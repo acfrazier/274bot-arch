@@ -1,0 +1,29 @@
+{
+  "format": "f0-architecture-gate-v1",
+  "schema_version": 1,
+  "target_ref": "refs/heads/dev",
+  "bootstrap": {
+    "accepted_sha": "de48e55a6d5c698bc08da932f33206f7e7e74a07",
+    "contract_epoch": 0,
+    "enforcement_sha": "522013ef8e25a0a78aed22149d81223c4d49da4d",
+    "bundle_digest": "b1e1218279db6d5c4b9625874ddad93fd33e7826c2db1861aa1ab62221460e59",
+    "runtime_pin": "python=3.14.8;rust-analyzer-sha256=fd89304c85f6c1996b036ea8f2c9ad9d3e25a197dbd713661c7fe51ec9dc8e49",
+    "schema_versions": {
+      "trusted_gate": 1,
+      "policy": 1,
+      "tools/architecture/inventories.json": 1,
+      "tools/architecture/ownership.json": 1
+    },
+    "input_digest": "d3b8dfffc6705c448c674e178882e5afe1ea5ca287fbc766b180cc105631c472",
+    "orchestrator_commit": "de48e55a6d5c698bc08da932f33206f7e7e74a07",
+    "reason": "F0-8 bootstrap: first protected architecture gate for refs/heads/dev at the F0-8 merge (de48e55a6, contract v5 \u00a726 \u00a74); later merges, starting with F0-core, are admitted through it.",
+    "operator_inline_approval": "I approve bootstrapping the 274bot architecture gate for dev (at de48e55a6) with enforcement 522013ef. (operator, orchestrator session, 2026-10-13)",
+    "owner_acknowledgements": [
+      "T1 runtime/seat: orchestrator (Main) acting until the T1 integrator exists, 2026-10-13",
+      "T2 compat/script: orchestrator (Main) acting until the T2 integrator exists, 2026-10-13",
+      "T3 frontend-core/panel/TUI: orchestrator (Main) acting until the T3 integrator exists, 2026-10-13",
+      "T4 rendering: orchestrator (Main) acting until the T4 integrator exists, 2026-10-13",
+      "T5 nav/local state: orchestrator (Main) acting until the T5 integrator exists, 2026-10-13"
+    ]
+  }
+}
