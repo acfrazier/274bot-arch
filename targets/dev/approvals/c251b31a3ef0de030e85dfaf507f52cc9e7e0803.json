@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "kind": "enforcement",
+  "target_ref": "refs/heads/dev",
+  "base_sha": "de48e55a6d5c698bc08da932f33206f7e7e74a07",
+  "head_sha": "c251b31a3ef0de030e85dfaf507f52cc9e7e0803",
+  "contract_epoch": 0,
+  "next_contract_epoch": 1,
+  "active_enforcement_sha": "522013ef8e25a0a78aed22149d81223c4d49da4d",
+  "active_bundle_digest": "b1e1218279db6d5c4b9625874ddad93fd33e7826c2db1861aa1ab62221460e59",
+  "proposed_enforcement_sha": "4cb9b79ac87041ad9745c2418aa14e314f41cf2d",
+  "proposed_bundle_digest": "af63a3876da7f23133751441009dfc6d3ee2475dc03a7d9592ee3ce22889f3f6",
+  "runtime_pin": "python=3.14.8;rust-analyzer-sha256=fd89304c85f6c1996b036ea8f2c9ad9d3e25a197dbd713661c7fe51ec9dc8e49",
+  "proposed_runtime_pin": "python=3.14.8;rust-analyzer-sha256=fd89304c85f6c1996b036ea8f2c9ad9d3e25a197dbd713661c7fe51ec9dc8e49",
+  "input_digest": "9748b9803984896faef914985c128c15dffd2c08650edbe7fb323fc922121019",
+  "delta": [],
+  "reason": "F0-core E' (step 1 of 2): seam field types defined in a workspace crate are classified structurally from their definitions (same resolver and rules as frontend-core types; use/pub use/alias chains followed; cycles, macros, unparseable or missing items fail closed), so a later definition change changes the findings. The 56-entry built-in table stays frozen and keeps precedence for its exact paths. Types defined outside the workspace come from strictly validated data in tools/architecture-data/foreign_types.json (outside the executable bundle; a row naming a workspace crate, a symlinked path component or over-deep JSON is an error; new row or changed class is a transition finding). The file ships empty, so inventory output and findings on this tree are unchanged. Probe sandbox (eprime-r3): sched_yield, which the pinned rust-analyzer calls only under CPU contention, is answered 0 without running instead of killing the probe; the allowlist is unchanged. The gate runs git with core.preloadIndex=false because git's preload threads end with exit (60), which the filter kills on every real-size index. Field ownership (eprime-r4): a workspace type named like a std scalar or transparent container (Option, Wrapping, u64, ...) is classified from its definition; the no-ownership shortcut applies only to the exact std/core item or an unshadowed prelude/primitive name. A workspace member may not take a sysroot/keyword name or the name of a dependency that is not that member (the vendored client), and inventory reads refuse symlinked path components. Round 5 enumerates Rust name binders and refuses same-module import/definition collisions, extern crate aliases, reserved-root rebinding, prelude-changing attributes, and unsupported qualified paths. Leading :: paths stay absolute despite local shadows; private globs are consulted for multi-segment heads and ambiguous or unknown bindings refuse. Qualification and real checker children all inherit the gate parent resource limits. Run the whole gate and test suites under prlimit --core=0 -- to prevent stored cores symmetrically. Consulted generic type defaults in field positions fail closed; frontend glob bindings outrank crate-root fallbacks; exact std leaf paths reject grouped-self glob shadows.",
+  "owner_acknowledgements": [
+    "T1 runtime/seat: orchestrator (Main) acting, 2026-10-13",
+    "T2 compat/script: orchestrator (Main) acting, 2026-10-13",
+    "T3 frontend-core/panel/TUI: orchestrator (Main) acting, 2026-10-13",
+    "T4 rendering: orchestrator (Main) acting, 2026-10-13",
+    "T5 nav/local state: orchestrator (Main) acting, 2026-10-13"
+  ],
+  "orchestrator_commit": "c251b31a3ef0de030e85dfaf507f52cc9e7e0803",
+  "operator_inline_approval": "I approve the reviewed E′ at commit `4cb9b79ac87041ad9745c2418aa14e314f41cf2d`. I have reviewed both reports (Grok & Wonder), and agree to the design follow up to use real name resolution.",
+  "source_message": "Operator inline message to the orchestrator (Main) session on chardonnay, 2026-10-14 07:26 EDT"
+}
