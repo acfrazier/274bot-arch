@@ -11,12 +11,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 import subprocess
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any, Iterator, Mapping
 
 RUST_EDITION = "2021"
 
@@ -27,6 +28,16 @@ RUST_EDITION = "2021"
 PARSER_VERSION = "rust-analyzer 0.3.3081-standalone"
 PARSER_SHA256 = "fd89304c85f6c1996b036ea8f2c9ad9d3e25a197dbd713661c7fe51ec9dc8e49"
 INVENTORY_RELATIVE = Path("tools/architecture/inventories.json")
+# Approved foreign-type data lives outside tools/architecture: every file under
+# that directory except the four named data files is part of the protected
+# executable bundle, and the active gate computes E' digests with its own
+# exclusion list.  The file is candidate data, bound by the admission input
+# digest; new rows and class changes are check_transition findings.
+FOREIGN_TYPES_RELATIVE = Path("tools/architecture-data/foreign_types.json")
+FOREIGN_TOP_FIELDS = frozenset({"schema_version", "foreign_types"})
+FOREIGN_ROW_FIELDS = frozenset({"path", "classification", "reason"})
+FOREIGN_PATH_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(?:::[A-Za-z_][A-Za-z0-9_]*)+")
+FOREIGN_PATH_RESERVED_ROOTS = frozenset({"crate", "self", "super", "Self"})
 VIEWS_RELATIVE = Path("crates/frontend-core/src/views.rs")
 FRONTEND_SRC_RELATIVE = Path("crates/frontend-core/src")
 SCRIPT_SRC_RELATIVE = Path("crates/script/src")
@@ -207,6 +218,10 @@ TRUSTED_SEAM_TYPE_CLASSES = {
     ("crates/frontend-core/src/walk_permissions.rs", "DangerLevel"): "scalar",
 }
 
+# Frozen legacy built-in foreign classifications.  Do not extend or change this
+# table: a new foreign seam field type is an approved data row in
+# FOREIGN_TYPES_RELATIVE, and data rows may not shadow these paths.  Changing
+# the built-in set is a protected enforcement update (E').
 TRUSTED_FOREIGN_TYPE_CLASSES = {
     "host_play::walk_map::ActionError": "owning",
     "host::login_queue::AdmitBlocker": "scalar",
@@ -304,8 +319,44 @@ KNOWN_SCALAR_TYPES = frozenset(
     }
 )
 
-TRANSPARENT_TYPE_CONTAINERS = frozenset(
-    {"Option", "Result", "ControlFlow", "Poll", "Wrapping", "Reverse", "PhantomData"}
+# The standard-library items behind the scalar/transparent leaf names, keyed by
+# name with their std/core module.  A field type takes the no-ownership
+# shortcut only when its path resolves to one of these exact items, or is a
+# bare prelude/primitive name that nothing in its module shadows.  A
+# workspace type with the same name is classified from its definition.
+STD_TRANSPARENT_TYPE_MODULES = {
+    "Option": "option",
+    "Result": "result",
+    "ControlFlow": "ops",
+    "Poll": "task",
+    "Wrapping": "num",
+    "Reverse": "cmp",
+    "PhantomData": "marker",
+}
+STD_LEAF_TYPE_PATHS = frozenset(
+    {
+        *(
+            f"{root}::{module}::{name}"
+            for root in ("std", "core")
+            for name, module in STD_TRANSPARENT_TYPE_MODULES.items()
+        ),
+        *(f"{root}::primitive::{name}" for root in ("std", "core") for name in KNOWN_SCALAR_TYPES),
+    }
+)
+PRELUDE_LEAF_TYPE_NAMES = KNOWN_SCALAR_TYPES | {"Option", "Result"}
+
+# Crate names that a workspace member or a dependency key may not take: the
+# sysroot crates and path keywords.  A workspace crate with such a name would
+# shadow the standard library in seam resolution.
+RESERVED_CRATE_NAMES = (
+    frozenset({"std", "core", "alloc", "proc_macro", "test"}) | FOREIGN_PATH_RESERVED_ROOTS
+)
+DEPENDENCY_TABLES = (
+    "dependencies",
+    "dev-dependencies",
+    "build-dependencies",
+    "dev_dependencies",
+    "build_dependencies",
 )
 
 FRONTEND_CRATE_NAMES = frozenset({"api", "host", "host_play", "nav", "script", "vault"})
@@ -360,6 +411,227 @@ def _object_without_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, An
             raise _InventoryError(f"duplicate JSON key {key!r}")
         result[key] = value
     return result
+
+
+def _traverses_symlink(root: Path, relative: Path) -> bool:
+    """True if any component of `relative` below `root` is a symlink.
+
+    Inventory reads never follow a symlink inside the tree, so every file the
+    checker consumes is the tree's own committed bytes.
+    """
+    component = root
+    for part in relative.parts:
+        component = component / part
+        if component.is_symlink():
+            return True
+    return False
+
+
+def _load_foreign_types(
+    root: Path, workspace_crates: frozenset[str]
+) -> tuple[dict[str, str], list[str]]:
+    """Return approved data classifications for foreign seam field types.
+
+    An absent file adds no rows.  An invalid file adds no rows and fails the
+    tree, so a malformed registry can only remove classifications.  A row may
+    not name a workspace crate: those types are classified from their
+    definitions.
+    """
+    path = root / FOREIGN_TYPES_RELATIVE
+    label = FOREIGN_TYPES_RELATIVE.as_posix()
+    if _traverses_symlink(root, FOREIGN_TYPES_RELATIVE):
+        return {}, [f"foreign types: {label} must not traverse a symlink"]
+    if not path.exists():
+        return {}, []
+    if not path.is_file():
+        return {}, [f"foreign types: {label} must be a regular file"]
+    try:
+        raw = json.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=_object_without_duplicate_keys,
+        )
+    except (OSError, UnicodeError, RecursionError, json.JSONDecodeError, _InventoryError) as error:
+        return {}, [f"foreign types: cannot load {label}: {error}"]
+    if not isinstance(raw, dict) or set(raw) != FOREIGN_TOP_FIELDS:
+        return {}, ["foreign types: top-level fields must be exactly schema_version, foreign_types"]
+    errors: list[str] = []
+    if type(raw["schema_version"]) is not int or raw["schema_version"] != 1:
+        errors.append("foreign types: schema_version must be integer 1")
+    if not isinstance(raw["foreign_types"], list):
+        errors.append("foreign types: foreign_types must be an array")
+        return {}, errors
+    rows: dict[str, str] = {}
+    for index, row in enumerate(raw["foreign_types"]):
+        where = f"foreign types: foreign_types[{index}]"
+        if not isinstance(row, dict) or set(row) != FOREIGN_ROW_FIELDS:
+            errors.append(f"{where} has unknown or missing fields")
+            continue
+        type_path = row["path"]
+        if (
+            not isinstance(type_path, str)
+            or FOREIGN_PATH_RE.fullmatch(type_path) is None
+            or type_path.split("::", 1)[0] in FOREIGN_PATH_RESERVED_ROOTS
+        ):
+            errors.append(f"{where}.path must be an exact external Rust type path")
+            continue
+        classification = row["classification"]
+        if not isinstance(classification, str) or classification not in TYPE_CLASSIFICATIONS:
+            errors.append(f"{where} has unknown classification")
+        if not isinstance(row["reason"], str) or not row["reason"].strip():
+            errors.append(f"{where}.reason must be nonblank")
+        if type_path in TRUSTED_FOREIGN_TYPE_CLASSES:
+            errors.append(f"{where} shadows built-in foreign type {type_path}")
+        if type_path.split("::", 1)[0] in workspace_crates:
+            errors.append(
+                f"{where} names workspace type {type_path}; workspace types are "
+                "classified from their definitions"
+            )
+        if type_path in rows:
+            errors.append(f"foreign types: duplicate path {type_path}")
+        rows[type_path] = str(classification)
+    if errors:
+        return {}, errors
+    return rows, []
+
+
+@dataclass(frozen=True)
+class _WorkspaceCrate:
+    manifest: str
+    lib_root: str | None
+    edition: Any
+
+
+def _workspace_crates(root: Path) -> tuple[dict[str, _WorkspaceCrate], list[str]]:
+    """Library crates of the candidate workspace, keyed by Rust crate name.
+
+    Members come from the root manifest, as in check.py discover_workspace.  An
+    absent root manifest declares no workspace crates; the graph checker
+    refuses such a tree.  A member without a library target is still a
+    workspace crate: data rows may not name it and resolving into it fails.
+
+    Seam resolution reads a path's first segment as a workspace crate when one
+    has that name, so the name must mean that crate everywhere in the
+    workspace: a member may not take a sysroot or keyword name, and no manifest
+    may declare a dependency of that name that is not the member itself (the
+    vendored `client` path dependency, for example).  No dependency key may be
+    a reserved name either.  Each case fails the whole tree.
+    """
+    if not (root / "Cargo.toml").exists() and not (root / "Cargo.toml").is_symlink():
+        return {}, []
+
+    def manifest(relative: Path) -> dict[str, Any]:
+        path = root / relative
+        if _traverses_symlink(root, relative):
+            raise _InventoryError(f"{relative.as_posix()} must not traverse a symlink")
+        if not path.is_file():
+            raise _InventoryError(f"{relative.as_posix()} must be a regular file")
+        with path.open("rb") as stream:
+            return tomllib.load(stream)
+
+    def dependency_tables(
+        document: dict[str, Any], label: str
+    ) -> Iterator[tuple[str, dict[str, Any]]]:
+        tables: list[tuple[str, Any]] = [
+            (kind, document[kind]) for kind in DEPENDENCY_TABLES if kind in document
+        ]
+        targets = document.get("target", {})
+        if not isinstance(targets, dict):
+            raise _InventoryError(f"{label}: unsupported target table")
+        for platform, target in sorted(targets.items()):
+            if not isinstance(target, dict):
+                raise _InventoryError(f"{label}: unsupported target table")
+            tables.extend(
+                (f"target.{platform}.{kind}", target[kind])
+                for kind in DEPENDENCY_TABLES
+                if kind in target
+            )
+        workspace_table = document.get("workspace")
+        if isinstance(workspace_table, dict) and "dependencies" in workspace_table:
+            tables.append(("workspace.dependencies", workspace_table["dependencies"]))
+        for kind, table in tables:
+            if not isinstance(table, dict):
+                raise _InventoryError(f"{label}: unsupported [{kind}] table")
+            yield kind, table
+
+    manifests: list[tuple[Path, str, dict[str, Any]]] = []
+    member_directories: dict[str, Path] = {}
+
+    crates: dict[str, _WorkspaceCrate] = {}
+    try:
+        workspace = manifest(Path("Cargo.toml"))
+        manifests.append((Path("."), "Cargo.toml", workspace))
+        table = workspace.get("workspace", {})
+        members = table.get("members", []) if isinstance(table, dict) else None
+        if not isinstance(members, list) or any(not isinstance(member, str) for member in members):
+            raise _InventoryError("Cargo.toml: workspace members must be an array of strings")
+        inherited = table.get("package", {}) if isinstance(table, dict) else {}
+        directories = [Path(member) for member in members]
+        if "package" in workspace:
+            directories.insert(0, Path("."))
+        for directory in directories:
+            normalized = _normalize_source_path(directory)
+            if normalized is None or any(character in str(directory) for character in "*?["):
+                raise _InventoryError(f"Cargo.toml: unsupported workspace member {directory.as_posix()}")
+            relative = normalized / "Cargo.toml"
+            member = manifest(relative)
+            if normalized != Path("."):
+                manifests.append((normalized, relative.as_posix(), member))
+            package = member.get("package")
+            lib = member.get("lib", {})
+            if (
+                not isinstance(package, dict)
+                or not isinstance(package.get("name"), str)
+                or not isinstance(lib, dict)
+            ):
+                raise _InventoryError(f"{relative.as_posix()}: unsupported package manifest")
+            name = lib.get("name", package["name"].replace("-", "_"))
+            lib_path = lib.get("path", "src/lib.rs")
+            if not isinstance(name, str) or not isinstance(lib_path, str):
+                raise _InventoryError(f"{relative.as_posix()}: unsupported library target")
+            lib_root = _normalize_source_path(normalized / lib_path)
+            if lib_root is None:
+                raise _InventoryError(f"{relative.as_posix()}: library target escapes the tree")
+            edition = package.get("edition")
+            if edition == {"workspace": True} and isinstance(inherited, dict):
+                edition = inherited.get("edition")
+            if name in RESERVED_CRATE_NAMES:
+                raise _InventoryError(
+                    f"{relative.as_posix()}: workspace crate name {name} is reserved"
+                )
+            if name in crates:
+                raise _InventoryError(f"Cargo.toml: duplicate workspace crate {name}")
+            if _traverses_symlink(root, lib_root):
+                raise _InventoryError(f"{lib_root.as_posix()} must not traverse a symlink")
+            crates[name] = _WorkspaceCrate(
+                relative.as_posix(),
+                lib_root.as_posix() if (root / lib_root).is_file() else None,
+                edition,
+            )
+            member_directories[name] = normalized
+        for directory, label, document in manifests:
+            for kind, table in dependency_tables(document, label):
+                for key, spec in sorted(table.items()):
+                    crate_name = key.replace("-", "_")
+                    if crate_name in RESERVED_CRATE_NAMES:
+                        raise _InventoryError(f"{label}: [{kind}] {key} is a reserved crate name")
+                    if crate_name not in crates:
+                        continue
+                    if isinstance(spec, dict) and spec.get("workspace") is True:
+                        # Inherits the root [workspace.dependencies] entry,
+                        # which this loop checks on its own.
+                        continue
+                    path = spec.get("path") if isinstance(spec, dict) else None
+                    target = (
+                        _normalize_source_path(directory / path) if isinstance(path, str) else None
+                    )
+                    if target != member_directories[crate_name]:
+                        raise _InventoryError(
+                            f"{label}: [{kind}] {key} is not workspace crate {crate_name}; "
+                            "a workspace crate may not share its name with another crate"
+                        )
+    except (OSError, UnicodeError, RecursionError, tomllib.TOMLDecodeError, _InventoryError) as error:
+        return {}, [f"workspace crates: {error}"]
+    return crates, []
 
 
 def _parser_executable() -> str:
@@ -492,7 +764,6 @@ def _parse_source(executable: str, path: str, source: str) -> dict[str, Any]:
         if errors:
             first = errors[0].get("kind")
             raise _InventoryError(f"{path}: unsupported or malformed Rust syntax ({first})")
-    _reject_conditional_cfg_attr(tree, path)
     return tree
 
 
@@ -503,6 +774,8 @@ def _check_rust_editions(root: Path) -> list[str]:
         Path("crates/frontend-core/Cargo.toml"),
     ):
         try:
+            if _traverses_symlink(root, relative):
+                raise OSError("symlinked manifest is unsupported")
             with (root / relative).open("rb") as stream:
                 manifest = tomllib.load(stream)
         except (OSError, tomllib.TOMLDecodeError) as error:
@@ -520,12 +793,15 @@ def _read_rust_files(root: Path, executable: str) -> tuple[dict[str, dict[str, A
     roots = (SCRIPT_SRC_RELATIVE, SCRIPT_TESTS_RELATIVE)
     for relative_root in roots:
         directory = root / relative_root
+        if _traverses_symlink(root, relative_root):
+            errors.append(f"{relative_root.as_posix()}: symlinked Rust input is unsupported")
+            continue
         if not directory.is_dir():
             errors.append(f"missing Rust source tree: {relative_root.as_posix()}")
             continue
         for path in sorted(directory.rglob("*.rs")):
             relative = path.relative_to(root).as_posix()
-            if path.is_symlink():
+            if _traverses_symlink(root, path.relative_to(root)):
                 errors.append(f"{relative}: symlinked Rust input is unsupported")
                 continue
             try:
@@ -537,7 +813,7 @@ def _read_rust_files(root: Path, executable: str) -> tuple[dict[str, dict[str, A
             parsed[relative] = {"source": source, "tree": tree}
     for relative in SCRIPT_AUX_RELATIVE:
         path = root / relative
-        if path.is_symlink():
+        if _traverses_symlink(root, relative):
             errors.append(f"{relative.as_posix()}: symlinked Rust input is unsupported")
             continue
         try:
@@ -554,11 +830,13 @@ def _read_frontend_files(
     parsed: dict[str, dict[str, Any]] = {}
     errors: list[str] = []
     directory = root / FRONTEND_SRC_RELATIVE
+    if _traverses_symlink(root, FRONTEND_SRC_RELATIVE):
+        return {}, [f"{FRONTEND_SRC_RELATIVE.as_posix()}: symlinked Rust input is unsupported"]
     if not directory.is_dir():
         return {}, [f"missing Rust source tree: {FRONTEND_SRC_RELATIVE.as_posix()}"]
     for path in sorted(directory.rglob("*.rs")):
         relative = path.relative_to(root).as_posix()
-        if path.is_symlink():
+        if _traverses_symlink(root, path.relative_to(root)):
             errors.append(f"{relative}: symlinked Rust input is unsupported")
             continue
         try:
@@ -598,16 +876,71 @@ def _module_base(file_path: Path) -> Path:
     return file_path.parent / file_path.stem
 
 
-def _frontend_module_sources(
-    parsed: dict[str, dict[str, Any]],
+class _CrateSources(Mapping[str, dict[str, Any]]):
+    """Rust files under one workspace crate, parsed when a module first needs them.
+
+    Only the production module tree of a loaded crate is parsed; a file the
+    parser adapter rejects fails only the crate that reaches it.  No path
+    component below the tree root may be a symlink.
+    """
+
+    def __init__(self, root: Path, executable: str, directory: Path) -> None:
+        self._root = root
+        self._executable = executable
+        base = root / directory
+        self._files = (
+            frozenset(path.relative_to(root).as_posix() for path in base.rglob("*.rs"))
+            if not _traverses_symlink(root, directory) and base.is_dir()
+            else frozenset()
+        )
+        self._parsed: dict[str, dict[str, Any]] = {}
+
+    def __contains__(self, relative: object) -> bool:
+        return relative in self._files
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(sorted(self._files))
+
+    def __len__(self) -> int:
+        return len(self._files)
+
+    def __getitem__(self, relative: str) -> dict[str, Any]:
+        if relative not in self._files:
+            raise KeyError(relative)
+        if relative not in self._parsed:
+            path = self._root / relative
+            if _traverses_symlink(self._root, Path(relative)):
+                raise _InventoryError(f"{relative}: symlinked Rust input is unsupported")
+            try:
+                source = path.read_text(encoding="utf-8")
+            except (OSError, UnicodeError) as error:
+                raise _InventoryError(f"{relative}: {error}") from error
+            self._parsed[relative] = {
+                "source": source,
+                "tree": _parse_source(self._executable, relative, source),
+            }
+        return self._parsed[relative]
+
+
+def _crate_module_sources(
+    parsed: Mapping[str, dict[str, Any]],
+    root_path: Path,
+    label: str,
+    boundary: Path | None = None,
 ) -> tuple[
     dict[tuple[str, ...], tuple[str, dict[str, Any], bool]],
     dict[tuple[str, ...], list[tuple[tuple[str, ...], bool]]],
     list[str],
     dict[tuple[str, ...], tuple[str, ...]],
 ]:
-    """Resolve frontend-core modules, their children, and inherited cfg predicates."""
-    root_file = (FRONTEND_SRC_RELATIVE / "lib.rs").as_posix()
+    """Resolve one crate's modules, their children, and inherited cfg predicates.
+
+    A `#[path]` module must stay under `boundary` (default: the crate root's
+    directory).
+    """
+    module_root = root_path.parent
+    source_root = boundary if boundary is not None else module_root
+    root_file = root_path.as_posix()
     if root_file not in parsed:
         return {}, {}, [f"missing Rust crate root: {root_file}"], {}
     modules: dict[tuple[str, ...], tuple[str, dict[str, Any], bool]] = {}
@@ -624,7 +957,7 @@ def _frontend_module_sources(
         cfgs: tuple[str, ...],
     ) -> None:
         if module_path in modules:
-            errors.append(f"{file_key}: duplicate frontend-core module path {'::'.join(module_path)}")
+            errors.append(f"{file_key}: duplicate {label} module path {'::'.join(module_path)}")
             return
         try:
             file_inner = _inner_cfg_predicates(container, file_key)
@@ -663,9 +996,9 @@ def _frontend_module_sources(
                     errors.append(f"{file_key}::{name}: module path escapes source root")
                     continue
                 try:
-                    target.relative_to(FRONTEND_SRC_RELATIVE)
+                    target.relative_to(source_root)
                 except ValueError:
-                    errors.append(f"{file_key}::{name}: module path escapes frontend-core source")
+                    errors.append(f"{file_key}::{name}: module path escapes {label} source")
                     continue
                 candidates = (target.as_posix(),)
             else:
@@ -685,20 +1018,29 @@ def _frontend_module_sources(
                 )
                 continue
             target_key = existing[0]
+            try:
+                target_tree = parsed[target_key]["tree"]
+            except _InventoryError as error:
+                errors.append(str(error))
+                continue
             visit(
                 target_key,
-                parsed[target_key]["tree"],
+                target_tree,
                 child_path,
                 _module_base(Path(existing[0])),
                 False,
                 child_cfgs,
             )
 
+    try:
+        root_tree = parsed[root_file]["tree"]
+    except _InventoryError as error:
+        return {}, {}, [str(error)], {}
     visit(
         root_file,
-        parsed[root_file]["tree"],
+        root_tree,
         (),
-        FRONTEND_SRC_RELATIVE,
+        module_root,
         False,
         (),
     )
@@ -783,6 +1125,16 @@ def _root_test_scopes(
             name = _module_name(child)
             if name is None:
                 errors.append(f"{file_relative}: module declaration has no supported name")
+                continue
+            if any(
+                tokens[2][1] == "cfg_attr"
+                and set(_cfg_attr_effect_names(tokens, 2)) & {"cfg", "path"}
+                for tokens in _direct_attributes(child)
+                if len(tokens) > 2
+            ):
+                errors.append(
+                    f"{file_relative}: cfg_attr may not alter cfg or module path provenance"
+                )
                 continue
             test_cfg = _test_cfg_expression(child)
             nested_stack = module_stack + (name,)
@@ -887,6 +1239,8 @@ def _path_segments(node: dict[str, Any]) -> tuple[str, ...]:
         if child.get("kind") == "PATH":
             result.extend(_path_segments(child))
         elif child.get("kind") == "PATH_SEGMENT":
+            if not result and next(_leaf_tokens(child), None) == ("COLON2", "::"):
+                result.append("")
             name = _path_segment_name(child)
             if name is not None:
                 result.append(name)
@@ -988,23 +1342,58 @@ def _direct_attributes(node: dict[str, Any]) -> list[list[tuple[str, str]]]:
     return [_attribute_tokens(attr) for attr in _direct_children(node, "ATTR")]
 
 
-def _reject_conditional_cfg_attr(tree: dict[str, Any], path: str) -> None:
-    for node, _, _, _, _ in _walk_ast(tree, "production", ()):
-        if node.get("kind") != "ATTR":
+def _cfg_attr_effect_names(tokens: list[tuple[str, str]], start: int) -> list[str]:
+    """Read only cfg_attr effects, not its predicate or nested attribute arguments."""
+    if start + 1 >= len(tokens) or tokens[start + 1][1] != "(":
+        return ["cfg"]
+    names: list[str] = []
+    depth = 1
+    predicate_end = False
+    expecting_effect = False
+    for index in range(start + 2, len(tokens)):
+        text = tokens[index][1]
+        if text == "(":
+            depth += 1
+        elif text == ")":
+            depth -= 1
+            if depth == 0:
+                break
+        elif depth == 1 and text == ",":
+            predicate_end = True
+            expecting_effect = True
+        elif depth == 1 and predicate_end and expecting_effect:
+            names.append(text)
+            if text == "cfg_attr":
+                names.extend(_cfg_attr_effect_names(tokens, index))
+            expecting_effect = False
+    return names
+
+
+def _binding_attribute_issues(tree: dict[str, Any], path: str) -> list[str]:
+    """Report name-changing attributes only when an indexed module is consulted."""
+    prelude = {"no_implicit_prelude", "no_std", "no_core", "prelude_import"}
+    issues: list[str] = []
+    for node, scope, _, _, _ in _walk_ast(tree, "production", ()):
+        if node.get("kind") != "ATTR" or _is_test_scope(scope):
             continue
         tokens = _attribute_tokens(node)
-        if len(tokens) < 3 or tokens[2][1] != "cfg_attr":
+        head = 3 if len(tokens) > 3 and tokens[1][1] == "!" else 2
+        if len(tokens) <= head:
             continue
-        if any(
-            text in {"cfg", "path"} and kind not in {"STRING", "RAW_STRING"}
-            for kind, text in tokens[3:]
-        ):
-            raise _InventoryError(f"{path}: cfg_attr may not alter cfg or module path provenance")
-
-
-
-
-
+        name = tokens[head][1]
+        if name in prelude:
+            issues.append(f"{path}: unsupported Rust prelude configuration")
+        elif name in {"macro_use", "macro_export"}:
+            issues.append(f"{path}: unsupported macro binding attribute")
+        elif name == "cfg_attr":
+            effects = set(_cfg_attr_effect_names(tokens, head))
+            if effects & prelude:
+                issues.append(f"{path}: unsupported Rust prelude configuration")
+            if effects & {"macro_use", "macro_export"}:
+                issues.append(f"{path}: cfg_attr may not alter macro binding")
+            if effects & {"cfg", "path"}:
+                issues.append(f"{path}: cfg_attr may not alter cfg or module path provenance")
+    return issues
 def _module_name(node: dict[str, Any]) -> str | None:
     return _first_name(node)
 
@@ -1118,6 +1507,23 @@ def _use_tree_imports(
     return result
 
 
+def _extern_crate_binding(node: dict[str, Any]) -> tuple[str, str] | None:
+    """Return (source crate, local name) from an extern-crate declaration."""
+    sources = _direct_children(node, "NAME_REF")
+    if len(sources) != 1:
+        return None
+    source = next(
+        (text.removeprefix("r#") for kind, text in _leaf_tokens(sources[0])
+         if kind in {"IDENT", "RAW_IDENT", "SELF_KW"}),
+        None,
+    )
+    renames = _direct_children(node, "RENAME")
+    if len(renames) > 1:
+        return None
+    local = _first_name(renames[0]) if renames else source
+    return (source, local) if source and local else None
+
+
 def _macro_call_name(node: dict[str, Any]) -> str | None:
     paths = _direct_children(node, "PATH")
     if not paths:
@@ -1222,6 +1628,14 @@ def _type_ownership(
     generic_names: frozenset[str] = frozenset(),
     allow_generic: bool = False,
 ) -> tuple[bool, bool]:
+    """Return (owns, borrows) for a field type.
+
+    An owned-container leaf name counts as owning, whatever defines it.  Any
+    other path, including a std scalar or transparent-container name, is
+    classified by `resolve_type`, which decides whether the path is that std
+    item or a type with its own definition.  Generic arguments are always
+    visited.
+    """
     owned = False
     borrowed = False
 
@@ -1238,16 +1652,22 @@ def _type_ownership(
             borrowed = True
             behind_reference = True
         elif kind == "PATH_TYPE":
+            if any(token_kind == "AS_KW" for token_kind, _ in _leaf_tokens(current)):
+                raise _InventoryError(
+                    f"{path}::{owner}: unsupported qualified associated field type"
+                )
             segments = _path_segments(current)
             if segments and not inside_known_owner:
                 name = segments[-1]
+                if len(segments) > 1 and segments[0] in generic_names:
+                    raise _InventoryError(
+                        f"{path}::{owner}: unresolved generic field ownership ({segments[0]})"
+                    )
                 if name in OWNED_FIELD_TYPES:
                     if not behind_reference:
                         owned = True
                         inside_known_owner = True
-                elif name in KNOWN_SCALAR_TYPES or name in TRANSPARENT_TYPE_CONTAINERS:
-                    pass
-                elif name in generic_names:
+                elif len(segments) == 1 and name in generic_names:
                     if not behind_reference and not allow_generic:
                         raise _InventoryError(
                             f"{path}::{owner}: unresolved generic field ownership ({name})"
@@ -1275,6 +1695,40 @@ def _type_parameter_names(node: dict[str, Any]) -> frozenset[str]:
     return frozenset(names)
 
 
+def _defaulted_type_parameters_in_fields(
+    node: dict[str, Any], path: str, owner: str
+) -> frozenset[str]:
+    """Return defaulted type parameters referenced by this item's field types."""
+    defaulted: set[str] = set()
+    for parameter_list in _direct_children(node, "GENERIC_PARAM_LIST"):
+        for parameter in _direct_children(parameter_list, "TYPE_PARAM"):
+            name = _first_name(parameter)
+            after_equals = False
+            has_type_default = False
+            for child in _children(parameter):
+                if child.get("kind") == "EQ":
+                    after_equals = True
+                elif after_equals and str(child.get("kind", "")).endswith("_TYPE"):
+                    has_type_default = True
+                    break
+            if name is not None and has_type_default:
+                defaulted.add(name)
+    if not defaulted:
+        return frozenset()
+
+    used: set[str] = set()
+    for field, _, _, _, _ in _walk_ast(node, "production", ()):
+        if field.get("kind") not in {"RECORD_FIELD", "TUPLE_FIELD"}:
+            continue
+        field_type = _field_type_node(field, path, owner)
+        for child, _, _, _, _ in _walk_ast(field_type, "production", ()):
+            if child.get("kind") == "PATH_TYPE":
+                segments = _path_segments(child)
+                if segments and segments[0] in defaulted:
+                    used.add(segments[0])
+    return frozenset(used)
+
+
 def _type_alias_target(
     node: dict[str, Any], path: str, owner: str
 ) -> dict[str, Any]:
@@ -1300,6 +1754,7 @@ def _type_definitions(
     strict: bool = False,
     include_private: bool = False,
     field_ownership: Any = None,
+    baseline_names: bool = True,
 ) -> dict[_TypeKey, dict[str, Any]]:
     definitions: dict[_TypeKey, dict[str, Any]] = {}
     for item, scope, module_stack, parent_kind, _ in _walk_ast(tree, "production", ()):
@@ -1419,7 +1874,8 @@ def _type_definitions(
             else "scalar"
         )
         trusted_class = TRUSTED_SEAM_TYPE_CLASSES.get(
-            (path, symbol), BASELINE_SEAM_CLASSIFICATIONS.get(name)
+            (path, symbol),
+            BASELINE_SEAM_CLASSIFICATIONS.get(name) if baseline_names else None,
         )
         if trusted_class is not None and trusted_class != classification:
             raise _InventoryError(
@@ -1466,7 +1922,12 @@ def _explicit_clone_impls(
     return clones
 
 
-def _seam_records(root: Path) -> tuple[dict[_TypeKey, str], set[_RecordKey], list[str]]:
+def _seam_records(
+    root: Path,
+    foreign_classes: dict[str, str],
+    consulted_foreign: set[str],
+    workspace_crates: dict[str, _WorkspaceCrate],
+) -> tuple[dict[_TypeKey, str], set[_RecordKey], list[str]]:
     try:
         executable = _parser_executable()
     except _InventoryError as error:
@@ -1474,9 +1935,12 @@ def _seam_records(root: Path) -> tuple[dict[_TypeKey, str], set[_RecordKey], lis
     parsed, parse_errors = _read_frontend_files(root, executable)
     if parse_errors:
         return {}, set(), parse_errors
-    modules, module_children, module_errors, module_cfgs = _frontend_module_sources(parsed)
+    modules, module_children, module_errors, module_cfgs = _crate_module_sources(
+        parsed, FRONTEND_SRC_RELATIVE / "lib.rs", "frontend-core"
+    )
     if module_errors:
         return {}, set(), module_errors
+    frontend_modules = tuple(modules)
 
     type_items: dict[tuple[tuple[str, ...], str], dict[str, Any]] = {}
     declared_types: dict[tuple[tuple[str, ...], str], dict[str, Any]] = {}
@@ -1488,7 +1952,24 @@ def _seam_records(root: Path) -> tuple[dict[_TypeKey, str], set[_RecordKey], lis
     module_imports: dict[tuple[str, ...], dict[str, set[tuple[str, ...]]]] = {}
     module_globs: dict[tuple[str, ...], list[tuple[str, ...]]] = {}
     public_uses: dict[tuple[str, ...], list[tuple[str, dict[str, Any]]]] = {}
+    local_bindings: dict[tuple[str, ...], dict[str, int]] = {}
     # Production cfg branches are unioned; unresolved or differing alternatives fail closed.
+
+    # frontend-core modules are keyed from (); another workspace crate's modules
+    # are loaded on first use and keyed from ("::<crate>",), which no Rust
+    # module name can spell.
+    frontend_crate = next(
+        (
+            name
+            for name, crate in workspace_crates.items()
+            if crate.lib_root == (FRONTEND_SRC_RELATIVE / "lib.rs").as_posix()
+        ),
+        None,
+    )
+    loaded_crates: dict[str, tuple[str, ...] | str] = {}
+
+    def crate_root(module_path: tuple[str, ...]) -> tuple[str, ...]:
+        return module_path[:1] if module_path and module_path[0].startswith("::") else ()
 
     def module_self_import(
         module_path: tuple[str, ...],
@@ -1498,114 +1979,225 @@ def _seam_records(root: Path) -> tuple[dict[_TypeKey, str], set[_RecordKey], lis
         """Avoid alias cycles for modules already in the current namespace."""
         if not target or local_name != target[-1]:
             return False
+        root_path = crate_root(module_path)
         if target[0] == "crate":
-            candidates = (target[1:],)
+            candidates = (root_path + target[1:],)
         elif target[0] == "self":
             candidates = (module_path + target[1:],)
         elif target[0] == "super":
             parent = list(module_path)
             remainder = list(target)
             while remainder and remainder[0] == "super":
-                if not parent:
+                if len(parent) <= len(root_path):
                     return False
                 parent.pop()
                 remainder.pop(0)
             candidates = (tuple(parent + remainder),)
         else:
-            candidates = (module_path + target, target)
+            candidates = (module_path + target, root_path + target)
         imported_module = next(
             (candidate for candidate in candidates if candidate in modules),
             None,
         )
-        return imported_module in {module_path + (local_name,), (local_name,)}
+        return imported_module in {module_path + (local_name,), root_path + (local_name,)}
 
-    for module_path, (file_key, container, _) in modules.items():
-        module_issues[module_path] = []
-        module_imports[module_path] = {}
-        module_globs[module_path] = []
-        public_uses[module_path] = []
-        for item, scope, module_stack, parent_kind, _ in _walk_ast(container, "production", ()):
-            if _is_test_scope(scope) or module_stack or parent_kind not in {
-                None,
-                "SOURCE_FILE",
-                "ITEM_LIST",
-            }:
-                continue
-            kind = item.get("kind")
-            name = _first_name(item)
-            if kind in {"STRUCT", "ENUM", "TYPE_ALIAS"}:
-                if name is None:
-                    if _is_public(item):
+    def index_modules(
+        indexed: dict[tuple[str, ...], tuple[str, dict[str, Any], bool]],
+        label: str,
+        exported: bool,
+    ) -> None:
+        def bind(module_path: tuple[str, ...], name: str) -> None:
+            origin = (module_path, name)
+            names = local_bindings[module_path]
+            names[name] = names.get(name, 0) + 1
+            if names[name] > 1:
+                ambiguous_type_items.add(origin)
+                issue = f"{file_key}: ambiguous {label} name binding {name}"
+                module_issues[module_path].append(issue)
+
+        for module_path, (file_key, container, _) in indexed.items():
+            module_issues[module_path] = _binding_attribute_issues(container, file_key)
+            module_imports[module_path] = {}
+            module_globs[module_path] = []
+            public_uses[module_path] = []
+            local_bindings[module_path] = {}
+            for child_path in indexed:
+                if len(child_path) == len(module_path) + 1 and child_path[:-1] == module_path:
+                    bind(module_path, child_path[-1])
+            for item, scope, module_stack, parent_kind, _ in _walk_ast(container, "production", ()):
+                if _is_test_scope(scope) or module_stack or parent_kind not in {
+                    None,
+                    "SOURCE_FILE",
+                    "ITEM_LIST",
+                }:
+                    continue
+                kind = item.get("kind")
+                name = _first_name(item)
+                if kind in {"STRUCT", "ENUM", "TYPE_ALIAS", "UNION", "TRAIT"} and name:
+                    bind(module_path, name)
+                if kind in {"STRUCT", "ENUM", "TYPE_ALIAS"}:
+                    if name is None:
+                        if _is_public(item):
+                            module_issues[module_path].append(
+                                f"{file_key}: public {str(kind).lower()} has no supported name"
+                            )
+                        continue
+                    origin = (module_path, name)
+                    if origin in type_items:
+                        ambiguous_type_items.add(origin)
                         module_issues[module_path].append(
-                            f"{file_key}: public {str(kind).lower()} has no supported name"
+                            f"{file_key}: duplicate {label} type {name}"
                         )
-                    continue
-                origin = (module_path, name)
-                if origin in type_items:
-                    ambiguous_type_items.add(origin)
-                    module_issues[module_path].append(
-                        f"{file_key}: duplicate frontend-core type {name}"
-                    )
-                    continue
-                type_items[origin] = item
-                if _is_public(item):
-                    declared_types[origin] = item
-            elif kind == "UNION" and _is_public(item):
-                if name is not None:
-                    unsupported_types[(module_path, name)] = (file_key, str(kind))
-            elif kind == "TRAIT" and _is_public(item):
-                if name is not None:
-                    non_value_types.add((module_path, name))
-            elif kind in {"CONST", "STATIC", "FN"} and _is_public(item):
-                if name is not None:
-                    non_type_items.add((module_path, name))
-            elif kind in {"MACRO_RULES", "MACRO_RULES_DEF"} and parent_kind in {
-                "SOURCE_FILE",
-                "ITEM_LIST",
-            }:
-                module_issues[module_path].append(
-                    f"{file_key}: item-generating macro syntax is unsupported"
-                )
-            elif kind == "MACRO_CALL" and parent_kind in {"SOURCE_FILE", "ITEM_LIST"}:
-                module_issues[module_path].append(
-                    f"{file_key}: item macro invocation is unsupported"
-                )
-            elif kind == "USE":
-                if _is_public(item):
-                    public_uses[module_path].append((file_key, item))
-                for use_tree in _direct_children(item, "USE_TREE"):
-                    for symbol, local_name in _use_tree_imports(use_tree):
-                        parts = tuple(part for part in symbol.split("::") if part)
-                        if "*" in parts:
-                            if _is_public(item):
-                                module_issues[module_path].append(
-                                    f"{file_key}: public glob re-export is unsupported ({symbol})"
+                        continue
+                    type_items[origin] = item
+                    if exported and _is_public(item):
+                        declared_types[origin] = item
+                elif kind == "UNION" and _is_public(item):
+                    if name is not None:
+                        unsupported_types[(module_path, name)] = (file_key, str(kind))
+                elif kind == "TRAIT" and _is_public(item):
+                    if name is not None:
+                        non_value_types.add((module_path, name))
+                elif kind in {"CONST", "STATIC", "FN"} and _is_public(item):
+                    if name is not None:
+                        non_type_items.add((module_path, name))
+                elif kind in {"MACRO_RULES", "MACRO_RULES_DEF"} and parent_kind in {
+                    "SOURCE_FILE",
+                    "ITEM_LIST",
+                }:
+                    issue = f"{file_key}: item-generating macro syntax is unsupported"
+                    module_issues[module_path].append(issue)
+                elif kind == "MACRO_CALL" and parent_kind in {"SOURCE_FILE", "ITEM_LIST"}:
+                    issue = f"{file_key}: item macro invocation is unsupported"
+                    module_issues[module_path].append(issue)
+                elif kind == "EXTERN_CRATE":
+                    binding = _extern_crate_binding(item)
+                    if binding is None:
+                        issue = f"{file_key}: unsupported extern crate binding syntax"
+                    else:
+                        source, local = binding
+                        bind(module_path, local)
+                        issue = (
+                            f"{file_key}: extern crate {source} as {local} shadows reserved crate name"
+                            if local in RESERVED_CRATE_NAMES and source != local
+                            else f"{file_key}: extern crate binding {local} is unsupported"
+                        )
+                    module_issues[module_path].append(issue)
+                elif kind == "USE":
+                    if _is_public(item):
+                        public_uses[module_path].append((file_key, item))
+                    for use_tree in _direct_children(item, "USE_TREE"):
+                        for symbol, local_name in _use_tree_imports(use_tree):
+                            parts = (("",) if symbol.startswith("::") else ()) + tuple(
+                                part for part in symbol.split("::") if part
+                            )
+                            if "*" in parts:
+                                if _is_public(item):
+                                    module_issues[module_path].append(
+                                        f"{file_key}: public glob re-export is unsupported ({symbol})"
+                                    )
+                                else:
+                                    glob_target = tuple(part for part in parts if part != "*")
+                                    if glob_target:
+                                        module_globs[module_path].append(glob_target)
+                                continue
+                            if parts:
+                                if not module_self_import(module_path, parts, local_name):
+                                    imported = module_imports[module_path].setdefault(local_name, set())
+                                    if parts not in imported:
+                                        bind(module_path, local_name)
+                                        imported.add(parts)
+                            if local_name in RESERVED_CRATE_NAMES and parts != (local_name,):
+                                issue = (
+                                    f"{file_key}: import {symbol} as {local_name} shadows reserved crate name"
                                 )
-                            else:
-                                glob_target = tuple(part for part in parts if part != "*")
-                                if glob_target:
-                                    module_globs[module_path].append(glob_target)
-                            continue
-                        target = tuple(part for part in symbol.split("::") if part)
-                        if target and not module_self_import(module_path, target, local_name):
-                            module_imports[module_path].setdefault(local_name, set()).add(target)
+                                module_issues[module_path].append(issue)
+
+    index_modules(modules, "frontend-core", True)
+
+    def load_workspace_crate(name: str) -> tuple[str, ...] | str:
+        """Parse and index a workspace library crate; return its root key or an error."""
+        state = loaded_crates.get(name)
+        if state is not None:
+            return state
+        crate = workspace_crates[name]
+        if crate.lib_root is None:
+            state = f"workspace crate {name} has no library target"
+        elif crate.edition != RUST_EDITION:
+            state = f"{crate.manifest}: parser adapter requires edition {RUST_EDITION}"
+        else:
+            crate_directory = Path(crate.manifest).parent
+            crate_modules, _, crate_errors, _ = _crate_module_sources(
+                _CrateSources(root, executable, crate_directory),
+                Path(crate.lib_root),
+                f"workspace crate {name}",
+                crate_directory,
+            )
+            if crate_errors:
+                state = f"workspace crate {name}: {'; '.join(sorted(crate_errors))}"
+            else:
+                key = (f"::{name}",)
+                keyed = {key + module_path: value for module_path, value in crate_modules.items()}
+                modules.update(keyed)
+                index_modules(keyed, f"workspace crate {name}", False)
+                state = key
+        loaded_crates[name] = state
+        return state
+
+    def workspace_issue(module_path: tuple[str, ...], name: str) -> str | None:
+        """Only a consulted name can encounter its module's binding issue."""
+        for issue in module_issues.get(module_path, []):
+            if " name binding " in issue and issue.rsplit(" ", 1)[-1] != name:
+                continue
+            return f"{issue} (consulted for a seam field type)"
+        return None
 
     def resolve_path(
         module_path: tuple[str, ...],
         segments: tuple[str, ...],
         seen_imports: frozenset[tuple[tuple[str, ...], str]] = frozenset(),
         seen_paths: frozenset[tuple[tuple[str, ...], tuple[str, ...]]] = frozenset(),
+        seen_globs: frozenset[tuple[str, ...]] = frozenset(),
     ) -> tuple[str, Any, str | None] | None:
         state = (module_path, segments)
         if state in seen_paths:
             return None
         seen_paths = seen_paths | {state}
+        root_path = crate_root(module_path)
         if not segments:
             return ("module", module_path, None)
         if segments[-1] == "self":
             segments = segments[:-1]
             if not segments:
                 return ("module", module_path, None)
+        if segments[0] == "":
+            # In Rust 2018+, a leading :: starts at the extern prelude, not
+            # at this module.  Do not let local imports or definitions change
+            # the meaning of an absolute workspace or sysroot path.
+            absolute = segments[1:]
+            if not absolute:
+                return None
+            issue = workspace_issue(module_path, absolute[0])
+            if issue is not None:
+                return ("workspace_error", issue, None)
+            canonical = "::".join(absolute)
+            if canonical in TRUSTED_FOREIGN_TYPE_CLASSES:
+                return ("foreign", canonical, None)
+            if absolute[0] in workspace_crates:
+                crate_key = (
+                    () if absolute[0] == frontend_crate else load_workspace_crate(absolute[0])
+                )
+                if isinstance(crate_key, str):
+                    return ("workspace_error", crate_key, absolute[-1])
+                return resolve_path(crate_key, ("crate",) + absolute[1:], seen_imports, seen_paths, seen_globs)
+            if canonical in foreign_classes:
+                return ("foreign", canonical, None)
+            return None
+        if (module_path, segments[0]) in ambiguous_type_items:
+            return ("ambiguous", (module_path, segments[0]), segments[0])
+        issue = workspace_issue(module_path, segments[0])
+        if issue is not None:
+            return ("workspace_error", issue, None)
 
         if segments[0] in module_imports.get(module_path, {}):
             local_name = segments[0]
@@ -1618,6 +2210,7 @@ def _seam_records(root: Path) -> tuple[dict[_TypeKey, str], set[_RecordKey], lis
                         imported + segments[1:],
                         seen_imports | {import_key},
                         seen_paths,
+                        seen_globs,
                     )
                     for imported in sorted(imported_targets)
                 ]
@@ -1632,7 +2225,7 @@ def _seam_records(root: Path) -> tuple[dict[_TypeKey, str], set[_RecordKey], lis
 
         if segments[0] == "crate":
             normalized = segments[1:]
-            search_module = ()
+            search_module = root_path
         elif segments[0] == "self":
             normalized = segments[1:]
             search_module = module_path
@@ -1640,7 +2233,7 @@ def _seam_records(root: Path) -> tuple[dict[_TypeKey, str], set[_RecordKey], lis
             parent = list(module_path)
             remainder = list(segments)
             while remainder and remainder[0] == "super":
-                if not parent:
+                if len(parent) <= len(root_path):
                     return None
                 parent.pop()
                 remainder.pop(0)
@@ -1651,15 +2244,17 @@ def _seam_records(root: Path) -> tuple[dict[_TypeKey, str], set[_RecordKey], lis
             search_module = module_path
 
         candidates = [search_module + normalized]
-        if search_module:
-            candidates.append(normalized)
         for target in dict.fromkeys(candidates):
-            if target in modules:
-                return ("module", target, None)
             if target:
                 origin = (target[:-1], target[-1])
                 if origin in ambiguous_type_items:
                     return ("ambiguous", origin, origin[1])
+                issue = workspace_issue(origin[0], origin[1])
+                if issue is not None:
+                    return ("workspace_error", issue, origin[1])
+            if target in modules:
+                return ("module", target, None)
+            if target:
                 if origin in type_items:
                     return ("type", origin, origin[1])
                 if origin in unsupported_types:
@@ -1676,28 +2271,84 @@ def _seam_records(root: Path) -> tuple[dict[_TypeKey, str], set[_RecordKey], lis
                         target[split:],
                         seen_imports,
                         seen_paths,
+                        seen_globs,
                     )
                     if resolved is not None:
                         return resolved
 
-        if len(segments) == 1 and segments[0] not in {"crate", "self", "super"}:
+        if segments[0] not in {"crate", "self", "super"} and module_path not in seen_globs:
             glob_matches: set[tuple[str, Any, str | None]] = set()
+            unknown_glob = False
             for glob_target in module_globs.get(module_path, []):
                 resolved = resolve_path(
                     module_path,
                     glob_target + segments,
                     seen_imports,
                     seen_paths,
+                    seen_globs | {module_path},
                 )
                 if resolved is not None:
                     glob_matches.add(resolved)
-            if len(glob_matches) == 1:
-                return next(iter(glob_matches))
-            if len(glob_matches) > 1:
+                else:
+                    glob_module = resolve_path(
+                        module_path, glob_target, seen_imports, seen_paths,
+                        seen_globs | {module_path},
+                    )
+                    if glob_module is None or glob_module[0] != "module":
+                        unknown_glob = True
+            if unknown_glob or len(glob_matches) > 1:
                 return ("ambiguous", tuple(sorted(glob_matches, key=repr)), segments[0])
+            if glob_matches:
+                return next(iter(glob_matches))
+
+        # Only after local and glob bindings fail may frontend-core use its
+        # crate-root fallback; workspace crates resolve Rust 2021 paths.
+        if search_module and not root_path:
+            target = normalized
+            if target:
+                origin = (target[:-1], target[-1])
+                if origin in ambiguous_type_items:
+                    return ("ambiguous", origin, origin[1])
+                issue = workspace_issue(origin[0], origin[1])
+                if issue is not None:
+                    return ("workspace_error", issue, origin[1])
+            if target in modules:
+                return ("module", target, None)
+            if target:
+                if origin in type_items:
+                    return ("type", origin, origin[1])
+                if origin in unsupported_types:
+                    return ("unsupported_type", origin, origin[1])
+                if origin in non_value_types:
+                    return ("non_value_type", origin, origin[1])
+                if origin in non_type_items:
+                    return ("non_type_item", origin, origin[1])
+            for split in range(len(target) - 1, 0, -1):
+                module_candidate = target[:split]
+                if module_candidate in modules:
+                    resolved = resolve_path(
+                        module_candidate,
+                        target[split:],
+                        seen_imports,
+                        seen_paths,
+                        seen_globs,
+                    )
+                    if resolved is not None:
+                        return resolved
 
         canonical = "::".join(segments)
+        # A built-in entry keeps precedence for its exact path.  Any other path
+        # rooted at a workspace crate resolves to that crate's definition.
         if canonical in TRUSTED_FOREIGN_TYPE_CLASSES:
+            return ("foreign", canonical, None)
+        if segments[0] in workspace_crates:
+            crate_key = (
+                () if segments[0] == frontend_crate else load_workspace_crate(segments[0])
+            )
+            if isinstance(crate_key, str):
+                return ("workspace_error", crate_key, segments[-1])
+            return resolve_path(crate_key, ("crate",) + segments[1:], seen_imports, seen_paths, seen_globs)
+        if canonical in foreign_classes:
             return ("foreign", canonical, None)
         return None
 
@@ -1705,22 +2356,69 @@ def _seam_records(root: Path) -> tuple[dict[_TypeKey, str], set[_RecordKey], lis
     def resolve_public_path(
         module_path: tuple[str, ...], symbol: str
     ) -> tuple[str, Any, str | None] | None:
-        segments = tuple(part for part in symbol.split("::") if part)
+        segments = (("",) if symbol.startswith("::") else ()) + tuple(
+            part for part in symbol.split("::") if part
+        )
         resolved = resolve_path(module_path, segments)
         if resolved is None:
             return None
         kind, target, name = resolved
         if kind == "type":
             origin = target
+            if crate_root(origin[0]):
+                return ("workspace_type", origin[0], origin[1])
             if origin in declared_types:
                 return ("type", origin[0], origin[1])
             if origin in unsupported_types:
                 return ("unsupported_type", origin[0], origin[1])
             return None
+        if kind == "module" and crate_root(target):
+            return ("workspace_module", target, None)
         if kind in {"unsupported_type", "non_value_type", "non_type_item"}:
             origin = target
             return (kind, origin[0], origin[1])
         return resolved
+
+    def std_leaf_type(module_path: tuple[str, ...], segments: tuple[str, ...]) -> bool:
+        """Whether a path that names no workspace or registered type is a std leaf.
+
+        The path, after the module's own `use` renames, must be one of the
+        exact std/core items in STD_LEAF_TYPE_PATHS, or a bare prelude or
+        primitive name that no import names and no glob of an unindexed module
+        could shadow.  Anything else stays an unresolved field type.
+        """
+        target = segments
+        if (module_path, target[0]) in ambiguous_type_items:
+            return False
+        followed: set[str] = set()
+        while target[0] in module_imports.get(module_path, {}):
+            local_name = target[0]
+            imported = module_imports[module_path][local_name]
+            if local_name in followed or len(imported) != 1:
+                return False
+            followed.add(local_name)
+            target = next(iter(imported)) + target[1:]
+        absolute = target[0] == ""
+        if not absolute and target[0] in local_bindings.get(module_path, {}):
+            return False
+        for glob_target in module_globs.get(module_path, []):
+            glob_module = resolve_path(module_path, glob_target)
+            if glob_module is None or glob_module[0] != "module":
+                return False
+            glob_binding = resolve_path(
+                module_path, glob_target + target[:1]
+            )
+            if glob_binding is not None:
+                return False
+        if "::".join(target[1:] if absolute else target) in STD_LEAF_TYPE_PATHS:
+            return True
+        if absolute or target != segments or len(target) != 1 or target[0] not in PRELUDE_LEAF_TYPE_NAMES:
+            return False
+        for glob_target in module_globs.get(module_path, []):
+            glob_module = resolve_path(module_path, glob_target)
+            if glob_module is None or glob_module[0] not in {"module", "type"}:
+                return False
+        return True
 
     type_classes: dict[tuple[tuple[str, ...], str], str] = {}
     type_definitions: dict[tuple[tuple[str, ...], str], dict[str, Any]] = {}
@@ -1747,9 +2445,15 @@ def _seam_records(root: Path) -> tuple[dict[_TypeKey, str], set[_RecordKey], lis
             field_module: tuple[str, ...],
             segments: tuple[str, ...],
         ) -> str:
-            if segments and segments[-1] == "Self":
-                return classify_origin(origin)
+            if "Self" in segments:
+                raise _InventoryError(
+                    f"{file_key}::{name}: unsupported Self/associated seam field type"
+                )
             resolved = resolve_path(field_module, segments)
+            if (resolved is None or resolved[0] == "unresolved_import") and std_leaf_type(
+                field_module, segments
+            ):
+                return "scalar"
             if resolved is None:
                 raise _InventoryError(
                     f"{file_key}::{name}: unresolved public seam field type {'::'.join(segments)}"
@@ -1758,12 +2462,15 @@ def _seam_records(root: Path) -> tuple[dict[_TypeKey, str], set[_RecordKey], lis
             if kind == "type":
                 return classify_origin(target)
             if kind == "foreign":
-                classification = TRUSTED_FOREIGN_TYPE_CLASSES.get(target)
+                classification = foreign_classes.get(target)
                 if classification is None:
                     raise _InventoryError(
                         f"{file_key}::{name}: unresolved foreign seam type {target}"
                     )
+                consulted_foreign.add(target)
                 return classification
+            if kind == "workspace_error":
+                raise _InventoryError(f"{file_key}::{name}: {target}")
             if kind == "unsupported_type":
                 source_path, syntax = unsupported_types[target]
                 raise _InventoryError(
@@ -1795,6 +2502,15 @@ def _seam_records(root: Path) -> tuple[dict[_TypeKey, str], set[_RecordKey], lis
             )
 
         try:
+            defaulted_fields = _defaulted_type_parameters_in_fields(
+                item, file_key, name
+            )
+            if defaulted_fields:
+                parameter = sorted(defaulted_fields)[0]
+                raise _InventoryError(
+                    f"{file_key}::{name}: generic type defaults are unsupported "
+                    f"({parameter})"
+                )
             if item.get("kind") == "TYPE_ALIAS":
                 if _type_parameter_names(item):
                     raise _InventoryError(
@@ -1845,6 +2561,7 @@ def _seam_records(root: Path) -> tuple[dict[_TypeKey, str], set[_RecordKey], lis
                     symbol_prefix=symbol_prefix,
                     include_private=True,
                     field_ownership=field_ownership,
+                    baseline_names=not crate_root(module_path),
                 )
                 if len(found) != 1:
                     raise _InventoryError(
@@ -1901,11 +2618,16 @@ def _seam_records(root: Path) -> tuple[dict[_TypeKey, str], set[_RecordKey], lis
                             )
                             continue
                         resolved = resolve_public_path(module_path, symbol)
-                        if resolved is None:
+                        if resolved is None or resolved[0] in {"workspace_error", "workspace_module"}:
                             final_name = symbol.rstrip(":").split("::")[-1]
                             if final_name[:1].isupper():
+                                detail = (
+                                    f": {resolved[1]}"
+                                    if resolved is not None and resolved[0] == "workspace_error"
+                                    else ""
+                                )
                                 unresolved_exports.add(
-                                    f"{file_key}: cannot resolve public type re-export {symbol}"
+                                    f"{file_key}: cannot resolve public type re-export {symbol}{detail}"
                                 )
                             continue
                         kind, target_module, name = resolved
@@ -1945,6 +2667,25 @@ def _seam_records(root: Path) -> tuple[dict[_TypeKey, str], set[_RecordKey], lis
                                     else local_name
                                 )
                                 foreign_exports[_TypeKey(file_key, exported_name)] = target_module
+                        elif kind == "workspace_type":
+                            # A re-exported workspace type is a seam alias classified
+                            # from its definition, like a local re-export.
+                            _, _, inline = modules[module_path]
+                            symbol_prefix = "::".join(module_path) if inline else ""
+                            exported_name = (
+                                f"{symbol_prefix}::{local_name}" if symbol_prefix else local_name
+                            )
+                            expected_target = TRUSTED_FOREIGN_REEXPORTS.get((file_key, exported_name))
+                            if expected_target is not None:
+                                unresolved_exports.add(
+                                    f"{file_key}::{exported_name}: trusted foreign re-export is "
+                                    f"{expected_target}, source exports "
+                                    f"{'::'.join(target_module)[2:]}::{name}"
+                                )
+                            public_aliases[_TypeKey(file_key, exported_name)] = (
+                                target_module,
+                                name or "",
+                            )
                         elif kind in {"non_value_type", "non_type_item"}:
                             continue
                         elif kind == "ambiguous":
@@ -1987,7 +2728,8 @@ def _seam_records(root: Path) -> tuple[dict[_TypeKey, str], set[_RecordKey], lis
     for origin in declared_types:
         declared_by_name.setdefault(origin[1], set()).add(origin)
     explicit_clone_origins: dict[tuple[tuple[str, ...], str], set[tuple[str, ...]]] = {}
-    for module_path, (_, container, _) in modules.items():
+    for module_path in frontend_modules:
+        container = modules[module_path][1]
         for name, impl_cfgs in _explicit_clone_impls(container, modules[module_path][0]).items():
             conditions = {module_cfgs[module_path] + cfgs for cfgs in impl_cfgs}
             local_origin = (module_path, name)
@@ -2031,10 +2773,11 @@ def _seam_records(root: Path) -> tuple[dict[_TypeKey, str], set[_RecordKey], lis
         }
 
     for key, target in foreign_exports.items():
-        classification = TRUSTED_FOREIGN_TYPE_CLASSES.get(target)
+        classification = foreign_classes.get(target)
         if classification is None:
             errors.add(f"{key.path}::{key.symbol}: unresolved foreign seam type {target}")
             continue
+        consulted_foreign.add(target)
         definitions[key] = {
             "name": key.symbol,
             "fields": [],
@@ -2459,12 +3202,14 @@ def _validate_inventory_shape(raw: Any) -> tuple[dict[str, Any] | None, list[str
 
 def _load_inventory(root: Path) -> tuple[dict[str, Any] | None, list[str]]:
     path = root / INVENTORY_RELATIVE
+    if _traverses_symlink(root, INVENTORY_RELATIVE):
+        return None, [f"inventory: {INVENTORY_RELATIVE.as_posix()} must not traverse a symlink"]
     try:
         raw = json.loads(
             path.read_text(encoding="utf-8"),
             object_pairs_hook=_object_without_duplicate_keys,
         )
-    except (OSError, UnicodeError, json.JSONDecodeError, _InventoryError) as error:
+    except (OSError, UnicodeError, RecursionError, json.JSONDecodeError, _InventoryError) as error:
         return None, [f"inventory: cannot load {INVENTORY_RELATIVE.as_posix()}: {error}"]
     return _validate_inventory_shape(raw)
 
@@ -2477,6 +3222,7 @@ class _Snapshot:
     violations: frozenset[_RecordKey]
     exceptions: frozenset[_RecordKey]
     errors: tuple[str, ...]
+    foreign_types: dict[str, str]
 def _analyze_tree(root: Path) -> _Snapshot:
 
 
@@ -2484,11 +3230,23 @@ def _analyze_tree(root: Path) -> _Snapshot:
     errors: list[str] = _check_rust_editions(root)
     inventory, shape_errors = _load_inventory(root)
     errors.extend(shape_errors)
-    classifications, seam_violations, seam_errors = _seam_records(root)
+    workspace_crates, workspace_errors = _workspace_crates(root)
+    errors.extend(workspace_errors)
+    foreign_rows, foreign_errors = _load_foreign_types(root, frozenset(workspace_crates))
+    errors.extend(foreign_errors)
+    consulted_foreign: set[str] = set()
+    classifications, seam_violations, seam_errors = _seam_records(
+        root,
+        {**TRUSTED_FOREIGN_TYPE_CLASSES, **foreign_rows},
+        consulted_foreign,
+        workspace_crates,
+    )
     errors.extend(seam_errors)
     nav_violations, nav_exceptions, nav_errors = _script_records(root)
     errors.extend(nav_errors)
     actual_violations = set(seam_violations) | set(nav_violations)
+    for type_path in sorted(set(foreign_rows) - consulted_foreign):
+        errors.append(f"stale foreign type classification: {type_path}")
     if inventory is not None:
         registered_types: dict[_TypeKey, str] = {}
         for row in inventory["seam_types"]:
@@ -2551,6 +3309,7 @@ def _analyze_tree(root: Path) -> _Snapshot:
         frozenset(actual_violations),
         frozenset(nav_exceptions),
         tuple(sorted(set(errors))),
+        foreign_rows,
     )
 
 
@@ -2589,4 +3348,12 @@ def check_transition(base: Path, candidate: Path) -> list[str]:
         findings.add(f"new inventory violation: {_expected_id(key)}")
     for key in sorted(after.exceptions - before.exceptions):
         findings.add(f"new test import exception: {_expected_id(key)}")
+    before_foreign = before.foreign_types
+    after_foreign = after.foreign_types
+    for type_path in sorted(set(after_foreign) - set(before_foreign)):
+        findings.add(f"new foreign type classification: {type_path} {after_foreign[type_path]}")
+    for type_path in sorted(set(before_foreign) & set(after_foreign)):
+        old, new = before_foreign[type_path], after_foreign[type_path]
+        if old != new:
+            findings.add(f"foreign type classification changed: {type_path} {old}->{new}")
     return sorted(findings)

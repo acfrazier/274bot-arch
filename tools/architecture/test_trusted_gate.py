@@ -7,9 +7,11 @@ real-suite variants live in e2e_trusted_gate.py, outside the qualified corpus.
 """
 from __future__ import annotations
 
+import contextlib
 import json
 import importlib.util
 import os
+import resource
 from pathlib import Path
 import re
 import shutil
@@ -22,6 +24,7 @@ import threading
 import tomllib
 import unittest
 from types import SimpleNamespace
+from typing import Iterator
 from unittest import mock
 
 
@@ -43,6 +46,32 @@ EXPECTED_PROBE_SYSCALLS = frozenset({
     230, 231, 257, 262, 263, 272, 273, 280, 289, 290, 291, 293,
     302, 318, 319, 326, 334, 435, 436, 439,
 })
+# sched_yield: answered 0 without running; measured only under CPU contention.
+EXPECTED_PROBE_NOOP_SYSCALLS = frozenset({24})
+# Confined contention: one CPU shared by the probe tree and processes that
+# sleep ~20 us in a loop, so they wake and preempt the probe often. With
+# sched_yield killed, eprime-r3 lost 10 of 10 such parse loops within 10000
+# parses of the fixture's script source, about one kill per 2000 parses.
+_CONTENTION_WAKERS = 8
+_CONTENTION_PARSES = 8000
+_CONTENDED_PARSER = """import sys
+sys.path.insert(0, sys.argv[1])
+import inventories
+executable = inventories._parser_executable()
+for _ in range(int(sys.argv[2])):
+    inventories._parse_source(executable, "crates/script/src/lib.rs", "// empty script fixture\\n")
+print("PARSED", sys.argv[2])
+"""
+# The gate's own verify_checkout inside the filter, on an index large enough
+# (1200 entries) that git would start preload-index threads.
+_LARGE_INDEX_STATUS = """import sys
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+import trusted_gate
+trusted_gate.verify_checkout(Path(sys.argv[2]), sys.argv[3], "large-index probe checkout")
+print("CLEAN")
+"""
+_LARGE_INDEX_FILES = 1200
 _STAGED_PROBE_MARKER = "import base64, json, os, shutil, subprocess, sys"
 _TRACED_SYSCALL_RE = re.compile(r"^\[\s*(\d+)\]\s+[A-Za-z_][A-Za-z0-9_]*\(")
 _TRACED_CHILD_RE = re.compile(
@@ -1687,6 +1716,109 @@ else:
                         self.assertEqual((result.returncode, result.stdout.strip()), (159, ""), result.stdout)
         print("GOOD §26 syscall attacks are killed in both modes; prepare keeps only local sockets")
 
+    def test_seccomp_killed_probe_inherits_parent_core_limit(self) -> None:
+        work, payload = self._write_probe_script(
+            "no-core-dump",
+            "import ctypes, os, resource\n"
+            "limit = resource.getrlimit(resource.RLIMIT_CORE)\n"
+            "child = os.fork()\n"
+            "if child == 0:\n"
+            "    ctypes.CDLL(None).prctl(15, b'F0R5NoCore', 0, 0, 0)\n"
+            "    ctypes.CDLL(None).syscall(321, 0, 0, 0)\n"
+            "    os._exit(0)\n"
+            "_, status = os.waitpid(child, 0)\n"
+            "print(limit, os.WIFSIGNALED(status), os.WTERMSIG(status),"
+            " os.WCOREDUMP(status), flush=True)\n",
+        )
+        for deny_sockets in (True, False):
+            with self.subTest(deny_sockets=deny_sockets):
+                result = gate._isolated_probe(
+                    [sys.executable, str(payload)], work, deny_sockets=deny_sockets
+                )
+                # A piped core_pattern can set WCOREDUMP with a zero limit;
+                # the host storage check is recorded separately.
+                self.assertEqual(
+                    (result.returncode, result.stdout.strip()),
+                    (0, f"{resource.getrlimit(resource.RLIMIT_CORE)} True 31 True"),
+                    result.stdout,
+                )
+
+    def test_probe_and_real_checker_child_inherit_same_core_limit(self) -> None:
+        soft, hard = resource.getrlimit(resource.RLIMIT_CORE)
+        work, payload = self._write_probe_script(
+            "core-limit-parity",
+            "import resource\nprint(resource.getrlimit(resource.RLIMIT_CORE))\n",
+        )
+        checker = self.root / "core-limit-checker"
+        (checker / gate.ARCH_DIR).mkdir(parents=True)
+        (checker / gate.ARCH_DIR / "check.py").write_text(
+            "import resource\n"
+            "def check_tree(root):\n"
+            "    return [str(resource.getrlimit(resource.RLIMIT_CORE))]\n",
+            encoding="utf-8",
+        )
+        original_run = subprocess.run
+        child_hooks = []
+
+        def record_launch(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+            child_hooks.append(kwargs.get("preexec_fn"))
+            return original_run(*args, **kwargs)
+
+        try:
+            # A nonzero soft limit distinguishes the old hook by observation
+            # when the host permits it; a hard-zero host still checks that no
+            # child-only pre-exec hook is installed.
+            if hard != 0:
+                resource.setrlimit(resource.RLIMIT_CORE, (1, hard))
+            expected = str(resource.getrlimit(resource.RLIMIT_CORE))
+            with mock.patch.object(gate.subprocess, "run", side_effect=record_launch):
+                real_checker_limit = gate.checker_findings(checker, "tree", root=self.root)
+                self.assertEqual(real_checker_limit, [expected])
+                for deny_sockets in (True, False):
+                    with self.subTest(deny_sockets=deny_sockets):
+                        result = gate._isolated_probe(
+                            [sys.executable, str(payload)], work, deny_sockets=deny_sockets
+                        )
+                        self.assertEqual((result.returncode, result.stdout.strip()), (0, expected), result.stdout)
+            self.assertTrue(child_hooks)
+            self.assertTrue(all(hook is None for hook in child_hooks), child_hooks)
+        finally:
+            resource.setrlimit(resource.RLIMIT_CORE, (soft, hard))
+
+    def test_probe_filter_answers_sched_yield_with_zero_in_every_configuration(self) -> None:
+        # The one no-op rule: sched_yield returns 0 and errno 0 instead of killing.
+        work, payload = self._write_probe_script(
+            "noop-sched-yield",
+            "import ctypes\n"
+            "libc = ctypes.CDLL(None, use_errno=True)\n"
+            "libc.syscall.restype = ctypes.c_long\n"
+            "ctypes.set_errno(0)\n"
+            "print('RAN', libc.syscall(24), ctypes.get_errno())\n",
+        )
+        for deny_sockets in (True, False):
+            result = gate._isolated_probe([sys.executable, str(payload)], work, deny_sockets=deny_sockets)
+            with self.subTest(deny_sockets=deny_sockets):
+                self.assertEqual((result.returncode, result.stdout.split()), (0, ["RAN", "0", "0"]), result.stdout)
+        print("GOOD §26 sched_yield is answered 0, not killed, in both modes")
+
+    def test_gate_git_status_survives_the_filter_on_a_real_size_index(self) -> None:
+        # Git starts preload-index threads once the index has 1000 entries, and
+        # each thread ends with exit (60), which the filter kills. Every real
+        # product tree is that large; the other fixture trees are not.
+        work, payload = self._write_probe_script("large-index-status", _LARGE_INDEX_STATUS)
+        shutil.copyfile(CHECKER_ROOT / "tools/architecture/trusted_gate.py", work / "trusted_gate.py")
+        repo = work / "large"
+        _init_repo(repo)
+        for index in range(_LARGE_INDEX_FILES):
+            (repo / f"f{index:04}.txt").write_text(f"{index}\n", encoding="ascii")
+        sha = _commit(repo, "large index")
+        command = [sys.executable, "-I", "-S", str(payload), str(work), str(repo), sha]
+        for deny_sockets in (True, False):
+            result = gate._isolated_probe(command, work, deny_sockets=deny_sockets)
+            with self.subTest(deny_sockets=deny_sockets):
+                self.assertEqual((result.returncode, result.stdout.strip()), (0, "CLEAN"), result.stdout[-2000:])
+        print(f"GOOD §26 gate git status on a {_LARGE_INDEX_FILES}-entry index survives both filter modes")
+
     def _assert_filter_trace_matches_allowlist(
         self, prefix: Path, *, deny_sockets: bool, expected_exec: str
     ) -> int:
@@ -1737,13 +1869,43 @@ else:
             for line in traces[pid].splitlines()
             if (match := _TRACED_SYSCALL_RE.match(line))
         }
-        allowed = set(gate._PROBE_SYSCALLS)
+        # A no-op syscall never runs, but strace reports its 0 return as success.
+        allowed = set(gate._PROBE_SYSCALLS) | set(gate._PROBE_NOOP_SYSCALLS)
         if not deny_sockets:
             allowed.update((gate._SYS_SOCKET, gate._SYS_CONNECT))
         denied = sorted(observed - allowed)
         self.assertFalse(denied, f"successful filtered syscalls outside the {('admission' if deny_sockets else 'prepare')} allowlist: {denied}")
         self.assertTrue(observed, "strace recorded no successful syscalls in the filtered process tree")
         return len(observed)
+
+    def _skip_inside_seccomp(self, audit: str) -> None:
+        seccomp_status = next(
+            (line.split()[1] for line in Path("/proc/self/status").read_text(encoding="ascii").splitlines()
+             if line.startswith("Seccomp:")),
+            "0",
+        )
+        if seccomp_status != "0":
+            self.skipTest(f"{audit} runs from the unfiltered host fixture, not inside a nested seccomp suite")
+
+    @contextlib.contextmanager
+    def _confined_contention(self) -> Iterator[None]:
+        """Pin this thread, and so every probe it launches, to one CPU shared with wakers."""
+        previous = os.sched_getaffinity(0)
+        os.sched_setaffinity(0, {min(previous)})
+        wakers: list[subprocess.Popen[bytes]] = []
+        try:
+            for _ in range(_CONTENTION_WAKERS):
+                wakers.append(subprocess.Popen(
+                    [sys.executable, "-I", "-S", "-c", "import time\nwhile True:\n    time.sleep(0.00002)\n"],
+                    stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                ))
+            yield
+        finally:
+            for waker in wakers:
+                waker.kill()
+            for waker in wakers:
+                waker.wait()
+            os.sched_setaffinity(0, previous)
 
     def _traced_isolated_probe(
         self,
@@ -1754,13 +1916,7 @@ else:
         records: Path,
         label: str,
     ) -> subprocess.CompletedProcess[str]:
-        seccomp_status = next(
-            (line.split()[1] for line in Path("/proc/self/status").read_text(encoding="ascii").splitlines()
-             if line.startswith("Seccomp:")),
-            "0",
-        )
-        if seccomp_status != "0":
-            self.skipTest("strace audit runs from the unfiltered host fixture, not inside a nested seccomp suite")
+        self._skip_inside_seccomp("strace audit")
         strace = shutil.which("strace")
         self.assertIsNotNone(strace, "strace is required for the allowlist drift audit")
         prefix = self.root / f"honest-runtime-audit-{label}"
@@ -1800,17 +1956,20 @@ else:
 
     def test_probe_syscall_allowlist_matches_recorded_set(self) -> None:
         self.assertEqual(set(gate._PROBE_SYSCALLS), EXPECTED_PROBE_SYSCALLS)
+        self.assertEqual(set(gate._PROBE_NOOP_SYSCALLS), EXPECTED_PROBE_NOOP_SYSCALLS)
+        self.assertFalse(EXPECTED_PROBE_SYSCALLS & EXPECTED_PROBE_NOOP_SYSCALLS)
 
-    def test_honest_runtime_syscall_audit_stays_in_sync_with_the_filter(self) -> None:
+    def _honest_runtime_audit(self, *, contended: bool) -> None:
         # Admit a real fixture control, then trace its real E' CLI qualification
         # under both filter configurations. The synthetic Git history is tiny;
         # each run still exercises staging, bwrap, seccomp and checked records.
+        self._skip_inside_seccomp("strace audit")
         gate.admit(self._args(base=self.b0, candidate=self.b1, head_sha=self.b1_sha))
         self._commit_records("publish fixture baseline for syscall audit")
         _git(self.repo_root, "update-ref", TARGET_REF, self.b1_sha)
 
         for deny_sockets in (True, False):
-            mode = "admission" if deny_sockets else "prepare-filter"
+            mode = ("contended-" if contended else "") + ("admission" if deny_sockets else "prepare-filter")
             with self.subTest(mode=mode), tempfile.TemporaryDirectory(dir=self.root) as temp_name:
                 work = Path(temp_name)
                 records_clone = gate._clone_at(self.records, work / "records", self.records_sha, depth=1)
@@ -1837,13 +1996,14 @@ else:
                     candidate_sha,
                 )
                 records_before = gate._record_files(records_clone)
-                result = self._traced_isolated_probe(
-                    command,
-                    work,
-                    deny_sockets=deny_sockets,
-                    records=records_clone,
-                    label=mode,
-                )
+                with self._confined_contention() if contended else contextlib.nullcontext():
+                    result = self._traced_isolated_probe(
+                        command,
+                        work,
+                        deny_sockets=deny_sockets,
+                        records=records_clone,
+                        label=mode,
+                    )
                 self.assertIn("architecture admission recorded", result.stdout)
                 gate._check_probe_records(records_clone, records_before, True)
                 gate._check_probe_receipt(
@@ -1854,6 +2014,37 @@ else:
                     gate.input_digest(candidate),
                     self.e_sha,
                 )
+
+    def test_honest_runtime_syscall_audit_stays_in_sync_with_the_filter(self) -> None:
+        self._honest_runtime_audit(contended=False)
+
+    def test_honest_runtime_syscall_audit_holds_under_confined_contention(self) -> None:
+        # The recorded set must not be an idle-only set: the same traced admit
+        # runs on one CPU shared with frequent wakers.
+        self._honest_runtime_audit(contended=True)
+
+    def test_honest_parser_survives_the_filter_under_confined_contention(self) -> None:
+        # Round 2 lost an e2e qualification to SIGSYS: under CPU contention the
+        # pinned rust-analyzer's ParseNodeDropper thread calls sched_yield. The
+        # checker's own _parse_source parses the fixture's script source in a
+        # loop in each filter mode, untraced, on one CPU shared with wakers.
+        self._skip_inside_seccomp("contention audit")
+        work, payload = self._write_probe_script("contended-parser", _CONTENDED_PARSER)
+        shutil.copyfile(CHECKER_ROOT / "tools/architecture/inventories.py", work / "inventories.py")
+        command = [sys.executable, "-I", "-S", str(payload), str(work), str(_CONTENTION_PARSES)]
+        with self._confined_contention():
+            results = {
+                deny_sockets: gate._isolated_probe(command, work, deny_sockets=deny_sockets)
+                for deny_sockets in (True, False)
+            }
+        for deny_sockets, result in results.items():
+            with self.subTest(deny_sockets=deny_sockets):
+                self.assertEqual(
+                    (result.returncode, result.stdout.strip()),
+                    (0, f"PARSED {_CONTENTION_PARSES}"),
+                    result.stdout[-2000:],
+                )
+        print(f"GOOD §26 {2 * _CONTENTION_PARSES} contended fixture parses survive both filter modes")
 
     def test_sequential_isolated_probe_work_is_not_shared(self) -> None:
         work, payload = self._write_probe_script(
