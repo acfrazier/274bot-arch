@@ -211,7 +211,7 @@ TRUSTED_SEAM_TYPE_CLASSES = {
 }
 
 # Built-in foreign classifications are checker rules. New external seam types
-# must be classified in the adjacent remote-owned foreign_types.json file.
+# must be classified in the checked tree's tools/architecture/foreign_types.json.
 TRUSTED_FOREIGN_TYPE_CLASSES = {
     "host_play::walk_map::ActionError": "owning",
     "host::login_queue::AdmitBlocker": "scalar",
