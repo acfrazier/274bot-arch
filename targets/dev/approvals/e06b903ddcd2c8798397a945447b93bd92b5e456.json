@@ -1,0 +1,32 @@
+{
+    "schema_version": 1,
+    "kind": "policy",
+    "target_ref": "refs/heads/dev",
+    "base_sha": "e02773d28da96fdffb457325c22a905f8211ed8d",
+    "head_sha": "e06b903ddcd2c8798397a945447b93bd92b5e456",
+    "contract_epoch": 6,
+    "next_contract_epoch": 7,
+    "active_enforcement_sha": "527156c0d8e4ae36339ab8f61aa9961bbcc3e90c",
+    "active_bundle_digest": "859baff90455f8a3cf6a3ff5d312ea3a1b0a2541597a7ee71446faa8e41a08fb",
+    "proposed_enforcement_sha": "527156c0d8e4ae36339ab8f61aa9961bbcc3e90c",
+    "proposed_bundle_digest": "859baff90455f8a3cf6a3ff5d312ea3a1b0a2541597a7ee71446faa8e41a08fb",
+    "runtime_pin": "python=3.14.8;rust-analyzer-sha256=fd89304c85f6c1996b036ea8f2c9ad9d3e25a197dbd713661c7fe51ec9dc8e49",
+    "proposed_runtime_pin": "python=3.14.8;rust-analyzer-sha256=fd89304c85f6c1996b036ea8f2c9ad9d3e25a197dbd713661c7fe51ec9dc8e49",
+    "input_digest": "a890d016e50268ce76b228c2acd500c495eac9320efc86ea9fe18be0be43db4a",
+    "delta": [
+        "new seam type: crates/frontend-core/src/marked.rs::BulkScope",
+        "new seam type: crates/frontend-core/src/marked.rs::MarkedAction",
+        "new seam type: crates/frontend-core/src/marked.rs::MarkedBlock"
+    ],
+    "reason": "T3.2 fleet/application decision consolidation (frontend-core owns filter/sort/marks/gating/bulk scope; panel and TUI render core results), merged onto dev e02773d28. Three new scalar seam types in crates/frontend-core/src/marked.rs (BulkScope, MarkedAction, MarkedBlock), owner T3, used from both panel and TUI. Reviewed: opus-reviewer r1 REVISE, r2 APPROVE; Grok r3 low-fix check APPROVE.",
+    "owner_acknowledgements": [
+        "T1 runtime/seat: orchestrator (Main) acting, 2026-10-15",
+        "T2 compat/script: orchestrator (Main) acting, 2026-10-15",
+        "T3 frontend-core/panel/TUI: orchestrator (Main) acting, 2026-10-15",
+        "T4 rendering: orchestrator (Main) acting, 2026-10-15",
+        "T5 nav/local state: orchestrator (Main) acting, 2026-10-15"
+    ],
+    "orchestrator_commit": "e06b903ddcd2c8798397a945447b93bd92b5e456",
+    "operator_inline_approval": "I approve T3.2 (e06b903dd) with the BulkScope, MarkedAction, and MarkedBlock seam types.",
+    "source_message": "I approve T3.2 (e06b903dd) with the BulkScope, MarkedAction, and MarkedBlock seam types."
+}
