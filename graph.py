@@ -219,8 +219,8 @@ def _provenance_record(checker, raw):
         text(4)
         edge_fields(5, 6, 7)
         return tuple(raw)
-    if tag == "feature-activation" and len(raw) == 6:
-        return (tag, *(text(index) for index in range(1, 6)))
+    if tag == "feature-activation" and len(raw) == 5:
+        return (tag, *(text(index) for index in range(1, 5)))
     if tag == "activation" and len(raw) == 7:
         text(1)
         text(2)

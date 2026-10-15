@@ -424,7 +424,7 @@ def _load_foreign_types(
     """
     relative = DATA_DIR_RELATIVE / FOREIGN_TYPES_RELATIVE
     path = root / relative
-    label = FOREIGN_TYPES_RELATIVE.as_posix()
+    label = relative.as_posix()
     if _traverses_symlink(root, relative):
         return {}, [f"foreign types: {label} must not traverse a symlink"]
     if not path.exists():
@@ -3204,14 +3204,14 @@ def _load_inventory(root: Path) -> tuple[dict[str, Any] | None, list[str]]:
     relative = DATA_DIR_RELATIVE / INVENTORY_RELATIVE
     path = root / relative
     if _traverses_symlink(root, relative):
-        return None, [f"inventory: {INVENTORY_RELATIVE.as_posix()} must not traverse a symlink"]
+        return None, [f"inventory: {relative.as_posix()} must not traverse a symlink"]
     try:
         raw = json.loads(
             path.read_text(encoding="utf-8"),
             object_pairs_hook=_object_without_duplicate_keys,
         )
     except (OSError, UnicodeError, RecursionError, json.JSONDecodeError, _InventoryError) as error:
-        return None, [f"inventory: cannot load {INVENTORY_RELATIVE.as_posix()}: {error}"]
+        return None, [f"inventory: cannot load {relative.as_posix()}: {error}"]
     return _validate_inventory_shape(raw)
 
 

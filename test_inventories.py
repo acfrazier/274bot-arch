@@ -197,6 +197,10 @@ def _write_fixture(
         path = root / relative
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(contents, encoding="utf-8")
+    for relative in inventories.SCRIPT_AUX_RELATIVE:
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("// generated fixture input\n", encoding="utf-8")
     rule_dir = root / inventories.DATA_DIR_RELATIVE
     rule_dir.mkdir(parents=True, exist_ok=True)
     inventory = {
@@ -277,8 +281,8 @@ pub struct FleetView<'a> {
         (candidate_rules / "inventories.json").write_text("not checker rules", encoding="utf-8")
         (candidate_rules / "foreign_types.json").write_text("not checker rules", encoding="utf-8")
         errors = inventories.check_tree(root)
-        self.assertTrue(any("inventory: cannot load inventories.json" in error for error in errors), errors)
-        self.assertTrue(any("foreign types: cannot load foreign_types.json" in error for error in errors), errors)
+        self.assertTrue(any("inventory: cannot load tools/architecture/inventories.json" in error for error in errors), errors)
+        self.assertTrue(any("foreign types: cannot load tools/architecture/foreign_types.json" in error for error in errors), errors)
 
     def test_value_reexports_and_module_self_import_are_not_seam_types(self) -> None:
         log_file_path = "crates/frontend-core/src/log_file.rs"
@@ -1164,15 +1168,18 @@ pub struct FleetView<'a> {
         cases = {
             "std marker": (
                 self.baseline_views()
+                + "#[derive(Clone, Copy)]\n"
                 + "pub struct MarkerView { marker: std::marker::PhantomData<fn() -> u64> }\n"
             ),
             "generic marker": (
                 self.baseline_views()
+                + "#[derive(Clone, Copy)]\n"
                 + "pub struct MarkerView<F> { marker: std::marker::PhantomData<fn() -> F> }\n"
             ),
             "core marker alias": (
                 "use core::marker::PhantomData as Marker;\n"
                 + self.baseline_views()
+                + "#[derive(Clone, Copy)]\n"
                 + "pub struct MarkerView { marker: Marker<fn() -> u64> }\n"
             ),
         }
@@ -1660,7 +1667,7 @@ pub struct FleetView<'a> {
             with self.subTest(case=label):
                 root = self.fixture(views=views, seam_types=seams, foreign_types=content)
                 if content is None:
-                    (root / inventories.FOREIGN_TYPES_RELATIVE).mkdir(parents=True)
+                    (root / inventories.DATA_DIR_RELATIVE / inventories.FOREIGN_TYPES_RELATIVE).mkdir()
                 errors = inventories.check_tree(root)
                 print(f"BAD foreign type data ({label}): {[error[:200] for error in errors]}")
                 expected_errors = (expected,) if isinstance(expected, str) else expected
@@ -1674,8 +1681,8 @@ pub struct FleetView<'a> {
                 )
                 self.assertIn(unresolved, errors)
         symlinks = {
-            "symlinked file": inventories.FOREIGN_TYPES_RELATIVE,
-            "symlinked parent directory": inventories.FOREIGN_TYPES_RELATIVE.parent,
+            "symlinked file": inventories.DATA_DIR_RELATIVE / inventories.FOREIGN_TYPES_RELATIVE,
+            "symlinked parent directory": inventories.DATA_DIR_RELATIVE,
         }
         for label, linked in symlinks.items():
             with self.subTest(case=label):
@@ -1687,14 +1694,15 @@ pub struct FleetView<'a> {
                 )
                 link = root / linked
                 link.parent.mkdir(parents=True, exist_ok=True)
-                if linked == inventories.FOREIGN_TYPES_RELATIVE:
+                if linked == inventories.DATA_DIR_RELATIVE / inventories.FOREIGN_TYPES_RELATIVE:
                     link.symlink_to(outside / inventories.FOREIGN_TYPES_RELATIVE.name)
                 else:
+                    link.rename(outside / "original-data")
                     link.symlink_to(outside, target_is_directory=True)
                 errors = inventories.check_tree(root)
                 print(f"BAD foreign type data ({label}): {errors}")
                 self.assertIn(
-                    "foreign types: tools/architecture-data/foreign_types.json must not traverse a symlink",
+                    "foreign types: tools/architecture/foreign_types.json must not traverse a symlink",
                     errors,
                 )
                 self.assertIn(unresolved, errors)
@@ -1705,7 +1713,7 @@ pub struct FleetView<'a> {
             seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
         )
         depth = 100_000
-        (root / inventories.INVENTORY_RELATIVE).write_text("[" * depth + "]" * depth, encoding="utf-8")
+        (root / inventories.DATA_DIR_RELATIVE / inventories.INVENTORY_RELATIVE).write_text("[" * depth + "]" * depth, encoding="utf-8")
         errors = inventories.check_tree(root)
         print(f"BAD deeply nested inventory: {[error[:200] for error in errors]}")
         self.assertTrue(
@@ -1778,7 +1786,7 @@ pub struct FleetView<'a> {
             views=self.baseline_views(),
             seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
         )
-        inventory_path = root / inventories.INVENTORY_RELATIVE
+        inventory_path = root / inventories.DATA_DIR_RELATIVE / inventories.INVENTORY_RELATIVE
         raw = json.loads(inventory_path.read_text(encoding="utf-8"))
         raw["parser_version"] = "attacker-selected"
         inventory_path.write_text(json.dumps(raw), encoding="utf-8")

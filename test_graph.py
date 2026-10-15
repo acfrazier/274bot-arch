@@ -194,7 +194,7 @@ optional_dependencies = []
 id = "fixture"
 packages = ["vault"]
 features = []
-default_features = false
+default_features = true
 dev = false
 status = "enforced"
 owner = "T1"
@@ -228,6 +228,40 @@ owner = "T1"
 forbidden_features = []
 optional_dependencies = []
 """)
+        manifest.write_text(
+            manifest.read_text(encoding="utf-8").replace(
+                "default = []", 'default = ["probe"]'
+            ),
+            encoding="utf-8",
+        )
+        errors = checker.check_graph_tree(self.root)
+        self.assertTrue(
+            any("exceptional provenance/activation widened" in error for error in errors),
+            errors,
+        )
+
+    def test_emitted_baseline_accepts_feature_activation(self) -> None:
+        self.write_policy(
+            [{"from": "vault", "to": "api", "kinds": ["optional"], "reason": "fixture"}],
+            """
+[[configuration]]
+id = "fixture"
+packages = ["vault"]
+features = []
+default_features = true
+dev = false
+status = "enforced"
+owner = "T1"
+forbidden_features = []
+optional_dependencies = []
+""",
+        )
+        workspace(self.root, kind="optional", feature=True)
+        self.write_baseline(self.root)
+        records = json.loads(
+            (self.rules / "graph-provenance.json").read_text(encoding="utf-8")
+        )["records"]
+        self.assertTrue(any(record[0] == "feature-activation" for record in records))
         self.assertEqual(checker.check_graph_tree(self.root), [])
 
     def test_missing_provenance_baseline_fails_closed(self) -> None:
