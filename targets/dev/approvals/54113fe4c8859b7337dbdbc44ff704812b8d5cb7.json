@@ -1,0 +1,28 @@
+{
+    "schema_version": 1,
+    "kind": "enforcement",
+    "target_ref": "refs/heads/dev",
+    "base_sha": "06332bbde7230ce8eeab8bc99629c750b7bb98ee",
+    "head_sha": "54113fe4c8859b7337dbdbc44ff704812b8d5cb7",
+    "contract_epoch": 4,
+    "next_contract_epoch": 5,
+    "active_enforcement_sha": "314ccc0135df5f0ed3c43af5d57830778bc3c525",
+    "active_bundle_digest": "740123790dabbc01c79490fe870584beece5c321911266ba632c16d41e46927b",
+    "proposed_enforcement_sha": "527156c0d8e4ae36339ab8f61aa9961bbcc3e90c",
+    "proposed_bundle_digest": "859baff90455f8a3cf6a3ff5d312ea3a1b0a2541597a7ee71446faa8e41a08fb",
+    "runtime_pin": "python=3.14.8;rust-analyzer-sha256=fd89304c85f6c1996b036ea8f2c9ad9d3e25a197dbd713661c7fe51ec9dc8e49",
+    "proposed_runtime_pin": "python=3.14.8;rust-analyzer-sha256=fd89304c85f6c1996b036ea8f2c9ad9d3e25a197dbd713661c7fe51ec9dc8e49",
+    "input_digest": "74e91f7bb401006902b21347a72505f83a25bdb78c40035d0e559d4a1b7413e7",
+    "delta": [],
+    "reason": "Bind only trusted host interpreter runtime inputs read-only, never the prefix tree. Hide nested share secrets and non-stdlib lib files. Preserve Arch and the loader bind.",
+    "owner_acknowledgements": [
+        "T1 runtime/seat: orchestrator (Main) acting, 2026-10-15",
+        "T2 compat/script: orchestrator (Main) acting, 2026-10-15",
+        "T3 frontend-core/panel/TUI: orchestrator (Main) acting, 2026-10-15",
+        "T4 rendering: orchestrator (Main) acting, 2026-10-15",
+        "T5 nav/local state: orchestrator (Main) acting, 2026-10-15"
+    ],
+    "orchestrator_commit": "54113fe4c8859b7337dbdbc44ff704812b8d5cb7",
+    "operator_inline_approval": "I approve activating enforcement 527156c0d and admitting H6 54113fe4c to dev",
+    "source_message": "I approve activating enforcement 527156c0d and admitting H6 54113fe4c to dev, and the wave-1 batch 6ba95aff8 with the route_view test exception.\n\nGood call on batching, makes it easier to keep things moving along without running into the rubber stamp concern. Separately, I wanted to let you know it looks like Tibo hit the reset button again yesterday, I woke up to Codex being almost full again. Not sure if we wanted to use Argon for more design or Wonder for any implementation tasks, but I believe we do still have some room there."
+}
