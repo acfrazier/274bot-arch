@@ -1,4 +1,4 @@
-"""Behavioral tests for remote-owned source-path ownership rules."""
+"""Behavioral tests for product-owned source-path ownership rules."""
 
 from __future__ import annotations
 
@@ -10,12 +10,12 @@ from pathlib import Path
 import ownership as subject
 
 
-def rules_dir(root: Path) -> Path:
-    return root / ".architecture-rules"
+def data_dir(root: Path) -> Path:
+    return root / "tools" / "architecture"
 
 
 def write_map(root: Path, entries: list[tuple[str, str]]) -> None:
-    directory = rules_dir(root)
+    directory = data_dir(root)
     directory.mkdir(parents=True, exist_ok=True)
     data = {
         "version": 1,
@@ -26,7 +26,7 @@ def write_map(root: Path, entries: list[tuple[str, str]]) -> None:
 
 
 def write_raw_map(root: Path, text: str) -> None:
-    directory = rules_dir(root)
+    directory = data_dir(root)
     directory.mkdir(parents=True, exist_ok=True)
     (directory / "ownership.json").write_text(text, encoding="utf-8")
 
@@ -38,12 +38,7 @@ def make_source(root: Path, relative: str, content: str = "test\n") -> None:
 
 
 def check_tree(root: Path) -> list[str]:
-    previous_rules = subject.RULES_DIR
-    subject.RULES_DIR = rules_dir(root)
-    try:
-        return subject.check_tree(root)
-    finally:
-        subject.RULES_DIR = previous_rules
+    return subject.check_tree(root)
 
 
 def test_missing_source_ownership() -> None:
@@ -166,15 +161,14 @@ def test_source_symlinks_rejected() -> None:
         assert check_tree(root) == []
 
 
-def test_candidate_ownership_file_is_ignored() -> None:
+def test_candidate_ownership_file_is_used() -> None:
     with tempfile.TemporaryDirectory() as temporary:
         root = Path(temporary)
         make_source(root, "crates/api/build.rs")
         write_map(root, [("crates/api/build.rs", "T2")])
-        candidate_map = root / "tools/architecture/ownership.json"
-        candidate_map.parent.mkdir(parents=True)
-        candidate_map.write_text("not checker rules", encoding="utf-8")
-        assert check_tree(root) == []
+        write_raw_map(root, "not checker rules")
+        errors = check_tree(root)
+        assert any("invalid JSON in" in error for error in errors), errors
 
 
 def load_tests(
@@ -192,7 +186,7 @@ def load_tests(
         test_clean_tree,
         test_duplicate_object_key_rejected,
         test_source_symlinks_rejected,
-        test_candidate_ownership_file_is_ignored,
+        test_candidate_ownership_file_is_used,
     ):
         standard_tests.addTest(unittest.FunctionTestCase(test))
     return standard_tests

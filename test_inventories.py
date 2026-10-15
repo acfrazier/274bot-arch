@@ -20,19 +20,6 @@ inventories = importlib.util.module_from_spec(INVENTORIES_SPEC)
 sys.modules[INVENTORIES_SPEC.name] = inventories
 INVENTORIES_SPEC.loader.exec_module(inventories)
 
-_check_tree = inventories.check_tree
-
-
-def _check_fixture(root: Path) -> list[str]:
-    previous_rules = inventories.RULES_DIR
-    inventories.RULES_DIR = Path(root) / ".architecture-rules"
-    try:
-        return _check_tree(root)
-    finally:
-        inventories.RULES_DIR = previous_rules
-
-
-inventories.check_tree = _check_fixture
 
 VIEWS_PATH = "crates/frontend-core/src/views.rs"
 # sha256 of json.dumps(sorted(TRUSTED_FOREIGN_TYPE_CLASSES.items())) at B de48e55a6.
@@ -210,7 +197,7 @@ def _write_fixture(
         path = root / relative
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(contents, encoding="utf-8")
-    rule_dir = root / ".architecture-rules"
+    rule_dir = root / inventories.DATA_DIR_RELATIVE
     rule_dir.mkdir(parents=True, exist_ok=True)
     inventory = {
         "schema_version": 1,
@@ -281,16 +268,17 @@ pub struct FleetView<'a> {
         )
         self.assertEqual(inventories.check_tree(root), [])
 
-    def test_candidate_rule_files_are_ignored(self) -> None:
+    def test_candidate_rule_files_are_used(self) -> None:
         root = self.fixture(
             views=self.baseline_views(),
             seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
         )
-        candidate_rules = root / "tools" / "architecture"
-        candidate_rules.mkdir(parents=True)
+        candidate_rules = root / inventories.DATA_DIR_RELATIVE
         (candidate_rules / "inventories.json").write_text("not checker rules", encoding="utf-8")
         (candidate_rules / "foreign_types.json").write_text("not checker rules", encoding="utf-8")
-        self.assertEqual(inventories.check_tree(root), [])
+        errors = inventories.check_tree(root)
+        self.assertTrue(any("inventory: cannot load inventories.json" in error for error in errors), errors)
+        self.assertTrue(any("foreign types: cannot load foreign_types.json" in error for error in errors), errors)
 
     def test_value_reexports_and_module_self_import_are_not_seam_types(self) -> None:
         log_file_path = "crates/frontend-core/src/log_file.rs"
@@ -1166,7 +1154,56 @@ pub struct FleetView<'a> {
         errors = inventories.check_tree(root)
         print(f"GOOD std leaf items: {errors}")
         self.assertEqual(errors, [])
+    def test_phantom_data_accepts_function_pointer_marker(self) -> None:
+        marker_types = (
+            ("FleetCounts", "scalar"),
+            ("FleetView", "borrowed"),
+            ("MarkerView", "scalar"),
+        )
+        cases = {
+            "std marker": (
+                self.baseline_views()
+                + "pub struct MarkerView { marker: std::marker::PhantomData<fn() -> u64> }\n"
+            ),
+            "generic marker": (
+                self.baseline_views()
+                + "pub struct MarkerView<F> { marker: std::marker::PhantomData<fn() -> F> }\n"
+            ),
+            "core marker alias": (
+                "use core::marker::PhantomData as Marker;\n"
+                + self.baseline_views()
+                + "pub struct MarkerView { marker: Marker<fn() -> u64> }\n"
+            ),
+        }
+        for label, views in cases.items():
+            with self.subTest(marker=label):
+                errors = inventories.check_tree(
+                    self.fixture(views=views, seam_types=marker_types)
+                )
+                self.assertEqual(errors, [])
 
+    def test_workspace_phantom_data_name_is_not_a_marker(self) -> None:
+        errors = inventories.check_tree(
+            self.fixture(
+                views=(
+                    "use api::PhantomData;\n"
+                    + self.baseline_views()
+                    + "pub struct MarkerView { marker: PhantomData<fn() -> u64> }\n"
+                ),
+                seam_types=(
+                    ("FleetCounts", "scalar"),
+                    ("FleetView", "borrowed"),
+                    ("MarkerView", "scalar"),
+                ),
+                workspace_files={
+                    "crates/api/src/lib.rs": "pub struct PhantomData<T>(T);\n"
+                },
+            )
+        )
+        self.assertTrue(
+            any("unsupported field type syntax (FN_PTR_TYPE)" in error for error in errors),
+            errors,
+        )
 
     def test_leaf_names_that_are_not_the_std_item_fail_closed(self) -> None:
         seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"), ("Uses", "scalar"))
@@ -2663,6 +2700,10 @@ pub struct FleetView<'a> {
                 "IMPL_TRAIT_TYPE",
             ),
             "function pointer": ("pub struct Uses { value: fn(u8) -> u8 }\n", "FN_PTR_TYPE"),
+            "function pointer inside Option": (
+                "pub struct Uses { value: Option<fn(u8) -> u8> }\n",
+                "FN_PTR_TYPE",
+            ),
             "raw pointer": ("pub struct Uses { value: *const u8 }\n", "PTR_TYPE"),
         }
         self.assertEqual(inventories.check_tree(base), [])

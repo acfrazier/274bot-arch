@@ -32,18 +32,30 @@ fetches `main`; a local clone uses its selected `HEAD` for pre-push proof.
 `${XDG_CACHE_HOME:-$HOME/.cache}/274bot-arch`.
 
 The runner archives the selected checker commit to a temporary directory,
-runs its disposable graph self-test, then checks the product tree. The rule
-files are loaded from beside the checker code, never from the candidate tree.
-`policy.toml`, `ownership.json`, `inventories.json`, and `foreign_types.json`
-are the operator-owned source of truth.
+runs its disposable graph self-test, then checks the product tree.
+The protected graph policy (`policy.toml`) and `graph-provenance.json` are
+loaded beside the checker; `policy.toml` keeps workspace, allowance, migration,
+and feature-configuration rows together. Ownership, inventories, and foreign
+type classifications are loaded only from the checked product tree's
+`tools/architecture/` directory; checker-side copies are never fallbacks.
+
+`graph-provenance.json` protects exceptional dependency provenance and
+supported-feature/optional-dependency activation. Update it only for an
+approved new optional activation or exceptional provenance change, not for
+ordinary changes covered by the effective edge policy. From this repository,
+regenerate it with
+`python3 -B check.py --emit-provenance-baseline /path/to/approved-tree > graph-provenance.json`
+after the corresponding protected policy change passes; review and commit the
+generated baseline with that policy change.
 
 ## Rule-change and rollout order
 
 The checker extraction is staged as three reviewable changes: first copy the
-live checker and ownership/inventory data; second add the narrow `PhantomData`
-marker rule and fixtures; third, after the first two changes are proved,
-remove the product's `tools/architecture/*.py` ownership rows and assign
-`tools/architecture/run.sh` to T1.
+live checker, protected graph policy, and provenance baseline; second add the
+narrow `PhantomData` marker rule and fixtures; third, after the first two
+changes are proved, remove the product's `tools/architecture/*.py` ownership
+rows and assign `tools/architecture/run.sh` to T1. Keep ownership, inventory,
+and foreign-type data in the product tree beside the runner.
 
 Roll out in this order:
 

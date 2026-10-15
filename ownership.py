@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Exact source-path ownership-map enforcement.
 
-The remote-owned ownership.json is loaded beside this checker and validated
-against the source paths present in the workspace tree.
+The product-owned ownership.json is loaded from the checked tree and validated
+against source paths present in that same tree.
 
 Every ``tools/seat-model/**`` source path is owned by T1 as physical custodian.
 T2 owner-integrates row-8a changes with T1 acknowledgment.
@@ -23,12 +23,20 @@ ROW_FIELDS = frozenset({"path", "owner"})
 
 SOURCE_SUFFIXES = frozenset({".rs", ".js", ".cjs", ".ts", ".fbs", ".py", ".sh", ".rs2"})
 
-OWNERSHIP_FILENAME = "ownership.json"
-RULES_DIR = Path(__file__).resolve().parent
+OWNERSHIP_RELATIVE = Path("tools/architecture/ownership.json")
 
 
-def ownership_path() -> Path:
-    return RULES_DIR / OWNERSHIP_FILENAME
+def ownership_path(root: Path) -> Path:
+    return Path(root) / OWNERSHIP_RELATIVE
+
+
+def _traverses_symlink(root: Path, relative: Path) -> bool:
+    component = Path(root)
+    for part in relative.parts:
+        component = component / part
+        if component.is_symlink():
+            return True
+    return False
 
 
 def is_source_file(path: Path) -> bool:
@@ -192,7 +200,12 @@ def load_ownership_file(json_path: Path) -> tuple[dict[str, str], list[str]]:
 
 def check_tree(root: Path) -> list[str]:
     root = Path(root)
-    mapping, errors = load_ownership_file(ownership_path())
+    if _traverses_symlink(root, OWNERSHIP_RELATIVE):
+        mapping, errors = {}, [
+            f"ownership: {OWNERSHIP_RELATIVE.as_posix()} must not traverse a symlink"
+        ]
+    else:
+        mapping, errors = load_ownership_file(ownership_path(root))
     errors = list(errors)
     sources, scan_errors = _census_sources(root)
     errors.extend(scan_errors)

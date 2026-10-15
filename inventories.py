@@ -1,7 +1,7 @@
 """Syntax-aware seam and navigation inventories for the architecture check.
 
-Rust source comes from the checked tree. Registry data is remote-owned and
-loaded beside this checker; syntax errors and source disagreement fail closed.
+Rust source comes from the checked tree. Product-owned registries are loaded
+from that tree; syntax errors and source disagreement fail closed.
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ RUST_EDITION = "2021"
 # Linux x86-64 rust-analyzer binary provisioned for the architecture gate.
 PARSER_VERSION = "rust-analyzer 0.3.3081-standalone"
 PARSER_SHA256 = "fd89304c85f6c1996b036ea8f2c9ad9d3e25a197dbd713661c7fe51ec9dc8e49"
-RULES_DIR = Path(__file__).resolve().parent
+DATA_DIR_RELATIVE = Path("tools/architecture")
 INVENTORY_RELATIVE = Path("inventories.json")
 FOREIGN_TYPES_RELATIVE = Path("foreign_types.json")
 FOREIGN_TOP_FIELDS = frozenset({"schema_version", "foreign_types"})
@@ -404,7 +404,7 @@ def _object_without_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, An
 
 
 def _traverses_symlink(root: Path, relative: Path) -> bool:
-    """True if any component of the checker-owned rule path is a symlink."""
+    """True if any component of the checked-tree path is a symlink."""
     component = root
     for part in relative.parts:
         component = component / part
@@ -414,16 +414,18 @@ def _traverses_symlink(root: Path, relative: Path) -> bool:
 
 
 def _load_foreign_types(
+    root: Path,
     workspace_crates: frozenset[str],
 ) -> tuple[dict[str, str], list[str]]:
-    """Load remote-owned classifications for external seam field types.
+    """Load product classifications for external seam field types.
 
     Invalid data adds no rows and fails the tree. A row may not name a workspace
     crate: those types are classified from their definitions.
     """
-    path = RULES_DIR / FOREIGN_TYPES_RELATIVE
+    relative = DATA_DIR_RELATIVE / FOREIGN_TYPES_RELATIVE
+    path = root / relative
     label = FOREIGN_TYPES_RELATIVE.as_posix()
-    if _traverses_symlink(RULES_DIR, FOREIGN_TYPES_RELATIVE):
+    if _traverses_symlink(root, relative):
         return {}, [f"foreign types: {label} must not traverse a symlink"]
     if not path.exists():
         return {}, []
@@ -1616,9 +1618,9 @@ def _type_ownership(
 
     An owned-container leaf name counts as owning, whatever defines it.  Any
     other path, including a std scalar or transparent-container name, is
-    classified by `resolve_type`, which decides whether the path is that std
-    item or a type with its own definition.  Generic arguments are always
-    visited.
+    classified by `resolve_type`, which distinguishes std items from defined
+    types.  Function-pointer types are ignored only behind a resolved standard
+    `PhantomData` marker; all other supported generic arguments are visited.
     """
     owned = False
     borrowed = False
@@ -1627,10 +1629,15 @@ def _type_ownership(
         current: dict[str, Any],
         behind_reference: bool = False,
         inside_known_owner: bool = False,
+        inside_marker: bool = False,
     ) -> None:
         nonlocal owned, borrowed
         kind = current.get("kind")
-        if kind in {"MACRO_TYPE", "PTR_TYPE", "FN_PTR_TYPE", "IMPL_TRAIT_TYPE", "DYN_TRAIT_TYPE"}:
+        if kind == "FN_PTR_TYPE":
+            if inside_marker:
+                return
+            raise _InventoryError(f"{path}::{owner}: unsupported field type syntax ({kind})")
+        if kind in {"MACRO_TYPE", "PTR_TYPE", "IMPL_TRAIT_TYPE", "DYN_TRAIT_TYPE"}:
             raise _InventoryError(f"{path}::{owner}: unsupported field type syntax ({kind})")
         if kind == "REF_TYPE":
             borrowed = True
@@ -1662,8 +1669,10 @@ def _type_ownership(
                         owned = True
                     elif classification == "borrowed":
                         borrowed = True
+                    elif classification == "marker":
+                        inside_marker = True
             for child in _children(current):
-                visit(child, behind_reference, inside_known_owner)
+                visit(child, behind_reference, inside_known_owner, inside_marker)
 
     visit(node)
     return owned, borrowed
@@ -2363,51 +2372,51 @@ def _seam_records(
             return (kind, origin[0], origin[1])
         return resolved
 
-    def std_leaf_type(module_path: tuple[str, ...], segments: tuple[str, ...]) -> bool:
-        """Whether a path that names no workspace or registered type is a std leaf.
-
-        The path, after the module's own `use` renames, must be one of the
-        exact std/core items in STD_LEAF_TYPE_PATHS, or a bare prelude or
-        primitive name that no import names and no glob of an unindexed module
-        could shadow.  Anything else stays an unresolved field type.
-        """
+    def std_leaf_classification(
+        module_path: tuple[str, ...], segments: tuple[str, ...]
+    ) -> str | None:
+        """Classify a path that names no workspace or registered type."""
         target = segments
         if (module_path, target[0]) in ambiguous_type_items:
-            return False
+            return None
         followed: set[str] = set()
         while target[0] in module_imports.get(module_path, {}):
             local_name = target[0]
             imported = module_imports[module_path][local_name]
             if local_name in followed or len(imported) != 1:
-                return False
+                return None
             followed.add(local_name)
             target = next(iter(imported)) + target[1:]
         absolute = target[0] == ""
         if not absolute and target[0] in local_bindings.get(module_path, {}):
-            return False
+            return None
         for glob_target in module_globs.get(module_path, []):
             glob_module = resolve_path(module_path, glob_target)
             if glob_module is None or glob_module[0] != "module":
-                return False
-            glob_binding = resolve_path(
-                module_path, glob_target + target[:1]
-            )
+                return None
+            glob_binding = resolve_path(module_path, glob_target + target[:1])
             if glob_binding is not None:
-                return False
-        if "::".join(target[1:] if absolute else target) in STD_LEAF_TYPE_PATHS:
-            return True
+                return None
+        canonical = "::".join(target[1:] if absolute else target)
+        if canonical in STD_LEAF_TYPE_PATHS:
+            if canonical in {
+                "std::marker::PhantomData",
+                "core::marker::PhantomData",
+            }:
+                return "marker"
+            return "scalar"
         if (
             absolute
             or target != segments
             or len(target) != 1
             or target[0] not in PRELUDE_LEAF_TYPE_NAMES
         ):
-            return False
+            return None
         for glob_target in module_globs.get(module_path, []):
             glob_module = resolve_path(module_path, glob_target)
             if glob_module is None or glob_module[0] not in {"module", "type"}:
-                return False
-        return True
+                return None
+        return "scalar"
 
     type_classes: dict[tuple[tuple[str, ...], str], str] = {}
     type_definitions: dict[tuple[tuple[str, ...], str], dict[str, Any]] = {}
@@ -2439,10 +2448,12 @@ def _seam_records(
                     f"{file_key}::{name}: unsupported Self/associated seam field type"
                 )
             resolved = resolve_path(field_module, segments)
-            if (
-                resolved is None or resolved[0] == "unresolved_import"
-            ) and std_leaf_type(field_module, segments):
-                return "scalar"
+            if resolved is None or resolved[0] == "unresolved_import":
+                standard_classification = std_leaf_classification(
+                    field_module, segments
+                )
+                if standard_classification is not None:
+                    return standard_classification
             if resolved is None:
                 raise _InventoryError(
                     f"{file_key}::{name}: unresolved public seam field type {'::'.join(segments)}"
@@ -3189,9 +3200,10 @@ def _validate_inventory_shape(raw: Any) -> tuple[dict[str, Any] | None, list[str
     return raw, errors
 
 
-def _load_inventory() -> tuple[dict[str, Any] | None, list[str]]:
-    path = RULES_DIR / INVENTORY_RELATIVE
-    if _traverses_symlink(RULES_DIR, INVENTORY_RELATIVE):
+def _load_inventory(root: Path) -> tuple[dict[str, Any] | None, list[str]]:
+    relative = DATA_DIR_RELATIVE / INVENTORY_RELATIVE
+    path = root / relative
+    if _traverses_symlink(root, relative):
         return None, [f"inventory: {INVENTORY_RELATIVE.as_posix()} must not traverse a symlink"]
     try:
         raw = json.loads(
@@ -3209,11 +3221,11 @@ def _analyze_tree(root: Path) -> list[str]:
 
 
     errors: list[str] = _check_rust_editions(root)
-    inventory, shape_errors = _load_inventory()
+    inventory, shape_errors = _load_inventory(root)
     errors.extend(shape_errors)
     workspace_crates, workspace_errors = _workspace_crates(root)
     errors.extend(workspace_errors)
-    foreign_rows, foreign_errors = _load_foreign_types(frozenset(workspace_crates))
+    foreign_rows, foreign_errors = _load_foreign_types(root, frozenset(workspace_crates))
     errors.extend(foreign_errors)
     consulted_foreign: set[str] = set()
     classifications, seam_violations, seam_errors = _seam_records(

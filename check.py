@@ -5,6 +5,7 @@ Requires Python 3.11+ (stdlib tomllib). Reads Cargo.toml manifests; does not
 compile Rust or parse .rs with regex.
 
     python3 -B check.py [--root TREE]
+    python3 -B check.py --emit-provenance-baseline TREE
     python3 -B check.py --self-test
 """
 
@@ -412,6 +413,10 @@ def trusted_helper(name: str):
 def check_graph_tree(root: Path) -> list[str]:
     return trusted_helper("graph").check_tree(sys.modules[__name__], root)
 
+def emit_provenance_baseline(root: Path) -> str:
+    return trusted_helper("graph").emit_provenance_baseline(sys.modules[__name__], root)
+
+
 
 
 def check_tree(root: Path) -> list[str]:
@@ -759,12 +764,28 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="workspace root (default: repository containing this script)",
     )
-    parser.add_argument(
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument(
         "--self-test",
         action="store_true",
         help="exercise disposable fixtures; do not read the product workspace",
     )
+    modes.add_argument(
+        "--emit-provenance-baseline",
+        type=Path,
+        metavar="TREE",
+        help="print JSON for the protected exceptional graph provenance baseline",
+    )
     args = parser.parse_args(argv)
+    if args.emit_provenance_baseline is not None:
+        if args.root is not None:
+            parser.error("--root cannot be combined with --emit-provenance-baseline")
+        try:
+            sys.stdout.write(emit_provenance_baseline(args.emit_provenance_baseline.resolve()))
+        except (OSError, ValueError, TypeError, KeyError, SystemExit) as exc:
+            sys.stderr.write(f"cannot emit graph provenance baseline: {exc}\n")
+            return 1
+        return 0
     if args.self_test:
         return run_self_test()
 
