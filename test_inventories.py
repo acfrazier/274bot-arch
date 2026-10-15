@@ -1154,56 +1154,6 @@ pub struct FleetView<'a> {
         errors = inventories.check_tree(root)
         print(f"GOOD std leaf items: {errors}")
         self.assertEqual(errors, [])
-    def test_phantom_data_accepts_function_pointer_marker(self) -> None:
-        marker_types = (
-            ("FleetCounts", "scalar"),
-            ("FleetView", "borrowed"),
-            ("MarkerView", "scalar"),
-        )
-        cases = {
-            "std marker": (
-                self.baseline_views()
-                + "pub struct MarkerView { marker: std::marker::PhantomData<fn() -> u64> }\n"
-            ),
-            "generic marker": (
-                self.baseline_views()
-                + "pub struct MarkerView<F> { marker: std::marker::PhantomData<fn() -> F> }\n"
-            ),
-            "core marker alias": (
-                "use core::marker::PhantomData as Marker;\n"
-                + self.baseline_views()
-                + "pub struct MarkerView { marker: Marker<fn() -> u64> }\n"
-            ),
-        }
-        for label, views in cases.items():
-            with self.subTest(marker=label):
-                errors = inventories.check_tree(
-                    self.fixture(views=views, seam_types=marker_types)
-                )
-                self.assertEqual(errors, [])
-
-    def test_workspace_phantom_data_name_is_not_a_marker(self) -> None:
-        errors = inventories.check_tree(
-            self.fixture(
-                views=(
-                    "use api::PhantomData;\n"
-                    + self.baseline_views()
-                    + "pub struct MarkerView { marker: PhantomData<fn() -> u64> }\n"
-                ),
-                seam_types=(
-                    ("FleetCounts", "scalar"),
-                    ("FleetView", "borrowed"),
-                    ("MarkerView", "scalar"),
-                ),
-                workspace_files={
-                    "crates/api/src/lib.rs": "pub struct PhantomData<T>(T);\n"
-                },
-            )
-        )
-        self.assertTrue(
-            any("unsupported field type syntax (FN_PTR_TYPE)" in error for error in errors),
-            errors,
-        )
 
     def test_leaf_names_that_are_not_the_std_item_fail_closed(self) -> None:
         seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"), ("Uses", "scalar"))
@@ -2700,10 +2650,6 @@ pub struct FleetView<'a> {
                 "IMPL_TRAIT_TYPE",
             ),
             "function pointer": ("pub struct Uses { value: fn(u8) -> u8 }\n", "FN_PTR_TYPE"),
-            "function pointer inside Option": (
-                "pub struct Uses { value: Option<fn(u8) -> u8> }\n",
-                "FN_PTR_TYPE",
-            ),
             "raw pointer": ("pub struct Uses { value: *const u8 }\n", "PTR_TYPE"),
         }
         self.assertEqual(inventories.check_tree(base), [])

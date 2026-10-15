@@ -1618,9 +1618,8 @@ def _type_ownership(
 
     An owned-container leaf name counts as owning, whatever defines it.  Any
     other path, including a std scalar or transparent-container name, is
-    classified by `resolve_type`, which distinguishes std items from defined
-    types.  Function-pointer types are ignored only behind a resolved standard
-    `PhantomData` marker; all other supported generic arguments are visited.
+    classified by `resolve_type`, which distinguishes std items from defined types.
+    Generic arguments are always visited.
     """
     owned = False
     borrowed = False
@@ -1629,15 +1628,10 @@ def _type_ownership(
         current: dict[str, Any],
         behind_reference: bool = False,
         inside_known_owner: bool = False,
-        inside_marker: bool = False,
     ) -> None:
         nonlocal owned, borrowed
         kind = current.get("kind")
-        if kind == "FN_PTR_TYPE":
-            if inside_marker:
-                return
-            raise _InventoryError(f"{path}::{owner}: unsupported field type syntax ({kind})")
-        if kind in {"MACRO_TYPE", "PTR_TYPE", "IMPL_TRAIT_TYPE", "DYN_TRAIT_TYPE"}:
+        if kind in {"MACRO_TYPE", "PTR_TYPE", "FN_PTR_TYPE", "IMPL_TRAIT_TYPE", "DYN_TRAIT_TYPE"}:
             raise _InventoryError(f"{path}::{owner}: unsupported field type syntax ({kind})")
         if kind == "REF_TYPE":
             borrowed = True
@@ -1669,10 +1663,8 @@ def _type_ownership(
                         owned = True
                     elif classification == "borrowed":
                         borrowed = True
-                    elif classification == "marker":
-                        inside_marker = True
-            for child in _children(current):
-                visit(child, behind_reference, inside_known_owner, inside_marker)
+        for child in _children(current):
+            visit(child, behind_reference, inside_known_owner)
 
     visit(node)
     return owned, borrowed
@@ -2399,11 +2391,6 @@ def _seam_records(
                 return None
         canonical = "::".join(target[1:] if absolute else target)
         if canonical in STD_LEAF_TYPE_PATHS:
-            if canonical in {
-                "std::marker::PhantomData",
-                "core::marker::PhantomData",
-            }:
-                return "marker"
             return "scalar"
         if (
             absolute
