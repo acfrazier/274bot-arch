@@ -1611,6 +1611,7 @@ def _type_ownership(
     owner: str,
     *,
     resolve_type: Any = None,
+    resolve_marker: Any = None,
     generic_names: frozenset[str] = frozenset(),
     allow_generic: bool = False,
 ) -> tuple[bool, bool]:
@@ -1648,6 +1649,13 @@ def _type_ownership(
                     f"{path}::{owner}: unsupported qualified associated field type"
                 )
             segments = _path_segments(current)
+            if (
+                segments
+                and (inside_known_owner or behind_reference)
+                and resolve_marker is not None
+                and resolve_marker(segments)
+            ):
+                inside_marker = True
             if segments and not inside_known_owner:
                 name = segments[-1]
                 if len(segments) > 1 and segments[0] in generic_names:
@@ -2524,6 +2532,9 @@ def _seam_records(
                     resolve_type=lambda segments: resolve_field_type(
                         module_path, segments
                     ),
+                    resolve_marker=lambda segments: std_leaf_classification(
+                        module_path, segments
+                    ) == "marker",
                 )
                 classification = (
                     "owning" if target_owned else "borrowed" if target_borrowed else "scalar"
@@ -2551,6 +2562,9 @@ def _seam_records(
                         resolve_type=lambda segments: resolve_field_type(
                             module_path, segments
                         ),
+                        resolve_marker=lambda segments: std_leaf_classification(
+                            module_path, segments
+                        ) == "marker",
                         generic_names=generic_names,
                         allow_generic=allow_generic,
                     )

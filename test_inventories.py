@@ -1190,28 +1190,57 @@ pub struct FleetView<'a> {
                 )
                 self.assertEqual(errors, [])
 
+    def test_function_pointer_markers_inside_containers_and_references(self) -> None:
+        cases = (
+            ("Vec<Marker<fn() -> u64>>", "owning"),
+            ("&'static Marker<fn() -> u64>", "borrowed"),
+        )
+        for field_type, classification in cases:
+            with self.subTest(field_type=field_type):
+                errors = inventories.check_tree(
+                    self.fixture(
+                        views=(
+                            "use std::marker::PhantomData as Marker;\n"
+                            + self.baseline_views()
+                            + f"pub struct MarkerView {{ marker: {field_type} }}\n"
+                        ),
+                        seam_types=(
+                            ("FleetCounts", "scalar"),
+                            ("FleetView", "borrowed"),
+                            ("MarkerView", classification),
+                        ),
+                    )
+                )
+                self.assertEqual(errors, [])
+
     def test_workspace_phantom_data_name_is_not_a_marker(self) -> None:
-        errors = inventories.check_tree(
-            self.fixture(
-                views=(
-                    "use api::PhantomData;\n"
-                    + self.baseline_views()
-                    + "pub struct MarkerView { marker: PhantomData<fn() -> u64> }\n"
-                ),
-                seam_types=(
-                    ("FleetCounts", "scalar"),
-                    ("FleetView", "borrowed"),
-                    ("MarkerView", "scalar"),
-                ),
-                workspace_files={
-                    "crates/api/src/lib.rs": "pub struct PhantomData<T>(T);\n"
-                },
-            )
-        )
-        self.assertTrue(
-            any("unsupported field type syntax (FN_PTR_TYPE)" in error for error in errors),
-            errors,
-        )
+        for field_type in (
+            "PhantomData<fn() -> u64>",
+            "Vec<PhantomData<fn() -> u64>>",
+            "&'static PhantomData<fn() -> u64>",
+        ):
+            with self.subTest(field_type=field_type):
+                errors = inventories.check_tree(
+                    self.fixture(
+                        views=(
+                            "use api::PhantomData;\n"
+                            + self.baseline_views()
+                            + f"pub struct MarkerView {{ marker: {field_type} }}\n"
+                        ),
+                        seam_types=(
+                            ("FleetCounts", "scalar"),
+                            ("FleetView", "borrowed"),
+                            ("MarkerView", "scalar"),
+                        ),
+                        workspace_files={
+                            "crates/api/src/lib.rs": "pub struct PhantomData<T>(T);\n"
+                        },
+                    )
+                )
+                self.assertTrue(
+                    any("unsupported field type syntax (FN_PTR_TYPE)" in error for error in errors),
+                    errors,
+                )
 
     def test_leaf_names_that_are_not_the_std_item_fail_closed(self) -> None:
         seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"), ("Uses", "scalar"))
@@ -2719,6 +2748,14 @@ pub struct FleetView<'a> {
             ),
             "callback pointer inside Option": (
                 "pub struct Uses { callback: Option<fn()> }\n",
+                "FN_PTR_TYPE",
+            ),
+            "callback pointer inside Vec": (
+                "pub struct Uses { callback: Vec<fn()> }\n",
+                "FN_PTR_TYPE",
+            ),
+            "callback pointer behind a reference": (
+                "pub struct Uses { callback: &'static fn() }\n",
                 "FN_PTR_TYPE",
             ),
             "raw pointer": ("pub struct Uses { value: *const u8 }\n", "PTR_TYPE"),
