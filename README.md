@@ -39,14 +39,15 @@ and feature-configuration rows together. Ownership, inventories, and foreign
 type classifications are loaded only from the checked product tree's
 `tools/architecture/` directory; checker-side copies are never fallbacks.
 
-`graph-provenance.json` protects exceptional dependency provenance and
-supported-feature/optional-dependency activation. Update it only for an
-approved new optional activation or exceptional provenance change, not for
-ordinary changes covered by the effective edge policy. From this repository,
-regenerate it with
-`python3 -B check.py --emit-provenance-baseline /path/to/approved-tree > graph-provenance.json`
-after the corresponding protected policy change passes; review and commit the
-generated baseline with that policy change.
+`graph-provenance.json` is plain generated data that protects exceptional
+dependency provenance and supported-feature/optional-dependency activation.
+Update it only when a reviewed change adds optional-dependency activation or
+exceptional provenance; do not update it for ordinary code, ownership,
+inventory, seam-type, or effective-edge changes without either of those
+additions. From this repository, regenerate it against the reviewed tree with
+`python3 -B check.py --emit-provenance-baseline /path/to/tree > graph-provenance.json`,
+review the diff, and have the operator commit it with any required policy
+change. There are no hashes, signatures, approvals, or epochs for the baseline.
 
 ## Rule-change and rollout order
 
