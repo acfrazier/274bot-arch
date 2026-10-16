@@ -3113,7 +3113,73 @@
       "scenario",
       "dependency",
       "script",
+      "deno_core",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "scenario",
+      "dependency",
+      "script",
+      "flatbuffers",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "scenario",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "scenario",
+      "dependency",
+      "script",
       "schemars",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "scenario",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "scenario",
+      "dependency",
+      "script",
+      "tokio",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "scenario",
+      "dependency",
+      "script",
+      "v8",
       "optional",
       "",
       "dependencies"
