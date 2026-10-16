@@ -56,10 +56,14 @@ Every listed manifest is scanned, even when unused. Path dependencies,
 or listed manifests. Edges from a listed package require ordinary protected
 `[[allow]]` permissions, including edges back into the product workspace.
 A non-member cannot impersonate a member through `package = "<member>"`.
+Nested workspace `members`, `default-members`, and `exclude` entries must also
+resolve to protected manifests. New members need an operator policy commit.
+Dependency aliases are tracked by package name, not by alias or version.
 
 The checker refuses `.cargo/config` and `.cargo/config.toml` anywhere in the
-candidate tree, including vendored trees and symlink files. These files can
-override the graph that `274bot-arch` protects.
+candidate tree, including vendored trees and symlinks. Directory and file names
+are matched without ASCII case distinctions. These files can override the
+graph that `274bot-arch` protects.
 
 Default-feature and dev-dependency activation is checked for every protected
 member and listed path package. Named configurations add their own activation

@@ -380,6 +380,17 @@ def discover_packages(root: Path, policy: Policy) -> Packages:
 
     overrides = set()
     for workspace_root, document in workspaces.items():
+        workspace = document.get("workspace", {})
+        # Membership is another local package input, even when no dependency
+        # reaches it. Every admitted manifest is already scanned above.
+        if "package" in document:
+            resolve_path_package(workspace_root / "Cargo.toml", by_manifest)
+        for field in ("members", "default-members", "exclude"):
+            for relative in sorted(string_set(workspace.get(field, []), f"workspace.{field}")):
+                manifest = (workspace_root / relative / "Cargo.toml").resolve()
+                if not manifest.is_relative_to(root):
+                    raise ValueError(f"workspace.{field} path escapes data root: {relative}")
+                resolve_path_package(manifest, by_manifest)
         # Validate unused workspace paths and unused overrides too. A later
         # dependency must not make an unlisted package reachable.
         for key, raw in document.get("workspace", {}).get("dependencies", {}).items():

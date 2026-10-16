@@ -143,10 +143,11 @@ def graph_state(checker, root):
                 f"candidate tools/architecture/{filename} is forbidden. "
                 f"Rules belong only in 274bot-arch/{filename}, not in the product tree"
             )
-    for directory in sorted(root.rglob(".cargo")):
-        for filename in ("config", "config.toml"):
-            candidate = directory / filename
-            if candidate.exists() or candidate.is_symlink():
+    for directory in sorted(path for path in root.rglob("*") if path.name.lower() == ".cargo"):
+        if not directory.is_dir():
+            continue
+        for candidate in sorted(directory.rglob("*")):
+            if candidate.name.lower() in {"config", "config.toml"}:
                 raise ValueError(
                     f"candidate {candidate.relative_to(root)} is forbidden. "
                     "Cargo configuration can override the graph protected by 274bot-arch"

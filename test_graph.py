@@ -591,10 +591,15 @@ optional_dependencies = []
         self.write_policy([])
         workspace(self.root, kind="none")
         for directory in ("", "vendor/fr-client-rust", "vendor/fr-client-rust/crates/client-play"):
-            for filename in ("config", "config.toml"):
+            for cargo, filename in (
+                (".cargo", "config"), (".cargo", "config.toml"),
+                (".cargo", "Config.toml"), (".Cargo", "config.toml"),
+                (".CARGO", "CONFIG"), (".CaRgO", "cOnFiG.ToMl"),
+                (".Cargo/nested", "CONFIG.TOML"),
+            ):
                 for symlink in (False, True):
-                    with self.subTest(directory=directory, filename=filename, symlink=symlink):
-                        config = self.root / directory / ".cargo" / filename
+                    with self.subTest(directory=directory, cargo=cargo, filename=filename, symlink=symlink):
+                        config = self.root / directory / cargo / filename
                         config.parent.mkdir(parents=True, exist_ok=True)
                         if symlink:
                             config.symlink_to(self.root / "missing-config")
@@ -606,6 +611,17 @@ optional_dependencies = []
                             for error in errors
                         ), errors)
                         config.unlink()
+
+    def test_case_variant_cargo_directory_symlink_is_refused(self) -> None:
+        self.write_policy([])
+        workspace(self.root, kind="none")
+        data = self.root / "config-data"
+        data.mkdir()
+        (data / "Config.toml").write_text("[build]\n", encoding="utf-8")
+        (self.root / ".Cargo").symlink_to(data, target_is_directory=True)
+        errors = checker.check_graph_tree(self.root)
+        self.assertTrue(any("candidate .Cargo/Config.toml is forbidden" in error
+                            for error in errors), errors)
 
     def client_play_fixture(self) -> Path:
         workspace(self.root, kind="none")
@@ -623,7 +639,7 @@ optional_dependencies = []
         client.parent.mkdir(parents=True)
         client.write_text(
             '[package]\nname = "client"\nversion = "0.1.0"\n'
-            '[features]\naudio = []\nwindow = []\nheaded-fixture = []\n',
+            '[features]\naudio = []\nwindow = []\nheaded-fixture = []\ntest-support = []\n',
             encoding="utf-8",
         )
         play = vendor / "crates/client-play/Cargo.toml"
@@ -641,6 +657,98 @@ optional_dependencies = []
         )
         self.write_baseline(self.root)
         return play
+
+    def vendored_probe(self, dependency: str) -> None:
+        self.client_play_fixture()
+        vendor = self.root / "vendor/fr-client-rust"
+        manifest = vendor / "Cargo.toml"
+        manifest.write_text(manifest.read_text(encoding="utf-8").replace(
+            '"crates/client-play"]', '"crates/client-play", "crates/probe"]'
+        ), encoding="utf-8")
+        probe = vendor / "crates/probe/Cargo.toml"
+        probe.parent.mkdir()
+        probe.write_text(
+            '[package]\nname = "probe"\nversion = "0.1.0"\n'
+            '[dependencies]\n' + dependency,
+            encoding="utf-8",
+        )
+
+    def list_vendored_probe(self) -> None:
+        policy = self.rules / "policy.toml"
+        policy.write_text(policy.read_text(encoding="utf-8").replace(
+            'path_packages = { ', 'path_packages = { '
+            'probe = "vendor/fr-client-rust/crates/probe/Cargo.toml", '
+        ), encoding="utf-8")
+
+    def test_vendored_new_member_client_features_need_operator_change(self) -> None:
+        self.vendored_probe(
+            'client = { path = "../client", features = ["headed-fixture", "test-support"] }\n'
+        )
+        errors = checker.check_graph_tree(self.root)
+        self.assertTrue(any("unlisted path package" in error and "probe" in error
+                            for error in errors), errors)
+        self.list_vendored_probe()
+        with (self.rules / "policy.toml").open("a", encoding="utf-8") as stream:
+            stream.write('\n[[allow]]\nfrom = "probe"\nto = "client"\n'
+                         'kinds = ["normal"]\nreason = "fixture"\n')
+        errors = checker.check_graph_tree(self.root)
+        self.assertTrue(any("graph provenance/activation widened" in error
+                            and "probe" in error and "headed-fixture" in error
+                            for error in errors), errors)
+        self.write_baseline(self.root)
+        self.assertEqual(checker.check_graph_tree(self.root), [])
+
+    def test_vendored_new_member_api_edge_needs_operator_change(self) -> None:
+        self.vendored_probe(
+            'api = { path = "../../../../crates/api", features = ["debug-catalog"] }\n'
+        )
+        with (self.root / "crates/api/Cargo.toml").open("a", encoding="utf-8") as stream:
+            stream.write('\n[features]\ndebug-catalog = []\n')
+        errors = checker.check_graph_tree(self.root)
+        self.assertTrue(any("unlisted path package" in error and "probe" in error
+                            for error in errors), errors)
+        self.list_vendored_probe()
+        errors = checker.check_graph_tree(self.root)
+        self.assertTrue(any("disallowed crate edge: probe -> api (normal)" in error
+                            for error in errors), errors)
+        with (self.rules / "policy.toml").open("a", encoding="utf-8") as stream:
+            stream.write('\n[[allow]]\nfrom = "probe"\nto = "api"\n'
+                         'kinds = ["normal"]\nreason = "fixture"\n')
+        self.write_baseline(self.root)
+        self.assertEqual(checker.check_graph_tree(self.root), [])
+
+    def test_vendored_workspace_lists_require_protected_manifests(self) -> None:
+        self.client_play_fixture()
+        manifest = self.root / "vendor/fr-client-rust/Cargo.toml"
+        original = manifest.read_text(encoding="utf-8")
+        for field in ("members", "default-members", "exclude"):
+            with self.subTest(field=field):
+                if field == "members":
+                    text = original.replace('"crates/client-play"]', '"crates/client-play", "crates/probe"]')
+                else:
+                    text = original + f'{field} = ["crates/probe"]\n'
+                manifest.write_text(text, encoding="utf-8")
+                errors = checker.check_graph_tree(self.root)
+                self.assertTrue(any("unlisted path package" in error and "probe" in error
+                                    for error in errors), errors)
+        for field in ("default-members", "exclude"):
+            with self.subTest(field=field, listed=True):
+                manifest.write_text(original + f'{field} = ["crates/client-play"]\n', encoding="utf-8")
+                self.assertEqual(checker.check_graph_tree(self.root), [])
+
+    def test_vendored_implicit_root_member_needs_protected_manifest(self) -> None:
+        self.client_play_fixture()
+        manifest = self.root / "vendor/fr-client-rust/Cargo.toml"
+        with manifest.open("a", encoding="utf-8") as stream:
+            stream.write('\n[package]\nname = "probe"\nversion = "0.1.0"\n')
+        errors = checker.check_graph_tree(self.root)
+        self.assertTrue(any("unlisted path package" in error
+                            and "vendor/fr-client-rust/Cargo.toml" in error
+                            for error in errors), errors)
+
+    def test_unchanged_vendored_workspace_is_clean(self) -> None:
+        self.client_play_fixture()
+        self.assertEqual(checker.check_graph_tree(self.root), [])
 
     def test_unreached_client_play_default_feature_request_needs_operator_change(self) -> None:
         play = self.client_play_fixture()
