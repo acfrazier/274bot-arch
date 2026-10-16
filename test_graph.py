@@ -43,6 +43,7 @@ class GraphPolicyTests(unittest.TestCase):
         self.previous_rules = checker.RULES_DIR
         checker.RULES_DIR = self.rules
         self.addCleanup(setattr, checker, "RULES_DIR", self.previous_rules)
+        self.write_pin()
 
     def write_policy(self, allows, configuration: str = "") -> None:
         path = self.rules / "policy.toml"
@@ -50,6 +51,10 @@ class GraphPolicyTests(unittest.TestCase):
         if configuration:
             with path.open("a", encoding="utf-8") as stream:
                 stream.write(configuration)
+
+    def write_pin(self) -> None:
+        helper = checker.trusted_helper("vendor_manifests")
+        (self.rules / helper.PIN).write_text(helper.pin_json(self.root), encoding="utf-8")
 
     def write_baseline(self, root: Path) -> None:
         baseline = checker.emit_provenance_baseline(root)
@@ -655,95 +660,70 @@ optional_dependencies = []
             '[workspace]\nmembers = ["crates/client", "crates/client-play"]\n',
             encoding="utf-8",
         )
+        self.write_pin()
         self.write_baseline(self.root)
         return play
 
-    def vendored_probe(self, dependency: str) -> None:
-        self.client_play_fixture()
-        vendor = self.root / "vendor/fr-client-rust"
-        manifest = vendor / "Cargo.toml"
-        manifest.write_text(manifest.read_text(encoding="utf-8").replace(
-            '"crates/client-play"]', '"crates/client-play", "crates/probe"]'
-        ), encoding="utf-8")
-        probe = vendor / "crates/probe/Cargo.toml"
-        probe.parent.mkdir()
-        probe.write_text(
-            '[package]\nname = "probe"\nversion = "0.1.0"\n'
-            '[dependencies]\n' + dependency,
-            encoding="utf-8",
-        )
-
-    def list_vendored_probe(self) -> None:
-        policy = self.rules / "policy.toml"
-        policy.write_text(policy.read_text(encoding="utf-8").replace(
-            'path_packages = { ', 'path_packages = { '
-            'probe = "vendor/fr-client-rust/crates/probe/Cargo.toml", '
-        ), encoding="utf-8")
-
-    def test_vendored_new_member_client_features_need_operator_change(self) -> None:
-        self.vendored_probe(
-            'client = { path = "../client", features = ["headed-fixture", "test-support"] }\n'
-        )
+    def assert_pin_refusal(self, filename: str) -> None:
         errors = checker.check_graph_tree(self.root)
-        self.assertTrue(any("unlisted path package" in error and "probe" in error
+        self.assertTrue(any("vendored Cargo.toml pin differs" in error
+                            and filename in error and "operator commit" in error
                             for error in errors), errors)
-        self.list_vendored_probe()
-        with (self.rules / "policy.toml").open("a", encoding="utf-8") as stream:
-            stream.write('\n[[allow]]\nfrom = "probe"\nto = "client"\n'
-                         'kinds = ["normal"]\nreason = "fixture"\n')
-        errors = checker.check_graph_tree(self.root)
-        self.assertTrue(any("graph provenance/activation widened" in error
-                            and "probe" in error and "headed-fixture" in error
-                            for error in errors), errors)
-        self.write_baseline(self.root)
-        self.assertEqual(checker.check_graph_tree(self.root), [])
 
-    def test_vendored_new_member_api_edge_needs_operator_change(self) -> None:
-        self.vendored_probe(
-            'api = { path = "../../../../crates/api", features = ["debug-catalog"] }\n'
-        )
-        with (self.root / "crates/api/Cargo.toml").open("a", encoding="utf-8") as stream:
-            stream.write('\n[features]\ndebug-catalog = []\n')
-        errors = checker.check_graph_tree(self.root)
-        self.assertTrue(any("unlisted path package" in error and "probe" in error
-                            for error in errors), errors)
-        self.list_vendored_probe()
-        errors = checker.check_graph_tree(self.root)
-        self.assertTrue(any("disallowed crate edge: probe -> api (normal)" in error
-                            for error in errors), errors)
-        with (self.rules / "policy.toml").open("a", encoding="utf-8") as stream:
-            stream.write('\n[[allow]]\nfrom = "probe"\nto = "api"\n'
-                         'kinds = ["normal"]\nreason = "fixture"\n')
-        self.write_baseline(self.root)
-        self.assertEqual(checker.check_graph_tree(self.root), [])
-
-    def test_vendored_workspace_lists_require_protected_manifests(self) -> None:
+    def test_vendored_workspace_edits_need_pin_update(self) -> None:
         self.client_play_fixture()
         manifest = self.root / "vendor/fr-client-rust/Cargo.toml"
         original = manifest.read_text(encoding="utf-8")
-        for field in ("members", "default-members", "exclude"):
-            with self.subTest(field=field):
-                if field == "members":
-                    text = original.replace('"crates/client-play"]', '"crates/client-play", "crates/probe"]')
-                else:
-                    text = original + f'{field} = ["crates/probe"]\n'
-                manifest.write_text(text, encoding="utf-8")
-                errors = checker.check_graph_tree(self.root)
-                self.assertTrue(any("unlisted path package" in error and "probe" in error
-                                    for error in errors), errors)
-        for field in ("default-members", "exclude"):
-            with self.subTest(field=field, listed=True):
-                manifest.write_text(original + f'{field} = ["crates/client-play"]\n', encoding="utf-8")
-                self.assertEqual(checker.check_graph_tree(self.root), [])
+        for addition in (
+            'exclude = ["crates/client"]\n',
+            'default-members = ["crates/probe"]\n',
+            '\n[package]\nname = "probe"\nversion = "0.1.0"\n',
+        ):
+            with self.subTest(addition=addition):
+                manifest.write_text(original + addition, encoding="utf-8")
+                self.assert_pin_refusal("vendor/fr-client-rust/Cargo.toml")
+        for members in ('["crates/*"]', '["node_modules/*"]', '["../../crates/api"]'):
+            with self.subTest(members=members):
+                manifest.write_text("[workspace]\nmembers = " + members + "\n", encoding="utf-8")
+                self.assert_pin_refusal("vendor/fr-client-rust/Cargo.toml")
 
-    def test_vendored_implicit_root_member_needs_protected_manifest(self) -> None:
+    def test_vendored_inheritance_cannot_redirect_to_product(self) -> None:
         self.client_play_fixture()
-        manifest = self.root / "vendor/fr-client-rust/Cargo.toml"
-        with manifest.open("a", encoding="utf-8") as stream:
-            stream.write('\n[package]\nname = "probe"\nversion = "0.1.0"\n')
+        client = self.root / "vendor/fr-client-rust/crates/client/Cargo.toml"
+        with client.open("a", encoding="utf-8") as stream:
+            stream.write('\n[dependencies]\napiish = { workspace = true }\n')
+        with (self.root / "Cargo.toml").open("a", encoding="utf-8") as stream:
+            stream.write('\n[workspace.dependencies]\n'
+                         'apiish = { path = "crates/api", package = "api" }\n')
+        self.assert_pin_refusal("crates/client/Cargo.toml")
+        # An operator cannot emit a pin that permits ambiguous inheritance.
+        with self.assertRaisesRegex(ValueError, "vendored dependency inheritance is forbidden"):
+            self.write_pin()
+
+    def test_vendored_added_and_removed_manifests_are_named(self) -> None:
+        self.client_play_fixture()
+        removed = self.root / "vendor/fr-client-rust/crates/client-play/Cargo.toml"
+        removed.unlink()
+        added = self.root / "vendor/fr-client-rust/node_modules/probe/Cargo.toml"
+        added.parent.mkdir(parents=True)
+        added.write_text('[package]\nname = "probe"\nversion = "0.1.0"\n', encoding="utf-8")
         errors = checker.check_graph_tree(self.root)
-        self.assertTrue(any("unlisted path package" in error
-                            and "vendor/fr-client-rust/Cargo.toml" in error
+        self.assertTrue(any("crates/client-play/Cargo.toml (removed)" in error
+                            and "node_modules/probe/Cargo.toml (added)" in error
+                            for error in errors), errors)
+
+    def test_missing_or_candidate_manifest_pin_fails_closed(self) -> None:
+        self.client_play_fixture()
+        pin = self.rules / "vendor-manifests.json"
+        saved = pin.read_text(encoding="utf-8")
+        pin.unlink()
+        self.assertTrue(checker.check_graph_tree(self.root))
+        pin.write_text(saved, encoding="utf-8")
+        candidate = self.root / "tools/architecture/vendor-manifests.json"
+        candidate.parent.mkdir(parents=True)
+        candidate.write_text(saved, encoding="utf-8")
+        errors = checker.check_graph_tree(self.root)
+        self.assertTrue(any("candidate tools/architecture/vendor-manifests.json is forbidden" in error
                             for error in errors), errors)
 
     def test_unchanged_vendored_workspace_is_clean(self) -> None:
@@ -757,6 +737,8 @@ optional_dependencies = []
             'default = ["window", "audio", "probe-cross"]\n'
             'probe-cross = ["client/headed-fixture"]'
         ), encoding="utf-8")
+        self.assert_pin_refusal("crates/client-play/Cargo.toml")
+        self.write_pin()
         errors = checker.check_graph_tree(self.root)
         self.assertTrue(any("graph provenance/activation widened" in error
                             and "client-play" in error and "feature-edge" in error
@@ -770,6 +752,8 @@ optional_dependencies = []
             'default = ["window", "audio"]',
             'default = ["window", "audio", "dep:serde"]'
         ) + '\n[dependencies.serde]\nversion = "=1.0.219"\noptional = true\n', encoding="utf-8")
+        self.assert_pin_refusal("crates/client-play/Cargo.toml")
+        self.write_pin()
         errors = checker.check_graph_tree(self.root)
         self.assertTrue(any("graph provenance/activation widened" in error
                             and "client-play" in error and "dependency" in error
@@ -780,11 +764,13 @@ optional_dependencies = []
     def test_unchanged_unreached_client_play_is_clean(self) -> None:
         play = self.client_play_fixture()
         self.assertEqual(checker.check_graph_tree(self.root), [])
-        # Purely local features remain outside the protected effects.
+        # Even a purely local feature changes protected manifest bytes.
         play.write_text(play.read_text(encoding="utf-8").replace(
             'default = ["window", "audio"]',
             'default = ["window", "audio", "probe-noop"]\nprobe-noop = []'
         ), encoding="utf-8")
+        self.assert_pin_refusal("crates/client-play/Cargo.toml")
+        self.write_pin()
         self.assertEqual(checker.check_graph_tree(self.root), [])
 
     def test_root_is_required(self) -> None:

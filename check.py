@@ -350,6 +350,11 @@ def discover_packages(root: Path, policy: Policy) -> Packages:
     contexts = {}
     workspaces = {}
     for name, directory in directories.items():
+        # The client manifests are exact protected inputs, not a Cargo workspace
+        # model. The pin forbids dependency inheritance in that set.
+        if directory.is_relative_to(root / "vendor/fr-client-rust"):
+            contexts[name] = root, {}
+            continue
         package_document = load_toml(directory / "Cargo.toml")
         package = package_document.get("package", {})
         explicit = package.get("workspace")
@@ -380,17 +385,18 @@ def discover_packages(root: Path, policy: Policy) -> Packages:
 
     overrides = set()
     for workspace_root, document in workspaces.items():
-        workspace = document.get("workspace", {})
-        # Membership is another local package input, even when no dependency
-        # reaches it. Every admitted manifest is already scanned above.
-        if "package" in document:
-            resolve_path_package(workspace_root / "Cargo.toml", by_manifest)
-        for field in ("members", "default-members", "exclude"):
-            for relative in sorted(string_set(workspace.get(field, []), f"workspace.{field}")):
-                manifest = (workspace_root / relative / "Cargo.toml").resolve()
-                if not manifest.is_relative_to(root):
-                    raise ValueError(f"workspace.{field} path escapes data root: {relative}")
-                resolve_path_package(manifest, by_manifest)
+        # Keep the product workspace checks. The client workspace is pinned
+        # above and never reaches this interpreter.
+        if workspace_root == root:
+            workspace = document.get("workspace", {})
+            if "package" in document:
+                resolve_path_package(workspace_root / "Cargo.toml", by_manifest)
+            for field in ("members", "default-members", "exclude"):
+                for relative in sorted(string_set(workspace.get(field, []), f"workspace.{field}")):
+                    manifest = (workspace_root / relative / "Cargo.toml").resolve()
+                    if not manifest.is_relative_to(root):
+                        raise ValueError(f"workspace.{field} path escapes data root: {relative}")
+                    resolve_path_package(manifest, by_manifest)
         # Validate unused workspace paths and unused overrides too. A later
         # dependency must not make an unlisted package reachable.
         for key, raw in document.get("workspace", {}).get("dependencies", {}).items():

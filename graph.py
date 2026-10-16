@@ -136,7 +136,7 @@ PROVENANCE_TABLES = frozenset({"dependencies", "dev-dependencies", "build-depend
 def graph_state(checker, root):
     """Protect cross-crate edges and optional activation, not local features."""
     policy = checker.load_policy(checker.RULES_DIR / "policy.toml")
-    for filename in ("policy.toml", PROVENANCE_BASELINE_FILENAME):
+    for filename in ("policy.toml", PROVENANCE_BASELINE_FILENAME, "vendor-manifests.json"):
         candidate = root / "tools" / "architecture" / filename
         if candidate.exists() or candidate.is_symlink():
             raise ValueError(
@@ -152,6 +152,7 @@ def graph_state(checker, root):
                     f"candidate {candidate.relative_to(root)} is forbidden. "
                     "Cargo configuration can override the graph protected by 274bot-arch"
                 )
+    checker.trusted_helper("vendor_manifests").check_pin(root, checker.RULES_DIR / "vendor-manifests.json")
     manifests, records = dependency_records(checker, root, policy)
     provenance = {
         (

@@ -36,10 +36,10 @@ bare-Git cache, defaulting to `${XDG_CACHE_HOME:-$HOME/.cache}/274bot-arch`.
 The runner archives the selected checker commit, checks the parser pin, runs
 the self-test, then checks the product. CI does not use this runner.
 
-`policy.toml` and `graph-provenance.json` are loaded beside the checker.
+`policy.toml`, `graph-provenance.json`, and `vendor-manifests.json` are loaded beside the checker.
 Ownership, inventories, and foreign-type classifications come only from the
-candidate's `tools/architecture/` directory. A candidate `policy.toml` or
-`graph-provenance.json` in that directory is an error, not an override.
+candidate's `tools/architecture/` directory. Candidate copies of protected rules
+in that directory are errors, not overrides.
 
 ## Graph identity
 
@@ -56,14 +56,15 @@ Every listed manifest is scanned, even when unused. Path dependencies,
 or listed manifests. Edges from a listed package require ordinary protected
 `[[allow]]` permissions, including edges back into the product workspace.
 A non-member cannot impersonate a member through `package = "<member>"`.
-Nested workspace `members`, `default-members`, and `exclude` entries must also
-resolve to protected manifests. New members need an operator policy commit.
+Product workspace `members`, `default-members`, and `exclude` entries must
+resolve to protected manifests. The client workspace uses the exact pin below.
 Dependency aliases are tracked by package name, not by alias or version.
 
 The checker refuses `.cargo/config` and `.cargo/config.toml` anywhere in the
 candidate tree, including vendored trees and symlinks. Directory and file names
 are matched without ASCII case distinctions. These files can override the
 graph that `274bot-arch` protects.
+Unicode look-alike names are outside this refusal because Cargo on Linux does not read them.
 
 Default-feature and dev-dependency activation is checked for every protected
 member and listed path package. Named configurations add their own activation
@@ -75,6 +76,37 @@ behavior. `cargo metadata --offline --locked` would depend on the local
 registry cache and would not provide this all-target declaration check.
 Unsupported or unresolved local identities fail closed.
 
+### Vendored client manifests
+
+Every `Cargo.toml` below `vendor/fr-client-rust/` is a protected input.
+`vendor-manifests.json` stores their expected paths and exact UTF-8 contents.
+One SHA-256 digest covers the sorted sequence of path and file-byte pairs.
+Each path and content field has an eight-byte big-endian byte length before it.
+The digest is identity data for a protected input, like policy data, not bookkeeping.
+
+The checker refuses added, removed, or changed manifests and names each difference.
+An operator commit to this repository must update the pin before that product change lands.
+The checker does not interpret the client workspace's member lists, exclusions, globs, or inheritance.
+The pinned set has no `workspace = true` dependencies.
+The pin command and checker refuse a pin that introduces such dependencies.
+Product workspace checks remain unchanged.
+
+Print the digest for a product tree:
+
+```bash
+python3 -B vendor_manifests.py /path/to/274bot
+```
+
+After fork review, generate the complete replacement pin in this repository:
+
+```bash
+python3 -B vendor_manifests.py --emit-pin /path/to/274bot > vendor-manifests.json
+```
+
+Review its changed paths and contents, then commit it with any required policy changes.
+A fork pointer change needs no pin update when all vendored manifests remain byte-identical.
+
+
 ## Changing rules
 
 Prepare a reviewed `274bot-arch` commit for any of these changes:
@@ -84,6 +116,7 @@ Prepare a reviewed `274bot-arch` commit for any of these changes:
 - a migration allowance;
 - optional-dependency activation in a protected package or supported configuration;
 - a vendored path package or its protected manifest binding;
+- any added, removed, or changed client `Cargo.toml`, including comments and local features;
 - a checker change.
 
 Edit `policy.toml` where required. First merge current `dev` into the branch
@@ -103,9 +136,9 @@ Run the checker against the merged product tree.
 
 The plain JSON baseline protects cross-crate edge declarations, cross-crate
 feature requests, and optional-dependency activation. It does not record
-purely local feature names. A local feature that activates no optional
-dependency and no cross-crate edge needs no operator commit. Ordinary code,
-ownership, seam-type, and inventory changes also need no operator commit.
+purely local feature names. Outside the pinned client manifests, a local feature
+that activates no optional dependency or cross-crate edge needs no operator commit.
+Ordinary code, ownership, seam-type, and inventory changes also need no operator commit.
 
 The baseline only grows without operator action: removed edges retain permission, so a later candidate can restore them without another arch commit.
 
