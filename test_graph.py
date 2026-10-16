@@ -518,6 +518,167 @@ optional_dependencies = []
         self.write_baseline(self.root)
         self.assertEqual(checker.check_graph_tree(self.root), [])
 
+    def test_cargo_config_patch_pbkdf2_copy_to_api_is_refused(self) -> None:
+        self.write_policy([])
+        workspace(self.root, kind="none")
+        vault = self.root / "crates/vault/Cargo.toml"
+        with vault.open("a", encoding="utf-8") as stream:
+            stream.write('\n[dependencies]\npbkdf2 = "0.12.2"\n')
+        shadow = self.root / "vendor/dear-imgui-wgpu-0.15.1/shadow-pbkdf2"
+        shadow.mkdir(parents=True)
+        (shadow / "Cargo.toml").write_text(
+            '[package]\nname = "pbkdf2"\nversion = "0.12.2"\n'
+            '[dependencies.api]\npath = "../../../crates/api"\n',
+            encoding="utf-8",
+        )
+        self.write_baseline(self.root)
+        self.assertEqual(checker.check_graph_tree(self.root), [])
+        config = self.root / ".cargo/config.toml"
+        config.parent.mkdir()
+        config.write_text(
+            '[patch.crates-io]\npbkdf2 = { path = '
+            '"vendor/dear-imgui-wgpu-0.15.1/shadow-pbkdf2" }\n',
+            encoding="utf-8",
+        )
+        errors = checker.check_graph_tree(self.root)
+        self.assertTrue(any("candidate .cargo/config.toml is forbidden" in error
+                            and "274bot-arch" in error for error in errors), errors)
+
+    def test_cargo_config_patch_imgui_copy_to_seat_model_is_refused(self) -> None:
+        checker.write_workspace(self.root, ["vault", "api", "seat-model"])
+        for name in ("vault", "api", "seat-model"):
+            checker.write_crate(self.root, name)
+        policy = self.rules / "policy.toml"
+        checker.write_policy(policy, ["vault", "api", "seat-model"], [{
+            "from": "vault", "to": "dear-imgui-wgpu", "kinds": ["normal"], "reason": "fixture"
+        }])
+        policy.write_text(policy.read_text(encoding="utf-8").replace(
+            "[workspace]", '[workspace]\npath_packages = { '
+            'dear-imgui-wgpu = "vendor/dear-imgui-wgpu-0.15.1/Cargo.toml" }'
+        ), encoding="utf-8")
+        original = self.root / "vendor/dear-imgui-wgpu-0.15.1"
+        original.mkdir(parents=True)
+        (original / "Cargo.toml").write_text(
+            '[package]\nname = "dear-imgui-wgpu"\nversion = "0.15.1"\n',
+            encoding="utf-8",
+        )
+        with (self.root / "Cargo.toml").open("a", encoding="utf-8") as stream:
+            stream.write('\n[patch.crates-io]\ndear-imgui-wgpu = { path = '
+                         '"vendor/dear-imgui-wgpu-0.15.1" }\n')
+        with (self.root / "crates/vault/Cargo.toml").open("a", encoding="utf-8") as stream:
+            stream.write('\n[dependencies]\ndear-imgui-wgpu = "0.15"\n')
+        self.write_baseline(self.root)
+        self.assertEqual(checker.check_graph_tree(self.root), [])
+        shadow = original / "shadow-imgui"
+        shadow.mkdir()
+        (shadow / "Cargo.toml").write_text(
+            (original / "Cargo.toml").read_text(encoding="utf-8")
+            + '[dependencies.seat-model]\npath = "../../../crates/seat-model"\n',
+            encoding="utf-8",
+        )
+        config = self.root / ".cargo/config.toml"
+        config.parent.mkdir()
+        config.write_text(
+            '[patch.crates-io]\ndear-imgui-wgpu = { path = '
+            '"vendor/dear-imgui-wgpu-0.15.1/shadow-imgui" }\n',
+            encoding="utf-8",
+        )
+        errors = checker.check_graph_tree(self.root)
+        self.assertTrue(any("candidate .cargo/config.toml is forbidden" in error
+                            for error in errors), errors)
+
+    def test_cargo_configs_are_refused_in_nested_and_symlink_locations(self) -> None:
+        self.write_policy([])
+        workspace(self.root, kind="none")
+        for directory in ("", "vendor/fr-client-rust", "vendor/fr-client-rust/crates/client-play"):
+            for filename in ("config", "config.toml"):
+                for symlink in (False, True):
+                    with self.subTest(directory=directory, filename=filename, symlink=symlink):
+                        config = self.root / directory / ".cargo" / filename
+                        config.parent.mkdir(parents=True, exist_ok=True)
+                        if symlink:
+                            config.symlink_to(self.root / "missing-config")
+                        else:
+                            config.write_text("[paths]\n", encoding="utf-8")
+                        errors = checker.check_graph_tree(self.root)
+                        self.assertTrue(any(
+                            f"candidate {config.relative_to(self.root)} is forbidden" in error
+                            for error in errors
+                        ), errors)
+                        config.unlink()
+
+    def client_play_fixture(self) -> Path:
+        workspace(self.root, kind="none")
+        self.write_policy([{
+            "from": "client-play", "to": "client", "kinds": ["normal"], "reason": "fixture"
+        }])
+        policy = self.rules / "policy.toml"
+        policy.write_text(policy.read_text(encoding="utf-8").replace(
+            "[workspace]", '[workspace]\npath_packages = { '
+            'client = "vendor/fr-client-rust/crates/client/Cargo.toml", '
+            'client-play = "vendor/fr-client-rust/crates/client-play/Cargo.toml" }'
+        ), encoding="utf-8")
+        vendor = self.root / "vendor/fr-client-rust"
+        client = vendor / "crates/client/Cargo.toml"
+        client.parent.mkdir(parents=True)
+        client.write_text(
+            '[package]\nname = "client"\nversion = "0.1.0"\n'
+            '[features]\naudio = []\nwindow = []\nheaded-fixture = []\n',
+            encoding="utf-8",
+        )
+        play = vendor / "crates/client-play/Cargo.toml"
+        play.parent.mkdir()
+        play.write_text(
+            '[package]\nname = "client-play"\nversion = "0.1.0"\n'
+            '[features]\ndefault = ["window", "audio"]\n'
+            'audio = ["client/audio"]\nwindow = ["client/window"]\n'
+            '[dependencies]\nclient = { path = "../client" }\n',
+            encoding="utf-8",
+        )
+        (vendor / "Cargo.toml").write_text(
+            '[workspace]\nmembers = ["crates/client", "crates/client-play"]\n',
+            encoding="utf-8",
+        )
+        self.write_baseline(self.root)
+        return play
+
+    def test_unreached_client_play_default_feature_request_needs_operator_change(self) -> None:
+        play = self.client_play_fixture()
+        play.write_text(play.read_text(encoding="utf-8").replace(
+            'default = ["window", "audio"]',
+            'default = ["window", "audio", "probe-cross"]\n'
+            'probe-cross = ["client/headed-fixture"]'
+        ), encoding="utf-8")
+        errors = checker.check_graph_tree(self.root)
+        self.assertTrue(any("graph provenance/activation widened" in error
+                            and "client-play" in error and "feature-edge" in error
+                            and "headed-fixture" in error for error in errors), errors)
+        self.write_baseline(self.root)
+        self.assertEqual(checker.check_graph_tree(self.root), [])
+
+    def test_unreached_client_play_optional_dependency_needs_operator_change(self) -> None:
+        play = self.client_play_fixture()
+        play.write_text(play.read_text(encoding="utf-8").replace(
+            'default = ["window", "audio"]',
+            'default = ["window", "audio", "dep:serde"]'
+        ) + '\n[dependencies.serde]\nversion = "=1.0.219"\noptional = true\n', encoding="utf-8")
+        errors = checker.check_graph_tree(self.root)
+        self.assertTrue(any("graph provenance/activation widened" in error
+                            and "client-play" in error and "dependency" in error
+                            and "serde" in error for error in errors), errors)
+        self.write_baseline(self.root)
+        self.assertEqual(checker.check_graph_tree(self.root), [])
+
+    def test_unchanged_unreached_client_play_is_clean(self) -> None:
+        play = self.client_play_fixture()
+        self.assertEqual(checker.check_graph_tree(self.root), [])
+        # Purely local features remain outside the protected effects.
+        play.write_text(play.read_text(encoding="utf-8").replace(
+            'default = ["window", "audio"]',
+            'default = ["window", "audio", "probe-noop"]\nprobe-noop = []'
+        ), encoding="utf-8")
+        self.assertEqual(checker.check_graph_tree(self.root), [])
+
     def test_root_is_required(self) -> None:
         with self.assertRaises(SystemExit) as raised:
             checker.main([])

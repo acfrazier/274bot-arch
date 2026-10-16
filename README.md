@@ -57,6 +57,14 @@ or listed manifests. Edges from a listed package require ordinary protected
 `[[allow]]` permissions, including edges back into the product workspace.
 A non-member cannot impersonate a member through `package = "<member>"`.
 
+The checker refuses `.cargo/config` and `.cargo/config.toml` anywhere in the
+candidate tree, including vendored trees and symlink files. These files can
+override the graph that `274bot-arch` protects.
+
+Default-feature and dev-dependency activation is checked for every protected
+member and listed path package. Named configurations add their own activation
+checks. A package does not escape these checks when no configuration reaches it.
+
 Manifest scanning gives a deterministic cross-platform permission union.
 It needs no registry cache, lockfile repair, network access, or Cargo resolver
 behavior. `cargo metadata --offline --locked` would depend on the local
@@ -70,21 +78,24 @@ Prepare a reviewed `274bot-arch` commit for any of these changes:
 - a new crate edge, including a new target cfg or cross-crate feature request;
 - a new edge kind;
 - a migration allowance;
-- optional-dependency activation in a supported configuration;
+- optional-dependency activation in a protected package or supported configuration;
 - a vendored path package or its protected manifest binding;
 - a checker change.
 
-Edit `policy.toml` where required. In that same arch commit, regenerate the
-baseline against the candidate with one command:
+Edit `policy.toml` where required. First merge current `dev` into the branch
+being merged. In the same arch commit, regenerate the baseline from that
+merged branch tree:
 
 ```bash
-python3 -B check.py --emit-provenance-baseline /path/to/candidate > graph-provenance.json
+python3 -B check.py --emit-provenance-baseline /path/to/merged-branch > graph-provenance.json
 ```
 
-Review the policy and baseline diff together. Give the operator the arch
-commit or bundle. The operator publishes it to `274bot-arch` `main` before
-the product change lands. Update product architecture documentation for a
-boundary change, and run the checker against the merged product tree.
+Review the policy and baseline diff together. Review removed records.
+Retain records that other active branches still need.
+Give the operator the arch commit or bundle.
+The operator publishes it to `274bot-arch` `main` before the product change lands.
+Update product architecture documentation for a boundary change.
+Run the checker against the merged product tree.
 
 The plain JSON baseline protects cross-crate edge declarations, cross-crate
 feature requests, and optional-dependency activation. It does not record

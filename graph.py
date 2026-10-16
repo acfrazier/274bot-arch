@@ -143,6 +143,14 @@ def graph_state(checker, root):
                 f"candidate tools/architecture/{filename} is forbidden. "
                 f"Rules belong only in 274bot-arch/{filename}, not in the product tree"
             )
+    for directory in sorted(root.rglob(".cargo")):
+        for filename in ("config", "config.toml"):
+            candidate = directory / filename
+            if candidate.exists() or candidate.is_symlink():
+                raise ValueError(
+                    f"candidate {candidate.relative_to(root)} is forbidden. "
+                    "Cargo configuration can override the graph protected by 274bot-arch"
+                )
     manifests, records = dependency_records(checker, root, policy)
     provenance = {
         (
@@ -155,7 +163,19 @@ def graph_state(checker, root):
         ("dependency", row["from"], row["to"], row["kind"], row["cfg"], row["table"])
         for row in records if row["optional"]
     }
-    for config in policy.configurations:
+    # Every protected package needs default/dev activation coverage, even when
+    # no named product configuration selects or reaches it.
+    configurations = [{
+        "id": "package-defaults",
+        "packages": sorted(manifests),
+        "features": [],
+        "default_features": True,
+        "dev": True,
+        "status": "enforced",
+        "forbidden_features": [],
+        "optional_dependencies": [],
+    }, *policy.configurations]
+    for config in configurations:
         isolated_union = set()
         for selected in config["packages"]:
             isolated = dict(
@@ -317,7 +337,8 @@ def check_tree(checker, root: Path):
             f"graph provenance/activation widened: {record}. "
             "Propose an operator commit in 274bot-arch, updating policy.toml if needed. "
             "In that same commit regenerate graph-provenance.json with "
-            "`python3 -B check.py --emit-provenance-baseline /path/to/candidate > graph-provenance.json`"
+            "`python3 -B check.py --emit-provenance-baseline /path/to/merged-branch > graph-provenance.json` "
+            "on the branch being merged, after merging current dev. Review removed records"
             for record in sorted(provenance - protected, key=repr)
         )
         return errors
