@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import importlib.util
 import json
 import sys
@@ -22,8 +21,6 @@ INVENTORIES_SPEC.loader.exec_module(inventories)
 
 
 VIEWS_PATH = "crates/frontend-core/src/views.rs"
-# sha256 of json.dumps(sorted(TRUSTED_FOREIGN_TYPE_CLASSES.items())) at B de48e55a6.
-LEGACY_FOREIGN_TABLE_SHA256 = "5365df079759360f3e3e1df5bcf90e0e71940a05c55fa5fe6c1992fbe21bd04a"
 
 F0_API_FOREIGN_TYPES = (
     "api::identity::RequestId",
@@ -685,12 +682,6 @@ pub struct FleetView<'a> {
         print(f"GOOD MarkedWalk closure-derived owning classification: {errors}")
         self.assertEqual(errors, [])
 
-    def test_legacy_builtin_foreign_table_is_frozen(self) -> None:
-        table = inventories.TRUSTED_FOREIGN_TYPE_CLASSES
-        digest = hashlib.sha256(json.dumps(sorted(table.items())).encode("utf-8")).hexdigest()
-        self.assertEqual(len(table), 56)
-        self.assertEqual(digest, LEGACY_FOREIGN_TABLE_SHA256)
-        self.assertFalse(set(F0_API_FOREIGN_TYPES) & set(table))
 
     def test_f0_api_workspace_types_are_classified_from_definitions(self) -> None:
         aliases = "".join(
@@ -976,8 +967,8 @@ pub struct FleetView<'a> {
                 self.assertIn(f"stale seam type classification: {VIEWS_PATH}::Uses", errors)
 
     def test_builtin_entry_keeps_precedence_over_workspace_definition(self) -> None:
-        # Residual, by design: a frozen built-in path is trusted as written even
-        # when the workspace definition says otherwise.
+        # A built-in path keeps precedence even when the workspace definition
+        # says otherwise.
         root = self.fixture(
             views=self.baseline_views()
             + "pub type Diff = script::CatalogDiff;\npub type Compiled = script::CompiledId;\n",

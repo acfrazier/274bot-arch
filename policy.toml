@@ -4,7 +4,7 @@
 # workspace aliases, optional/dev/build/target tables, and package renames).
 # Permanent allowances are the accepted destination matrix. Named migration
 # records are exact remaining debt, not permanent permissions. Both are
-# untrusted inputs to the separately pinned checker.
+# protected rules in this operator-owned repository.
 schema_version = 1
 
 [workspace]
@@ -26,6 +26,25 @@ members = [
 # Path/workspace packages that participate in ownership but are not members
 # of this Cargo workspace. crates.io and other externals are ignored.
 externals = ["client"]
+
+# Each label is bound to one canonical manifest, never just a package name.
+# All listed manifests are scanned, including non-member dependency tables.
+[workspace.path_packages]
+client = "vendor/fr-client-rust/crates/client/Cargo.toml"
+client-play = "vendor/fr-client-rust/crates/client-play/Cargo.toml"
+dear-imgui-wgpu = "vendor/dear-imgui-wgpu-0.15.1/Cargo.toml"
+
+[[allow]]
+from = "client-play"
+to = "client"
+kinds = ["normal"]
+reason = "The vendored client-play executable consumes its own vendored client library."
+
+[[allow]]
+from = "panel"
+to = "dear-imgui-wgpu"
+kinds = ["normal"]
+reason = "Panel uses the checked-in dear-imgui-wgpu backend through the crates.io path patch."
 
 # --- leaves and host-facing types ---
 
@@ -505,9 +524,8 @@ owner = "T4"
 forbidden_features = []
 optional_dependencies = []
 
-# §27 §5: this row cannot disappear or change owner/status through an ordinary
-# merge. T2 must make deno_ast optional and remove all script/load activation.
-# Build enforcement starts in the approved plumbing transition, not at F0.
+# Native-only policy remains pending until T2 makes deno_ast optional and
+# removes script/load activation. Only an operator policy commit changes status.
 [[configuration]]
 id = "native-only"
 packages = ["panel", "tui", "host-play"]

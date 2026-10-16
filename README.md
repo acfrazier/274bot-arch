@@ -4,11 +4,9 @@ Operator-owned architecture checker and source-of-truth rules for 274bot.
 
 ## Running
 
-The checker requires Python 3.11 or newer (`tomllib` is part of the standard
-library). Product CI pins Python 3.14.8. It also requires
-`rust-analyzer 0.3.3081-standalone` on `PATH` (SHA-256
-`fd89304c85f6c1996b036ea8f2c9ad9d3e25a197dbd713661c7fe51ec9dc8e49`); the
-product runner verifies both its version and digest before starting the checker.
+The checker requires Python 3.11 or newer. Product CI pins Python 3.14.8.
+It requires `rust-analyzer 0.3.3081-standalone` on `PATH`, with SHA-256
+`fd89304c85f6c1996b036ea8f2c9ad9d3e25a197dbd713661c7fe51ec9dc8e49`.
 
 From this repository:
 
@@ -17,56 +15,83 @@ python3 -B check.py --self-test
 python3 -B check.py --root /path/to/274bot
 ```
 
-For the product's normal local and CI path, run its
-`tools/architecture/run.sh` from the product checkout:
+`--root` is required for a tree check. The self-test does not read a product tree.
+The protected product workflow clones `https://github.com/acfrazier/274bot-arch.git`
+`main`, at depth 1, into `$RUNNER_TEMP`. The workflow step checks the parser
+pin, runs the cloned checker's self-test, then checks `$GITHUB_WORKSPACE`.
+CI never executes `tools/architecture/run.sh` or any other candidate-tree
+script to judge the candidate. The token guard protects the workflow itself.
+
+For local convenience only, use the product runner:
 
 ```bash
 tools/architecture/run.sh
 tools/architecture/run.sh --root /path/to/tree
 ```
 
-With no `--root`, the product runner checks the product checkout containing
-the script. `ARCH_REPO` selects the checker source: the default remote always
-fetches `main`; a local clone uses its selected `HEAD` for pre-push proof.
-`ARCH_CACHE_DIR` selects the bare-Git fetch cache and defaults to
-`${XDG_CACHE_HOME:-$HOME/.cache}/274bot-arch`.
+With no `--root`, that runner checks its product checkout. `ARCH_REPO` selects
+the checker source locally. The default remote fetches `main`. A local clone
+uses its selected `HEAD` for pre-push proof. `ARCH_CACHE_DIR` selects the
+bare-Git cache, defaulting to `${XDG_CACHE_HOME:-$HOME/.cache}/274bot-arch`.
+The runner archives the selected checker commit, checks the parser pin, runs
+the self-test, then checks the product. CI does not use this runner.
 
-The runner archives the selected checker commit to a temporary directory,
-runs its disposable graph self-test, then checks the product tree.
-The protected graph policy (`policy.toml`) and `graph-provenance.json` are
-loaded beside the checker; `policy.toml` keeps workspace, allowance, migration,
-and feature-configuration rows together. Ownership, inventories, and foreign
-type classifications are loaded only from the checked product tree's
-`tools/architecture/` directory; checker-side copies are never fallbacks.
+`policy.toml` and `graph-provenance.json` are loaded beside the checker.
+Ownership, inventories, and foreign-type classifications come only from the
+candidate's `tools/architecture/` directory. A candidate `policy.toml` or
+`graph-provenance.json` in that directory is an error, not an override.
 
-`graph-provenance.json` is plain generated data that protects exceptional
-dependency provenance and supported-feature/optional-dependency activation.
-Update it only when a reviewed change adds optional-dependency activation or
-exceptional provenance; do not update it for ordinary code, ownership,
-inventory, seam-type, or effective-edge changes without either of those
-additions. From this repository, regenerate it against the reviewed tree with
-`python3 -B check.py --emit-provenance-baseline /path/to/tree > graph-provenance.json`,
-review the diff, and have the operator commit it with any required policy
-change. There are no hashes, signatures, approvals, or epochs for the baseline.
+## Graph identity
 
-## Rule-change and rollout order
+The checker reads manifests without Cargo resolution. It scans all target
+cfgs, dependency-table spellings, and protected path packages. A path package
+is identified by its canonical `Cargo.toml` path, not its dependency key or
+claimed package name. A non-member path package must appear in
+`policy.toml` `[workspace.path_packages]`. Each label binds one package name
+to one tree-relative manifest. Symlink substitutions are refused.
 
-The checker extraction is staged as three reviewable changes: first copy the
-live checker, protected graph policy, and provenance baseline; second add the
-narrow `PhantomData` marker rule and fixtures; third, after the first two
-changes are proved, remove the product's `tools/architecture/*.py` ownership
-rows and assign `tools/architecture/run.sh` to T1. Keep ownership, inventory,
-and foreign-type data in the product tree beside the runner.
+The current list covers the vendored client, client-play, and dear-imgui-wgpu.
+Every listed manifest is scanned, even when unused. Path dependencies,
+`workspace.dependencies`, `[patch]`, and `[replace]` must resolve to members
+or listed manifests. Edges from a listed package require ordinary protected
+`[[allow]]` permissions, including edges back into the product workspace.
+A non-member cannot impersonate a member through `package = "<member>"`.
 
-Roll out in this order:
+Manifest scanning gives a deterministic cross-platform permission union.
+It needs no registry cache, lockfile repair, network access, or Cargo resolver
+behavior. `cargo metadata --offline --locked` would depend on the local
+registry cache and would not provide this all-target declaration check.
+Unsupported or unresolved local identities fail closed.
 
-1. The operator pushes the reviewed checker and rule changes to the
-   `274bot-arch` repository's `main`.
-2. The operator pushes the product runner and workflow change.
-3. Main merges the product `arch-simplify` branch into `dev`.
+## Changing rules
 
-Until the product merge, older `dev` branches still contain and own the old
-checker tooling; their architecture findings describe that old tree. Do not
-apply the new ownership migration to those branches. Final `main` acceptance
-must run the simplified checker against the merged product, not against an
-older `dev` branch.
+Prepare a reviewed `274bot-arch` commit for any of these changes:
+
+- a new crate edge, including a new target cfg or cross-crate feature request;
+- a new edge kind;
+- a migration allowance;
+- optional-dependency activation in a supported configuration;
+- a vendored path package or its protected manifest binding;
+- a checker change.
+
+Edit `policy.toml` where required. In that same arch commit, regenerate the
+baseline against the candidate with one command:
+
+```bash
+python3 -B check.py --emit-provenance-baseline /path/to/candidate > graph-provenance.json
+```
+
+Review the policy and baseline diff together. Give the operator the arch
+commit or bundle. The operator publishes it to `274bot-arch` `main` before
+the product change lands. Update product architecture documentation for a
+boundary change, and run the checker against the merged product tree.
+
+The plain JSON baseline protects cross-crate edge declarations, cross-crate
+feature requests, and optional-dependency activation. It does not record
+purely local feature names. A local feature that activates no optional
+dependency and no cross-crate edge needs no operator commit. Ordinary code,
+ownership, seam-type, and inventory changes also need no operator commit.
+
+The baseline only grows without operator action: removed edges retain permission, so a later candidate can restore them without another arch commit.
+
+There are no receipts, hashes, signatures, approvals, or epochs for the baseline.

@@ -1,853 +1,57 @@
 {
   "records": [
     [
-      "activation",
-      "full-products",
-      "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
-    ],
-    [
-      "activation",
-      "full-products",
-      "host-play",
-      "scenario",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "full-products",
-      "panel",
-      "host",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "full-products",
-      "panel",
-      "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "full-products",
-      "panel",
-      "scenario",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "full-products",
-      "panel",
-      "script",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "full-products",
-      "panel",
-      "vault",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "full-products",
-      "tui",
-      "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "full-products",
-      "tui",
-      "scenario",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "full-products",
-      "tui",
-      "script",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "full-products",
-      "tui",
-      "vault",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "host-performance",
-      "host",
+      "edge",
+      "api",
       "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "memory-profile",
-      "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
-    ],
-    [
-      "activation",
-      "memory-profile",
-      "host-play",
-      "scenario",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "memory-profile",
-      "panel",
-      "host",
       "normal",
       "",
-      "dependencies"
+      "dependencies",
+      true,
+      []
     ],
     [
-      "activation",
-      "memory-profile",
-      "panel",
-      "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "memory-profile",
-      "panel",
-      "scenario",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "memory-profile",
-      "panel",
-      "script",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "memory-profile",
-      "panel",
-      "vault",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "memory-profile",
-      "tui",
-      "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "memory-profile",
-      "tui",
-      "scenario",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "memory-profile",
-      "tui",
-      "script",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "memory-profile",
-      "tui",
-      "vault",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "memory-profile-no-alloc",
-      "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
-    ],
-    [
-      "activation",
-      "memory-profile-no-alloc",
-      "host-play",
-      "scenario",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "host",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "scenario",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "script",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "vault",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "scenario",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "script",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "vault",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "native-only",
-      "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
-    ],
-    [
-      "activation",
-      "native-only",
-      "host-play",
-      "scenario",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "native-only",
-      "panel",
-      "host",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "native-only",
-      "panel",
-      "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "native-only",
-      "panel",
-      "scenario",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "native-only",
-      "panel",
-      "script",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "native-only",
-      "panel",
-      "vault",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "native-only",
-      "tui",
-      "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "native-only",
-      "tui",
-      "scenario",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "native-only",
-      "tui",
-      "script",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "native-only",
-      "tui",
-      "vault",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "render-diagnostics",
-      "frontend-core",
+      "edge",
+      "client-play",
       "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "render-diagnostics",
-      "frontend-core",
-      "frontend-core",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "render-diagnostics",
-      "frontend-core",
-      "host-play",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "render-diagnostics",
-      "frontend-core",
-      "scenario",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "render-diagnostics",
-      "host",
-      "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "render-diagnostics",
-      "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
-    ],
-    [
-      "activation",
-      "render-diagnostics",
-      "host-play",
-      "scenario",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "render-diagnostics",
-      "host-play",
-      "scenario",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "render-diagnostics",
-      "host-play",
-      "script",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "render-diagnostics",
-      "panel",
-      "frontend-core",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "render-diagnostics",
-      "panel",
-      "host",
       "normal",
       "",
-      "dependencies"
+      "dependencies",
+      true,
+      []
     ],
     [
-      "activation",
-      "render-diagnostics",
-      "panel",
-      "host-play",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "render-diagnostics",
-      "panel",
-      "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "render-diagnostics",
-      "panel",
-      "scenario",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "render-diagnostics",
-      "panel",
-      "script",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "render-diagnostics",
-      "panel",
-      "vault",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "render-diagnostics",
-      "script",
-      "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "render-diagnostics",
-      "script",
-      "script",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "render-diagnostics",
-      "script",
-      "seat-model",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "script-load-tests",
-      "script",
-      "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "script-load-tests",
-      "script",
-      "script",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "script-load-tests",
-      "script",
-      "seat-model",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
+      "edge",
       "e2e",
-      "host-play",
-      "dev",
+      "api",
+      "normal",
       "",
-      "dev-dependencies"
+      "dependencies",
+      true,
+      []
     ],
     [
-      "activation",
-      "workspace-tests",
-      "frontend-core",
+      "edge",
+      "e2e",
       "client",
-      "dev",
+      "normal",
       "",
-      "dev-dependencies"
+      "dependencies",
+      true,
+      []
     ],
     [
-      "activation",
-      "workspace-tests",
-      "frontend-core",
-      "frontend-core",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "frontend-core",
-      "host-play",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "frontend-core",
-      "scenario",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "host",
-      "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "host-play",
-      "scenario",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "host-play",
-      "scenario",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "host-play",
-      "script",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "panel",
-      "frontend-core",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "panel",
+      "edge",
+      "e2e",
       "host",
       "normal",
       "",
-      "dependencies"
+      "dependencies",
+      true,
+      []
     ],
     [
-      "activation",
-      "workspace-tests",
-      "panel",
-      "host-play",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "panel",
-      "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "panel",
-      "scenario",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "panel",
-      "script",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "panel",
-      "vault",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "script",
-      "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "script",
-      "script",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "script",
-      "seat-model",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "tui",
-      "frontend-core",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "tui",
-      "host",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "tui",
-      "host-play",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "tui",
-      "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "tui",
-      "scenario",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "tui",
-      "script",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "activation",
-      "workspace-tests",
-      "tui",
-      "vault",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "exceptional-edge",
+      "edge",
       "e2e",
       "host-play",
       "dev",
@@ -859,7 +63,57 @@
       ]
     ],
     [
-      "exceptional-edge",
+      "edge",
+      "e2e",
+      "host-play",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "e2e",
+      "nav",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "e2e",
+      "scenario",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "e2e",
+      "vault",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "frontend-core",
+      "api",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
       "frontend-core",
       "client",
       "dev",
@@ -869,19 +123,17 @@
       []
     ],
     [
-      "exceptional-edge",
+      "edge",
       "frontend-core",
-      "frontend-core",
-      "dev",
+      "host",
+      "normal",
       "",
-      "dev-dependencies",
+      "dependencies",
       true,
-      [
-        "test-support"
-      ]
+      []
     ],
     [
-      "exceptional-edge",
+      "edge",
       "frontend-core",
       "host-play",
       "dev",
@@ -893,7 +145,27 @@
       ]
     ],
     [
-      "exceptional-edge",
+      "edge",
+      "frontend-core",
+      "host-play",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "frontend-core",
+      "nav",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
       "frontend-core",
       "scenario",
       "dev",
@@ -903,7 +175,37 @@
       []
     ],
     [
-      "exceptional-edge",
+      "edge",
+      "frontend-core",
+      "script",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "frontend-core",
+      "vault",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "host",
+      "api",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
       "host",
       "client",
       "dev",
@@ -915,7 +217,57 @@
       ]
     ],
     [
-      "exceptional-edge",
+      "edge",
+      "host",
+      "client",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "host",
+      "vault",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "host-play",
+      "api",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "host-play",
+      "client",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "host-play",
+      "host",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
       "host-play",
       "nav",
       "build",
@@ -925,7 +277,17 @@
       []
     ],
     [
-      "exceptional-edge",
+      "edge",
+      "host-play",
+      "nav",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
       "host-play",
       "scenario",
       "dev",
@@ -935,7 +297,7 @@
       []
     ],
     [
-      "exceptional-edge",
+      "edge",
       "host-play",
       "scenario",
       "optional",
@@ -945,7 +307,7 @@
       []
     ],
     [
-      "exceptional-edge",
+      "edge",
       "host-play",
       "script",
       "dev",
@@ -957,7 +319,81 @@
       ]
     ],
     [
-      "exceptional-edge",
+      "edge",
+      "host-play",
+      "script",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      [
+        "load"
+      ]
+    ],
+    [
+      "edge",
+      "host-play",
+      "vault",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "nav",
+      "api",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "nav",
+      "client",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "panel",
+      "api",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "panel",
+      "client",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      [
+        "audio"
+      ]
+    ],
+    [
+      "edge",
+      "panel",
+      "dear-imgui-wgpu",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
       "panel",
       "frontend-core",
       "dev",
@@ -969,7 +405,17 @@
       ]
     ],
     [
-      "exceptional-edge",
+      "edge",
+      "panel",
+      "frontend-core",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
       "panel",
       "host",
       "normal",
@@ -979,7 +425,7 @@
       []
     ],
     [
-      "exceptional-edge",
+      "edge",
       "panel",
       "host-play",
       "dev",
@@ -991,7 +437,7 @@
       ]
     ],
     [
-      "exceptional-edge",
+      "edge",
       "panel",
       "host-play",
       "normal",
@@ -1004,7 +450,17 @@
       ]
     ],
     [
-      "exceptional-edge",
+      "edge",
+      "panel",
+      "nav",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
       "panel",
       "scenario",
       "normal",
@@ -1014,7 +470,7 @@
       []
     ],
     [
-      "exceptional-edge",
+      "edge",
       "panel",
       "script",
       "normal",
@@ -1024,7 +480,7 @@
       []
     ],
     [
-      "exceptional-edge",
+      "edge",
       "panel",
       "vault",
       "normal",
@@ -1034,7 +490,57 @@
       []
     ],
     [
-      "exceptional-edge",
+      "edge",
+      "scenario",
+      "api",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "scenario",
+      "client",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "scenario",
+      "nav",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "scenario",
+      "script",
+      "normal",
+      "",
+      "dependencies",
+      false,
+      []
+    ],
+    [
+      "edge",
+      "script",
+      "api",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
       "script",
       "client",
       "dev",
@@ -1044,20 +550,17 @@
       []
     ],
     [
-      "exceptional-edge",
+      "edge",
       "script",
-      "script",
-      "dev",
+      "nav",
+      "normal",
       "",
-      "dev-dependencies",
+      "dependencies",
       true,
-      [
-        "path-schema",
-        "test-hooks"
-      ]
+      []
     ],
     [
-      "exceptional-edge",
+      "edge",
       "script",
       "seat-model",
       "dev",
@@ -1067,7 +570,37 @@
       []
     ],
     [
-      "exceptional-edge",
+      "edge",
+      "script",
+      "vault",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "tui",
+      "api",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "tui",
+      "client",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
       "tui",
       "frontend-core",
       "dev",
@@ -1079,7 +612,17 @@
       ]
     ],
     [
-      "exceptional-edge",
+      "edge",
+      "tui",
+      "frontend-core",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
       "tui",
       "host",
       "dev",
@@ -1089,7 +632,7 @@
       []
     ],
     [
-      "exceptional-edge",
+      "edge",
       "tui",
       "host-play",
       "dev",
@@ -1102,7 +645,7 @@
       ]
     ],
     [
-      "exceptional-edge",
+      "edge",
       "tui",
       "host-play",
       "normal",
@@ -1114,7 +657,17 @@
       ]
     ],
     [
-      "exceptional-edge",
+      "edge",
+      "tui",
+      "nav",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
       "tui",
       "scenario",
       "normal",
@@ -1124,7 +677,7 @@
       []
     ],
     [
-      "exceptional-edge",
+      "edge",
       "tui",
       "script",
       "normal",
@@ -1134,7 +687,7 @@
       []
     ],
     [
-      "exceptional-edge",
+      "edge",
       "tui",
       "vault",
       "normal",
@@ -1144,966 +697,88 @@
       []
     ],
     [
-      "feature-activation",
+      "isolated-activation",
       "full-products",
       "host-play",
+      "dependency",
       "script",
-      "load"
-    ],
-    [
-      "feature-activation",
-      "full-products",
-      "panel",
-      "api",
-      "debug-catalog"
-    ],
-    [
-      "feature-activation",
-      "full-products",
-      "panel",
-      "host-play",
-      "debug-catalog"
-    ],
-    [
-      "feature-activation",
-      "full-products",
-      "panel",
-      "host-play",
-      "live-harness"
-    ],
-    [
-      "feature-activation",
-      "full-products",
-      "panel",
-      "script",
-      "load"
-    ],
-    [
-      "feature-activation",
-      "full-products",
-      "tui",
-      "host-play",
-      "live-harness"
-    ],
-    [
-      "feature-activation",
-      "full-products",
-      "tui",
-      "script",
-      "load"
-    ],
-    [
-      "feature-activation",
-      "host-performance",
-      "host",
-      "host",
-      "performance-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile",
-      "host-play",
-      "host",
-      "performance-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile",
-      "host-play",
-      "host-play",
-      "memory-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile",
-      "host-play",
-      "script",
-      "load"
-    ],
-    [
-      "feature-activation",
-      "memory-profile",
-      "host-play",
-      "script",
-      "memory-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile",
-      "panel",
-      "api",
-      "debug-catalog"
-    ],
-    [
-      "feature-activation",
-      "memory-profile",
-      "panel",
-      "host",
-      "performance-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile",
-      "panel",
-      "host-play",
-      "debug-catalog"
-    ],
-    [
-      "feature-activation",
-      "memory-profile",
-      "panel",
-      "host-play",
-      "live-harness"
-    ],
-    [
-      "feature-activation",
-      "memory-profile",
-      "panel",
-      "host-play",
-      "memory-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile",
-      "panel",
-      "panel",
-      "memory-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile",
-      "panel",
-      "script",
-      "load"
-    ],
-    [
-      "feature-activation",
-      "memory-profile",
-      "panel",
-      "script",
-      "memory-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile",
-      "tui",
-      "host",
-      "performance-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile",
-      "tui",
-      "host-play",
-      "live-harness"
-    ],
-    [
-      "feature-activation",
-      "memory-profile",
-      "tui",
-      "host-play",
-      "memory-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile",
-      "tui",
-      "script",
-      "load"
-    ],
-    [
-      "feature-activation",
-      "memory-profile",
-      "tui",
-      "script",
-      "memory-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile",
-      "tui",
-      "tui",
-      "memory-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "host-play",
-      "host",
-      "performance-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "host-play",
-      "host-play",
-      "memory-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "host-play",
-      "host-play",
-      "memory-profile-no-alloc"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "host-play",
-      "script",
-      "load"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "host-play",
-      "script",
-      "memory-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "api",
-      "debug-catalog"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "host",
-      "performance-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "host-play",
-      "debug-catalog"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "host-play",
-      "live-harness"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "host-play",
-      "memory-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "host-play",
-      "memory-profile-no-alloc"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "panel",
-      "memory-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "panel",
-      "memory-profile-no-alloc"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "script",
-      "load"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "script",
-      "memory-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "host",
-      "performance-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "host-play",
-      "live-harness"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "host-play",
-      "memory-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "host-play",
-      "memory-profile-no-alloc"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "script",
-      "load"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "script",
-      "memory-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "tui",
-      "memory-profile"
-    ],
-    [
-      "feature-activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "tui",
-      "memory-profile-no-alloc"
-    ],
-    [
-      "feature-activation",
-      "native-only",
-      "host-play",
-      "script",
-      "load"
-    ],
-    [
-      "feature-activation",
-      "native-only",
-      "panel",
-      "api",
-      "debug-catalog"
-    ],
-    [
-      "feature-activation",
-      "native-only",
-      "panel",
-      "host-play",
-      "debug-catalog"
-    ],
-    [
-      "feature-activation",
-      "native-only",
-      "panel",
-      "host-play",
-      "live-harness"
-    ],
-    [
-      "feature-activation",
-      "native-only",
-      "panel",
-      "script",
-      "load"
-    ],
-    [
-      "feature-activation",
-      "native-only",
-      "tui",
-      "host-play",
-      "live-harness"
-    ],
-    [
-      "feature-activation",
-      "native-only",
-      "tui",
-      "script",
-      "load"
-    ],
-    [
-      "feature-activation",
-      "render-diagnostics",
-      "host",
-      "host",
-      "render-diagnostics"
-    ],
-    [
-      "feature-activation",
-      "render-diagnostics",
-      "panel",
-      "api",
-      "debug-catalog"
-    ],
-    [
-      "feature-activation",
-      "render-diagnostics",
-      "panel",
-      "api",
-      "path-schema"
-    ],
-    [
-      "feature-activation",
-      "render-diagnostics",
-      "panel",
-      "api",
-      "test-hooks"
-    ],
-    [
-      "feature-activation",
-      "render-diagnostics",
-      "panel",
-      "frontend-core",
-      "test-support"
-    ],
-    [
-      "feature-activation",
-      "render-diagnostics",
-      "panel",
-      "host",
-      "render-diagnostics"
-    ],
-    [
-      "feature-activation",
-      "render-diagnostics",
-      "panel",
-      "host",
-      "test-support"
-    ],
-    [
-      "feature-activation",
-      "render-diagnostics",
-      "panel",
-      "host-play",
-      "debug-catalog"
-    ],
-    [
-      "feature-activation",
-      "render-diagnostics",
-      "panel",
-      "host-play",
-      "live-harness"
-    ],
-    [
-      "feature-activation",
-      "render-diagnostics",
-      "panel",
-      "host-play",
-      "live-probe"
-    ],
-    [
-      "feature-activation",
-      "render-diagnostics",
-      "panel",
-      "host-play",
-      "test-support"
-    ],
-    [
-      "feature-activation",
-      "render-diagnostics",
-      "panel",
-      "nav",
-      "test-support"
-    ],
-    [
-      "feature-activation",
-      "render-diagnostics",
-      "panel",
-      "panel",
-      "render-diagnostics"
-    ],
-    [
-      "feature-activation",
-      "render-diagnostics",
-      "panel",
-      "script",
-      "load"
-    ],
-    [
-      "feature-activation",
-      "render-diagnostics",
-      "panel",
-      "script",
-      "path-schema"
-    ],
-    [
-      "feature-activation",
-      "render-diagnostics",
-      "panel",
-      "script",
-      "test-hooks"
-    ],
-    [
-      "feature-activation",
-      "script-load-tests",
-      "script",
-      "api",
-      "path-schema"
-    ],
-    [
-      "feature-activation",
-      "script-load-tests",
-      "script",
-      "api",
-      "test-hooks"
-    ],
-    [
-      "feature-activation",
-      "script-load-tests",
-      "script",
-      "script",
-      "load"
-    ],
-    [
-      "feature-activation",
-      "script-load-tests",
-      "script",
-      "script",
-      "path-schema"
-    ],
-    [
-      "feature-activation",
-      "script-load-tests",
-      "script",
-      "script",
-      "test-hooks"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "e2e",
-      "api",
-      "path-schema"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "e2e",
-      "api",
-      "test-hooks"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "e2e",
-      "host-play",
-      "test-support"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "e2e",
-      "nav",
-      "test-support"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "e2e",
-      "script",
-      "load"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "e2e",
-      "script",
-      "path-schema"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "e2e",
-      "script",
-      "test-hooks"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "frontend-core",
-      "api",
-      "path-schema"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "frontend-core",
-      "api",
-      "test-hooks"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "frontend-core",
-      "frontend-core",
-      "test-support"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "frontend-core",
-      "host",
-      "test-support"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "frontend-core",
-      "host-play",
-      "test-support"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "frontend-core",
-      "nav",
-      "test-support"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "frontend-core",
-      "script",
-      "load"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "frontend-core",
-      "script",
-      "path-schema"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "frontend-core",
-      "script",
-      "test-hooks"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "host-play",
-      "api",
-      "path-schema"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "host-play",
-      "api",
-      "test-hooks"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "host-play",
-      "script",
-      "load"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "host-play",
-      "script",
-      "path-schema"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "host-play",
-      "script",
-      "test-hooks"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "panel",
-      "api",
-      "debug-catalog"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "panel",
-      "api",
-      "path-schema"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "panel",
-      "api",
-      "test-hooks"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "panel",
-      "frontend-core",
-      "test-support"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "panel",
-      "host",
-      "test-support"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "panel",
-      "host-play",
-      "debug-catalog"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "panel",
-      "host-play",
-      "live-harness"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "panel",
-      "host-play",
-      "live-probe"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "panel",
-      "host-play",
-      "test-support"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "panel",
-      "nav",
-      "test-support"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "panel",
-      "script",
-      "load"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "panel",
-      "script",
-      "path-schema"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "panel",
-      "script",
-      "test-hooks"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "scenario",
-      "api",
-      "path-schema"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "scenario",
-      "api",
-      "test-hooks"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "scenario",
-      "script",
-      "load"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "scenario",
-      "script",
-      "path-schema"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "scenario",
-      "script",
-      "test-hooks"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "script",
-      "api",
-      "path-schema"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "script",
-      "api",
-      "test-hooks"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "script",
-      "script",
-      "load"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "script",
-      "script",
-      "path-schema"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "script",
-      "script",
-      "test-hooks"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "tui",
-      "api",
-      "path-schema"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "tui",
-      "api",
-      "test-hooks"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "tui",
-      "frontend-core",
-      "test-support"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "tui",
-      "host",
-      "test-support"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "tui",
-      "host-play",
-      "live-harness"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "tui",
-      "host-play",
-      "live-probe"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "tui",
-      "host-play",
-      "test-support"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "tui",
-      "nav",
-      "test-support"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "tui",
-      "script",
-      "load"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "tui",
-      "script",
-      "path-schema"
-    ],
-    [
-      "feature-activation",
-      "workspace-tests",
-      "tui",
-      "script",
-      "test-hooks"
+      "deno_core",
+      "optional",
+      "",
+      "dependencies"
     ],
     [
       "isolated-activation",
       "full-products",
       "host-play",
-      "host",
+      "dependency",
+      "script",
+      "flatbuffers",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "host-play",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "host-play",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "host-play",
+      "dependency",
+      "script",
+      "tokio",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "host-play",
+      "dependency",
+      "script",
+      "v8",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "host-play",
+      "feature-edge",
+      "host-play",
+      "script",
+      "load"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "panel",
+      "dependency",
       "client",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "host-play",
-      "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "host-play",
-      "host-play",
-      "nav",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "host-play",
-      "host-play",
-      "script",
-      "normal",
+      "cpal",
+      "optional",
       "",
       "dependencies"
     ],
@@ -2111,19 +786,10 @@
       "isolated-activation",
       "full-products",
       "panel",
-      "frontend-core",
-      "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "panel",
-      "host",
+      "dependency",
       "client",
-      "normal",
+      "rustysynth",
+      "optional",
       "",
       "dependencies"
     ],
@@ -2131,19 +797,10 @@
       "isolated-activation",
       "full-products",
       "panel",
-      "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "panel",
-      "host-play",
-      "nav",
-      "normal",
+      "dependency",
+      "dear-imgui-wgpu",
+      "wgpu",
+      "optional",
       "",
       "dependencies"
     ],
@@ -2151,6 +808,7 @@
       "isolated-activation",
       "full-products",
       "panel",
+      "dependency",
       "host-play",
       "scenario",
       "optional",
@@ -2161,116 +819,118 @@
       "isolated-activation",
       "full-products",
       "panel",
+      "dependency",
+      "script",
+      "deno_core",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "panel",
+      "dependency",
+      "script",
+      "flatbuffers",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "panel",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "panel",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "panel",
+      "dependency",
+      "script",
+      "tokio",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "panel",
+      "dependency",
+      "script",
+      "v8",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "panel",
+      "feature-edge",
+      "host-play",
+      "api",
+      "debug-catalog"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "panel",
+      "feature-edge",
       "host-play",
       "script",
-      "normal",
-      "",
-      "dependencies"
+      "load"
     ],
     [
       "isolated-activation",
       "full-products",
       "panel",
+      "feature-edge",
       "panel",
-      "frontend-core",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "panel",
-      "panel",
-      "host",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "panel",
-      "panel",
-      "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "panel",
-      "panel",
-      "scenario",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "panel",
-      "panel",
-      "script",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "panel",
-      "panel",
-      "vault",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "tui",
-      "frontend-core",
-      "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "tui",
-      "host",
       "client",
-      "normal",
-      "",
-      "dependencies"
+      "audio"
     ],
     [
       "isolated-activation",
       "full-products",
-      "tui",
+      "panel",
+      "feature-edge",
+      "panel",
       "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
+      "debug-catalog"
     ],
     [
       "isolated-activation",
       "full-products",
-      "tui",
+      "panel",
+      "feature-edge",
+      "panel",
       "host-play",
-      "nav",
-      "normal",
-      "",
-      "dependencies"
+      "live-harness"
     ],
     [
       "isolated-activation",
       "full-products",
       "tui",
+      "dependency",
       "host-play",
       "scenario",
       "optional",
@@ -2281,116 +941,100 @@
       "isolated-activation",
       "full-products",
       "tui",
+      "dependency",
+      "script",
+      "deno_core",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "tui",
+      "dependency",
+      "script",
+      "flatbuffers",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "tui",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "tui",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "tui",
+      "dependency",
+      "script",
+      "tokio",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "tui",
+      "dependency",
+      "script",
+      "v8",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "tui",
+      "feature-edge",
       "host-play",
       "script",
-      "normal",
-      "",
-      "dependencies"
+      "load"
     ],
     [
       "isolated-activation",
       "full-products",
       "tui",
-      "tui",
-      "frontend-core",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "tui",
+      "feature-edge",
       "tui",
       "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "tui",
-      "tui",
-      "scenario",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "tui",
-      "tui",
-      "script",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "tui",
-      "tui",
-      "vault",
-      "normal",
-      "",
-      "dependencies"
+      "live-harness"
     ],
     [
       "isolated-activation",
       "host-performance",
       "host",
+      "feature-edge",
       "host",
       "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "host-performance",
-      "host",
-      "host",
-      "client",
-      "normal",
-      "",
-      "dependencies"
+      "test-support"
     ],
     [
       "isolated-activation",
       "memory-profile",
       "host-play",
-      "host",
-      "client",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "host-play",
-      "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "host-play",
-      "host-play",
-      "nav",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "host-play",
+      "dependency",
       "host-play",
       "scenario",
       "optional",
@@ -2401,29 +1045,103 @@
       "isolated-activation",
       "memory-profile",
       "host-play",
+      "dependency",
+      "script",
+      "deno_core",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "host-play",
+      "dependency",
+      "script",
+      "flatbuffers",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "host-play",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "host-play",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "host-play",
+      "dependency",
+      "script",
+      "tokio",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "host-play",
+      "dependency",
+      "script",
+      "v8",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "host-play",
+      "feature-edge",
+      "host-play",
+      "host",
+      "performance-profile"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "host-play",
+      "feature-edge",
       "host-play",
       "script",
-      "normal",
-      "",
-      "dependencies"
+      "load"
     ],
     [
       "isolated-activation",
       "memory-profile",
-      "panel",
-      "frontend-core",
       "host-play",
-      "normal",
-      "",
-      "dependencies"
+      "feature-edge",
+      "host-play",
+      "script",
+      "memory-profile"
     ],
     [
       "isolated-activation",
       "memory-profile",
       "panel",
-      "host",
+      "dependency",
       "client",
-      "normal",
+      "cpal",
+      "optional",
       "",
       "dependencies"
     ],
@@ -2431,19 +1149,10 @@
       "isolated-activation",
       "memory-profile",
       "panel",
-      "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "panel",
-      "host-play",
-      "nav",
-      "normal",
+      "dependency",
+      "client",
+      "rustysynth",
+      "optional",
       "",
       "dependencies"
     ],
@@ -2451,6 +1160,18 @@
       "isolated-activation",
       "memory-profile",
       "panel",
+      "dependency",
+      "dear-imgui-wgpu",
+      "wgpu",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "panel",
+      "dependency",
       "host-play",
       "scenario",
       "optional",
@@ -2461,116 +1182,145 @@
       "isolated-activation",
       "memory-profile",
       "panel",
+      "dependency",
+      "script",
+      "deno_core",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "panel",
+      "dependency",
+      "script",
+      "flatbuffers",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "panel",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "panel",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "panel",
+      "dependency",
+      "script",
+      "tokio",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "panel",
+      "dependency",
+      "script",
+      "v8",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "panel",
+      "feature-edge",
+      "host-play",
+      "api",
+      "debug-catalog"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "panel",
+      "feature-edge",
+      "host-play",
+      "host",
+      "performance-profile"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "panel",
+      "feature-edge",
       "host-play",
       "script",
-      "normal",
-      "",
-      "dependencies"
+      "load"
     ],
     [
       "isolated-activation",
       "memory-profile",
       "panel",
-      "panel",
-      "frontend-core",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "panel",
-      "panel",
-      "host",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "panel",
-      "panel",
+      "feature-edge",
       "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "panel",
-      "panel",
-      "scenario",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "panel",
-      "panel",
       "script",
-      "normal",
-      "",
-      "dependencies"
+      "memory-profile"
     ],
     [
       "isolated-activation",
       "memory-profile",
       "panel",
+      "feature-edge",
       "panel",
-      "vault",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "tui",
-      "frontend-core",
-      "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "tui",
-      "host",
       "client",
-      "normal",
-      "",
-      "dependencies"
+      "audio"
     ],
     [
       "isolated-activation",
       "memory-profile",
-      "tui",
+      "panel",
+      "feature-edge",
+      "panel",
       "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
+      "debug-catalog"
     ],
     [
       "isolated-activation",
       "memory-profile",
-      "tui",
+      "panel",
+      "feature-edge",
+      "panel",
       "host-play",
-      "nav",
-      "normal",
-      "",
-      "dependencies"
+      "live-harness"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "panel",
+      "feature-edge",
+      "panel",
+      "host-play",
+      "memory-profile"
     ],
     [
       "isolated-activation",
       "memory-profile",
       "tui",
+      "dependency",
       "host-play",
       "scenario",
       "optional",
@@ -2581,9 +1331,10 @@
       "isolated-activation",
       "memory-profile",
       "tui",
-      "host-play",
+      "dependency",
       "script",
-      "normal",
+      "deno_core",
+      "optional",
       "",
       "dependencies"
     ],
@@ -2591,9 +1342,10 @@
       "isolated-activation",
       "memory-profile",
       "tui",
-      "tui",
-      "frontend-core",
-      "normal",
+      "dependency",
+      "script",
+      "flatbuffers",
+      "optional",
       "",
       "dependencies"
     ],
@@ -2601,9 +1353,10 @@
       "isolated-activation",
       "memory-profile",
       "tui",
-      "tui",
-      "host-play",
-      "normal",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
       "",
       "dependencies"
     ],
@@ -2611,9 +1364,10 @@
       "isolated-activation",
       "memory-profile",
       "tui",
-      "tui",
-      "scenario",
-      "normal",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
       "",
       "dependencies"
     ],
@@ -2621,9 +1375,10 @@
       "isolated-activation",
       "memory-profile",
       "tui",
-      "tui",
+      "dependency",
       "script",
-      "normal",
+      "tokio",
+      "optional",
       "",
       "dependencies"
     ],
@@ -2631,46 +1386,63 @@
       "isolated-activation",
       "memory-profile",
       "tui",
-      "tui",
-      "vault",
-      "normal",
+      "dependency",
+      "script",
+      "v8",
+      "optional",
       "",
       "dependencies"
     ],
     [
       "isolated-activation",
-      "memory-profile-no-alloc",
+      "memory-profile",
+      "tui",
+      "feature-edge",
       "host-play",
       "host",
-      "client",
-      "normal",
-      "",
-      "dependencies"
+      "performance-profile"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "tui",
+      "feature-edge",
+      "host-play",
+      "script",
+      "load"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "tui",
+      "feature-edge",
+      "host-play",
+      "script",
+      "memory-profile"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "tui",
+      "feature-edge",
+      "tui",
+      "host-play",
+      "live-harness"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "tui",
+      "feature-edge",
+      "tui",
+      "host-play",
+      "memory-profile"
     ],
     [
       "isolated-activation",
       "memory-profile-no-alloc",
       "host-play",
-      "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "host-play",
-      "host-play",
-      "nav",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "host-play",
+      "dependency",
       "host-play",
       "scenario",
       "optional",
@@ -2681,29 +1453,103 @@
       "isolated-activation",
       "memory-profile-no-alloc",
       "host-play",
+      "dependency",
+      "script",
+      "deno_core",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "host-play",
+      "dependency",
+      "script",
+      "flatbuffers",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "host-play",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "host-play",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "host-play",
+      "dependency",
+      "script",
+      "tokio",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "host-play",
+      "dependency",
+      "script",
+      "v8",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "host-play",
+      "feature-edge",
+      "host-play",
+      "host",
+      "performance-profile"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "host-play",
+      "feature-edge",
       "host-play",
       "script",
-      "normal",
-      "",
-      "dependencies"
+      "load"
     ],
     [
       "isolated-activation",
       "memory-profile-no-alloc",
-      "panel",
-      "frontend-core",
       "host-play",
-      "normal",
-      "",
-      "dependencies"
+      "feature-edge",
+      "host-play",
+      "script",
+      "memory-profile"
     ],
     [
       "isolated-activation",
       "memory-profile-no-alloc",
       "panel",
-      "host",
+      "dependency",
       "client",
-      "normal",
+      "cpal",
+      "optional",
       "",
       "dependencies"
     ],
@@ -2711,19 +1557,10 @@
       "isolated-activation",
       "memory-profile-no-alloc",
       "panel",
-      "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "host-play",
-      "nav",
-      "normal",
+      "dependency",
+      "client",
+      "rustysynth",
+      "optional",
       "",
       "dependencies"
     ],
@@ -2731,6 +1568,18 @@
       "isolated-activation",
       "memory-profile-no-alloc",
       "panel",
+      "dependency",
+      "dear-imgui-wgpu",
+      "wgpu",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "panel",
+      "dependency",
       "host-play",
       "scenario",
       "optional",
@@ -2741,116 +1590,154 @@
       "isolated-activation",
       "memory-profile-no-alloc",
       "panel",
+      "dependency",
+      "script",
+      "deno_core",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "panel",
+      "dependency",
+      "script",
+      "flatbuffers",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "panel",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "panel",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "panel",
+      "dependency",
+      "script",
+      "tokio",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "panel",
+      "dependency",
+      "script",
+      "v8",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "panel",
+      "feature-edge",
+      "host-play",
+      "api",
+      "debug-catalog"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "panel",
+      "feature-edge",
+      "host-play",
+      "host",
+      "performance-profile"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "panel",
+      "feature-edge",
       "host-play",
       "script",
-      "normal",
-      "",
-      "dependencies"
+      "load"
     ],
     [
       "isolated-activation",
       "memory-profile-no-alloc",
       "panel",
-      "panel",
-      "frontend-core",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "panel",
-      "host",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "panel",
+      "feature-edge",
       "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "panel",
-      "scenario",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "panel",
       "script",
-      "normal",
-      "",
-      "dependencies"
+      "memory-profile"
     ],
     [
       "isolated-activation",
       "memory-profile-no-alloc",
       "panel",
+      "feature-edge",
       "panel",
-      "vault",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "frontend-core",
-      "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "host",
       "client",
-      "normal",
-      "",
-      "dependencies"
+      "audio"
     ],
     [
       "isolated-activation",
       "memory-profile-no-alloc",
-      "tui",
+      "panel",
+      "feature-edge",
+      "panel",
       "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
+      "debug-catalog"
     ],
     [
       "isolated-activation",
       "memory-profile-no-alloc",
-      "tui",
+      "panel",
+      "feature-edge",
+      "panel",
       "host-play",
-      "nav",
-      "normal",
-      "",
-      "dependencies"
+      "live-harness"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "panel",
+      "feature-edge",
+      "panel",
+      "host-play",
+      "memory-profile"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "panel",
+      "feature-edge",
+      "panel",
+      "host-play",
+      "memory-profile-no-alloc"
     ],
     [
       "isolated-activation",
       "memory-profile-no-alloc",
       "tui",
+      "dependency",
       "host-play",
       "scenario",
       "optional",
@@ -2861,9 +1748,10 @@
       "isolated-activation",
       "memory-profile-no-alloc",
       "tui",
-      "host-play",
+      "dependency",
       "script",
-      "normal",
+      "deno_core",
+      "optional",
       "",
       "dependencies"
     ],
@@ -2871,39 +1759,10 @@
       "isolated-activation",
       "memory-profile-no-alloc",
       "tui",
-      "tui",
-      "frontend-core",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "tui",
-      "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "tui",
-      "scenario",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "tui",
+      "dependency",
       "script",
-      "normal",
+      "flatbuffers",
+      "optional",
       "",
       "dependencies"
     ],
@@ -2911,69 +1770,183 @@
       "isolated-activation",
       "memory-profile-no-alloc",
       "tui",
-      "tui",
-      "vault",
-      "normal",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
       "",
       "dependencies"
     ],
     [
       "isolated-activation",
-      "native-only",
+      "memory-profile-no-alloc",
+      "tui",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "tui",
+      "dependency",
+      "script",
+      "tokio",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "tui",
+      "dependency",
+      "script",
+      "v8",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "tui",
+      "feature-edge",
       "host-play",
       "host",
-      "client",
-      "normal",
-      "",
-      "dependencies"
+      "performance-profile"
     ],
     [
       "isolated-activation",
-      "native-only",
-      "host-play",
-      "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "host-play",
-      "host-play",
-      "nav",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "host-play",
+      "memory-profile-no-alloc",
+      "tui",
+      "feature-edge",
       "host-play",
       "script",
-      "normal",
-      "",
-      "dependencies"
+      "load"
     ],
     [
       "isolated-activation",
-      "native-only",
-      "panel",
-      "frontend-core",
+      "memory-profile-no-alloc",
+      "tui",
+      "feature-edge",
       "host-play",
-      "normal",
+      "script",
+      "memory-profile"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "tui",
+      "feature-edge",
+      "tui",
+      "host-play",
+      "live-harness"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "tui",
+      "feature-edge",
+      "tui",
+      "host-play",
+      "memory-profile"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "tui",
+      "feature-edge",
+      "tui",
+      "host-play",
+      "memory-profile-no-alloc"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "host-play",
+      "dependency",
+      "script",
+      "deno_core",
+      "optional",
       "",
       "dependencies"
     ],
     [
       "isolated-activation",
       "native-only",
+      "host-play",
+      "dependency",
+      "script",
+      "flatbuffers",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "host-play",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "host-play",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "host-play",
+      "dependency",
+      "script",
+      "tokio",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "host-play",
+      "dependency",
+      "script",
+      "v8",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "host-play",
+      "feature-edge",
+      "host-play",
+      "script",
+      "load"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
       "panel",
-      "host",
+      "dependency",
       "client",
-      "normal",
+      "cpal",
+      "optional",
       "",
       "dependencies"
     ],
@@ -2981,19 +1954,10 @@
       "isolated-activation",
       "native-only",
       "panel",
-      "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "panel",
-      "host-play",
-      "nav",
-      "normal",
+      "dependency",
+      "client",
+      "rustysynth",
+      "optional",
       "",
       "dependencies"
     ],
@@ -3001,6 +1965,18 @@
       "isolated-activation",
       "native-only",
       "panel",
+      "dependency",
+      "dear-imgui-wgpu",
+      "wgpu",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "panel",
+      "dependency",
       "host-play",
       "scenario",
       "optional",
@@ -3011,116 +1987,118 @@
       "isolated-activation",
       "native-only",
       "panel",
+      "dependency",
+      "script",
+      "deno_core",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "panel",
+      "dependency",
+      "script",
+      "flatbuffers",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "panel",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "panel",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "panel",
+      "dependency",
+      "script",
+      "tokio",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "panel",
+      "dependency",
+      "script",
+      "v8",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "panel",
+      "feature-edge",
+      "host-play",
+      "api",
+      "debug-catalog"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "panel",
+      "feature-edge",
       "host-play",
       "script",
-      "normal",
-      "",
-      "dependencies"
+      "load"
     ],
     [
       "isolated-activation",
       "native-only",
       "panel",
+      "feature-edge",
       "panel",
-      "frontend-core",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "panel",
-      "panel",
-      "host",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "panel",
-      "panel",
-      "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "panel",
-      "panel",
-      "scenario",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "panel",
-      "panel",
-      "script",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "panel",
-      "panel",
-      "vault",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "tui",
-      "frontend-core",
-      "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "tui",
-      "host",
       "client",
-      "normal",
-      "",
-      "dependencies"
+      "audio"
     ],
     [
       "isolated-activation",
       "native-only",
-      "tui",
+      "panel",
+      "feature-edge",
+      "panel",
       "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
+      "debug-catalog"
     ],
     [
       "isolated-activation",
       "native-only",
-      "tui",
+      "panel",
+      "feature-edge",
+      "panel",
       "host-play",
-      "nav",
-      "normal",
-      "",
-      "dependencies"
+      "live-harness"
     ],
     [
       "isolated-activation",
       "native-only",
       "tui",
+      "dependency",
       "host-play",
       "scenario",
       "optional",
@@ -3131,79 +2109,112 @@
       "isolated-activation",
       "native-only",
       "tui",
+      "dependency",
+      "script",
+      "deno_core",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "tui",
+      "dependency",
+      "script",
+      "flatbuffers",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "tui",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "tui",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "tui",
+      "dependency",
+      "script",
+      "tokio",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "tui",
+      "dependency",
+      "script",
+      "v8",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "tui",
+      "feature-edge",
       "host-play",
       "script",
-      "normal",
-      "",
-      "dependencies"
+      "load"
     ],
     [
       "isolated-activation",
       "native-only",
       "tui",
-      "tui",
-      "frontend-core",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "tui",
+      "feature-edge",
       "tui",
       "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "tui",
-      "tui",
-      "scenario",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "tui",
-      "tui",
-      "script",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "tui",
-      "tui",
-      "vault",
-      "normal",
-      "",
-      "dependencies"
+      "live-harness"
     ],
     [
       "isolated-activation",
       "render-diagnostics",
       "host",
+      "feature-edge",
       "host",
       "client",
-      "dev",
-      "",
-      "dev-dependencies"
+      "render-diagnostics"
     ],
     [
       "isolated-activation",
       "render-diagnostics",
       "host",
+      "feature-edge",
       "host",
       "client",
-      "normal",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "dependency",
+      "api",
+      "schemars",
+      "optional",
       "",
       "dependencies"
     ],
@@ -3211,39 +2222,10 @@
       "isolated-activation",
       "render-diagnostics",
       "panel",
-      "frontend-core",
+      "dependency",
       "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "render-diagnostics",
-      "panel",
-      "frontend-core",
-      "frontend-core",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "render-diagnostics",
-      "panel",
-      "frontend-core",
-      "host-play",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "render-diagnostics",
-      "panel",
-      "frontend-core",
-      "host-play",
-      "normal",
+      "cpal",
+      "optional",
       "",
       "dependencies"
     ],
@@ -3251,29 +2233,10 @@
       "isolated-activation",
       "render-diagnostics",
       "panel",
-      "frontend-core",
-      "scenario",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "render-diagnostics",
-      "panel",
-      "host",
+      "dependency",
       "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "render-diagnostics",
-      "panel",
-      "host",
-      "client",
-      "normal",
+      "rustysynth",
+      "optional",
       "",
       "dependencies"
     ],
@@ -3281,19 +2244,10 @@
       "isolated-activation",
       "render-diagnostics",
       "panel",
-      "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "render-diagnostics",
-      "panel",
-      "host-play",
-      "nav",
-      "normal",
+      "dependency",
+      "dear-imgui-wgpu",
+      "wgpu",
+      "optional",
       "",
       "dependencies"
     ],
@@ -3301,16 +2255,7 @@
       "isolated-activation",
       "render-diagnostics",
       "panel",
-      "host-play",
-      "scenario",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "render-diagnostics",
-      "panel",
+      "dependency",
       "host-play",
       "scenario",
       "optional",
@@ -3321,19 +2266,10 @@
       "isolated-activation",
       "render-diagnostics",
       "panel",
-      "host-play",
+      "dependency",
       "script",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "render-diagnostics",
-      "panel",
-      "host-play",
-      "script",
-      "normal",
+      "deno_core",
+      "optional",
       "",
       "dependencies"
     ],
@@ -3341,19 +2277,10 @@
       "isolated-activation",
       "render-diagnostics",
       "panel",
-      "panel",
-      "frontend-core",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "render-diagnostics",
-      "panel",
-      "panel",
-      "frontend-core",
-      "normal",
+      "dependency",
+      "script",
+      "flatbuffers",
+      "optional",
       "",
       "dependencies"
     ],
@@ -3361,139 +2288,369 @@
       "isolated-activation",
       "render-diagnostics",
       "panel",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "dependency",
+      "script",
+      "schemars",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "dependency",
+      "script",
+      "tokio",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "dependency",
+      "script",
+      "v8",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "frontend-core",
+      "frontend-core",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "frontend-core",
+      "host",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "frontend-core",
+      "host-play",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "host",
+      "client",
+      "render-diagnostics"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "host",
+      "client",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "host-play",
+      "api",
+      "debug-catalog"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "host-play",
+      "nav",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "host-play",
+      "script",
+      "load"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "host-play",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "panel",
+      "client",
+      "audio"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "panel",
+      "client",
+      "render-diagnostics"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "panel",
+      "frontend-core",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
       "panel",
       "host",
-      "normal",
-      "",
-      "dependencies"
+      "render-diagnostics"
     ],
     [
       "isolated-activation",
       "render-diagnostics",
       "panel",
+      "feature-edge",
       "panel",
       "host-play",
-      "dev",
-      "",
-      "dev-dependencies"
+      "debug-catalog"
     ],
     [
       "isolated-activation",
       "render-diagnostics",
       "panel",
+      "feature-edge",
       "panel",
       "host-play",
-      "normal",
-      "",
-      "dependencies"
+      "live-harness"
     ],
     [
       "isolated-activation",
       "render-diagnostics",
       "panel",
+      "feature-edge",
       "panel",
-      "scenario",
-      "normal",
-      "",
-      "dependencies"
+      "host-play",
+      "live-probe"
     ],
     [
       "isolated-activation",
       "render-diagnostics",
       "panel",
-      "panel",
+      "feature-edge",
       "script",
-      "normal",
-      "",
-      "dependencies"
+      "api",
+      "path-schema"
     ],
     [
       "isolated-activation",
       "render-diagnostics",
       "panel",
-      "panel",
-      "vault",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "render-diagnostics",
-      "panel",
+      "feature-edge",
       "script",
-      "client",
-      "dev",
-      "",
-      "dev-dependencies"
+      "api",
+      "test-hooks"
     ],
     [
       "isolated-activation",
       "render-diagnostics",
       "panel",
+      "feature-edge",
       "script",
       "script",
-      "dev",
-      "",
-      "dev-dependencies"
+      "path-schema"
     ],
     [
       "isolated-activation",
       "render-diagnostics",
       "panel",
+      "feature-edge",
       "script",
-      "seat-model",
-      "dev",
-      "",
-      "dev-dependencies"
+      "script",
+      "test-hooks"
     ],
     [
       "isolated-activation",
       "script-load-tests",
       "script",
-      "script",
-      "client",
-      "dev",
+      "dependency",
+      "api",
+      "schemars",
+      "optional",
       "",
-      "dev-dependencies"
+      "dependencies"
     ],
     [
       "isolated-activation",
       "script-load-tests",
       "script",
+      "dependency",
       "script",
-      "script",
-      "dev",
+      "deno_core",
+      "optional",
       "",
-      "dev-dependencies"
+      "dependencies"
     ],
     [
       "isolated-activation",
       "script-load-tests",
       "script",
+      "dependency",
       "script",
-      "seat-model",
-      "dev",
+      "flatbuffers",
+      "optional",
       "",
-      "dev-dependencies"
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "script-load-tests",
+      "script",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "script-load-tests",
+      "script",
+      "dependency",
+      "script",
+      "schemars",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "script-load-tests",
+      "script",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "script-load-tests",
+      "script",
+      "dependency",
+      "script",
+      "tokio",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "script-load-tests",
+      "script",
+      "dependency",
+      "script",
+      "v8",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "script-load-tests",
+      "script",
+      "feature-edge",
+      "script",
+      "api",
+      "path-schema"
+    ],
+    [
+      "isolated-activation",
+      "script-load-tests",
+      "script",
+      "feature-edge",
+      "script",
+      "api",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "script-load-tests",
+      "script",
+      "feature-edge",
+      "script",
+      "script",
+      "path-schema"
+    ],
+    [
+      "isolated-activation",
+      "script-load-tests",
+      "script",
+      "feature-edge",
+      "script",
+      "script",
+      "test-hooks"
     ],
     [
       "isolated-activation",
       "workspace-tests",
       "e2e",
-      "e2e",
-      "host-play",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "e2e",
-      "e2e",
-      "host-play",
-      "normal",
+      "dependency",
+      "api",
+      "schemars",
+      "optional",
       "",
       "dependencies"
     ],
@@ -3501,56 +2658,7 @@
       "isolated-activation",
       "workspace-tests",
       "e2e",
-      "host",
-      "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "e2e",
-      "host",
-      "client",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "e2e",
-      "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "e2e",
-      "host-play",
-      "nav",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "e2e",
-      "host-play",
-      "scenario",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "e2e",
+      "dependency",
       "host-play",
       "scenario",
       "optional",
@@ -3561,19 +2669,10 @@
       "isolated-activation",
       "workspace-tests",
       "e2e",
-      "host-play",
+      "dependency",
       "script",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "e2e",
-      "host-play",
-      "script",
-      "normal",
+      "deno_core",
+      "optional",
       "",
       "dependencies"
     ],
@@ -3581,99 +2680,157 @@
       "isolated-activation",
       "workspace-tests",
       "e2e",
+      "dependency",
       "script",
-      "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "e2e",
-      "script",
-      "script",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "e2e",
-      "script",
-      "seat-model",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "frontend-core",
-      "frontend-core",
-      "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "frontend-core",
-      "frontend-core",
-      "frontend-core",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "frontend-core",
-      "frontend-core",
-      "host-play",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "frontend-core",
-      "frontend-core",
-      "host-play",
-      "normal",
+      "flatbuffers",
+      "optional",
       "",
       "dependencies"
     ],
     [
       "isolated-activation",
       "workspace-tests",
-      "frontend-core",
-      "frontend-core",
-      "scenario",
-      "dev",
+      "e2e",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
       "",
-      "dev-dependencies"
+      "dependencies"
     ],
     [
       "isolated-activation",
       "workspace-tests",
-      "frontend-core",
+      "e2e",
+      "dependency",
+      "script",
+      "schemars",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "dependency",
+      "script",
+      "tokio",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "dependency",
+      "script",
+      "v8",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "feature-edge",
+      "e2e",
+      "host-play",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "feature-edge",
       "host",
       "client",
-      "dev",
-      "",
-      "dev-dependencies"
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "feature-edge",
+      "host-play",
+      "nav",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "feature-edge",
+      "host-play",
+      "script",
+      "load"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "feature-edge",
+      "host-play",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "feature-edge",
+      "script",
+      "api",
+      "path-schema"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "feature-edge",
+      "script",
+      "api",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "feature-edge",
+      "script",
+      "script",
+      "path-schema"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "feature-edge",
+      "script",
+      "script",
+      "test-hooks"
     ],
     [
       "isolated-activation",
       "workspace-tests",
       "frontend-core",
-      "host",
-      "client",
-      "normal",
+      "dependency",
+      "api",
+      "schemars",
+      "optional",
       "",
       "dependencies"
     ],
@@ -3681,36 +2838,7 @@
       "isolated-activation",
       "workspace-tests",
       "frontend-core",
-      "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "frontend-core",
-      "host-play",
-      "nav",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "frontend-core",
-      "host-play",
-      "scenario",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "frontend-core",
+      "dependency",
       "host-play",
       "scenario",
       "optional",
@@ -3721,19 +2849,10 @@
       "isolated-activation",
       "workspace-tests",
       "frontend-core",
-      "host-play",
+      "dependency",
       "script",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "frontend-core",
-      "host-play",
-      "script",
-      "normal",
+      "deno_core",
+      "optional",
       "",
       "dependencies"
     ],
@@ -3741,89 +2860,184 @@
       "isolated-activation",
       "workspace-tests",
       "frontend-core",
+      "dependency",
       "script",
-      "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "frontend-core",
-      "script",
-      "script",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "frontend-core",
-      "script",
-      "seat-model",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "host",
-      "host",
-      "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "host",
-      "host",
-      "client",
-      "normal",
+      "flatbuffers",
+      "optional",
       "",
       "dependencies"
     ],
     [
       "isolated-activation",
       "workspace-tests",
-      "host-play",
-      "host",
-      "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "host-play",
-      "host",
-      "client",
-      "normal",
+      "frontend-core",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
       "",
       "dependencies"
     ],
     [
       "isolated-activation",
       "workspace-tests",
+      "frontend-core",
+      "dependency",
+      "script",
+      "schemars",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "dependency",
+      "script",
+      "tokio",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "dependency",
+      "script",
+      "v8",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
+      "frontend-core",
+      "frontend-core",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
+      "frontend-core",
+      "host",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
+      "frontend-core",
       "host-play",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
+      "host",
+      "client",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
       "host-play",
       "nav",
-      "build",
-      "",
-      "build-dependencies"
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
+      "host-play",
+      "script",
+      "load"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
+      "host-play",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
+      "script",
+      "api",
+      "path-schema"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
+      "script",
+      "api",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
+      "script",
+      "script",
+      "path-schema"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
+      "script",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host",
+      "feature-edge",
+      "host",
+      "client",
+      "test-support"
     ],
     [
       "isolated-activation",
       "workspace-tests",
       "host-play",
-      "host-play",
-      "nav",
-      "normal",
+      "dependency",
+      "api",
+      "schemars",
+      "optional",
       "",
       "dependencies"
     ],
@@ -3831,16 +3045,7 @@
       "isolated-activation",
       "workspace-tests",
       "host-play",
-      "host-play",
-      "scenario",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "host-play",
+      "dependency",
       "host-play",
       "scenario",
       "optional",
@@ -3851,19 +3056,10 @@
       "isolated-activation",
       "workspace-tests",
       "host-play",
-      "host-play",
+      "dependency",
       "script",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "host-play",
-      "host-play",
-      "script",
-      "normal",
+      "deno_core",
+      "optional",
       "",
       "dependencies"
     ],
@@ -3871,99 +3067,150 @@
       "isolated-activation",
       "workspace-tests",
       "host-play",
+      "dependency",
       "script",
-      "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "host-play",
-      "script",
-      "script",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "host-play",
-      "script",
-      "seat-model",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "panel",
-      "frontend-core",
-      "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "panel",
-      "frontend-core",
-      "frontend-core",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "panel",
-      "frontend-core",
-      "host-play",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "panel",
-      "frontend-core",
-      "host-play",
-      "normal",
+      "flatbuffers",
+      "optional",
       "",
       "dependencies"
     ],
     [
       "isolated-activation",
       "workspace-tests",
-      "panel",
-      "frontend-core",
-      "scenario",
-      "dev",
+      "host-play",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
       "",
-      "dev-dependencies"
+      "dependencies"
     ],
     [
       "isolated-activation",
       "workspace-tests",
-      "panel",
+      "host-play",
+      "dependency",
+      "script",
+      "schemars",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "dependency",
+      "script",
+      "tokio",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "dependency",
+      "script",
+      "v8",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "feature-edge",
       "host",
       "client",
-      "dev",
-      "",
-      "dev-dependencies"
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "feature-edge",
+      "host-play",
+      "script",
+      "load"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "feature-edge",
+      "host-play",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "feature-edge",
+      "script",
+      "api",
+      "path-schema"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "feature-edge",
+      "script",
+      "api",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "feature-edge",
+      "script",
+      "script",
+      "path-schema"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "feature-edge",
+      "script",
+      "script",
+      "test-hooks"
     ],
     [
       "isolated-activation",
       "workspace-tests",
       "panel",
-      "host",
+      "dependency",
+      "api",
+      "schemars",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "dependency",
       "client",
-      "normal",
+      "cpal",
+      "optional",
       "",
       "dependencies"
     ],
@@ -3971,19 +3218,10 @@
       "isolated-activation",
       "workspace-tests",
       "panel",
-      "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "panel",
-      "host-play",
-      "nav",
-      "normal",
+      "dependency",
+      "client",
+      "rustysynth",
+      "optional",
       "",
       "dependencies"
     ],
@@ -3991,16 +3229,18 @@
       "isolated-activation",
       "workspace-tests",
       "panel",
-      "host-play",
-      "scenario",
-      "dev",
+      "dependency",
+      "dear-imgui-wgpu",
+      "wgpu",
+      "optional",
       "",
-      "dev-dependencies"
+      "dependencies"
     ],
     [
       "isolated-activation",
       "workspace-tests",
       "panel",
+      "dependency",
       "host-play",
       "scenario",
       "optional",
@@ -4011,19 +3251,10 @@
       "isolated-activation",
       "workspace-tests",
       "panel",
-      "host-play",
+      "dependency",
       "script",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "panel",
-      "host-play",
-      "script",
-      "normal",
+      "deno_core",
+      "optional",
       "",
       "dependencies"
     ],
@@ -4031,19 +3262,10 @@
       "isolated-activation",
       "workspace-tests",
       "panel",
-      "panel",
-      "frontend-core",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "panel",
-      "panel",
-      "frontend-core",
-      "normal",
+      "dependency",
+      "script",
+      "flatbuffers",
+      "optional",
       "",
       "dependencies"
     ],
@@ -4051,239 +3273,466 @@
       "isolated-activation",
       "workspace-tests",
       "panel",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
       "panel",
+      "dependency",
+      "script",
+      "schemars",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "dependency",
+      "script",
+      "tokio",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "dependency",
+      "script",
+      "v8",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "frontend-core",
+      "frontend-core",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "frontend-core",
       "host",
-      "normal",
-      "",
-      "dependencies"
+      "test-support"
     ],
     [
       "isolated-activation",
       "workspace-tests",
       "panel",
-      "panel",
-      "host-play",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "panel",
-      "panel",
-      "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "panel",
-      "panel",
-      "scenario",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "panel",
-      "panel",
-      "script",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "panel",
-      "panel",
-      "vault",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "panel",
-      "script",
-      "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "panel",
-      "script",
-      "script",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "panel",
-      "script",
-      "seat-model",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "scenario",
-      "script",
-      "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "scenario",
-      "script",
-      "script",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "scenario",
-      "script",
-      "seat-model",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "script",
-      "script",
-      "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "script",
-      "script",
-      "script",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "script",
-      "script",
-      "seat-model",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "tui",
-      "frontend-core",
-      "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "tui",
-      "frontend-core",
-      "frontend-core",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "tui",
+      "feature-edge",
       "frontend-core",
       "host-play",
-      "dev",
-      "",
-      "dev-dependencies"
+      "test-support"
     ],
     [
       "isolated-activation",
       "workspace-tests",
-      "tui",
-      "frontend-core",
-      "host-play",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "tui",
-      "frontend-core",
-      "scenario",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "tui",
+      "panel",
+      "feature-edge",
       "host",
       "client",
-      "dev",
-      "",
-      "dev-dependencies"
+      "test-support"
     ],
     [
       "isolated-activation",
       "workspace-tests",
-      "tui",
-      "host",
-      "client",
-      "normal",
-      "",
-      "dependencies"
+      "panel",
+      "feature-edge",
+      "host-play",
+      "api",
+      "debug-catalog"
     ],
     [
       "isolated-activation",
       "workspace-tests",
-      "tui",
+      "panel",
+      "feature-edge",
       "host-play",
       "nav",
-      "build",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "host-play",
+      "script",
+      "load"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "host-play",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "panel",
+      "client",
+      "audio"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "panel",
+      "frontend-core",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "panel",
+      "host-play",
+      "debug-catalog"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "panel",
+      "host-play",
+      "live-harness"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "panel",
+      "host-play",
+      "live-probe"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "script",
+      "api",
+      "path-schema"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "script",
+      "api",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "script",
+      "script",
+      "path-schema"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "script",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "scenario",
+      "dependency",
+      "api",
+      "schemars",
+      "optional",
       "",
-      "build-dependencies"
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "scenario",
+      "dependency",
+      "script",
+      "deno_core",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "scenario",
+      "dependency",
+      "script",
+      "flatbuffers",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "scenario",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "scenario",
+      "dependency",
+      "script",
+      "schemars",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "scenario",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "scenario",
+      "dependency",
+      "script",
+      "tokio",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "scenario",
+      "dependency",
+      "script",
+      "v8",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "scenario",
+      "feature-edge",
+      "script",
+      "api",
+      "path-schema"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "scenario",
+      "feature-edge",
+      "script",
+      "api",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "scenario",
+      "feature-edge",
+      "script",
+      "script",
+      "path-schema"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "scenario",
+      "feature-edge",
+      "script",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "dependency",
+      "api",
+      "schemars",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "dependency",
+      "script",
+      "deno_core",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "dependency",
+      "script",
+      "flatbuffers",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "dependency",
+      "script",
+      "schemars",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "dependency",
+      "script",
+      "tokio",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "dependency",
+      "script",
+      "v8",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "feature-edge",
+      "script",
+      "api",
+      "path-schema"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "feature-edge",
+      "script",
+      "api",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "feature-edge",
+      "script",
+      "script",
+      "path-schema"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "feature-edge",
+      "script",
+      "script",
+      "test-hooks"
     ],
     [
       "isolated-activation",
       "workspace-tests",
       "tui",
-      "host-play",
-      "nav",
-      "normal",
+      "dependency",
+      "api",
+      "schemars",
+      "optional",
       "",
       "dependencies"
     ],
@@ -4291,16 +3740,7 @@
       "isolated-activation",
       "workspace-tests",
       "tui",
-      "host-play",
-      "scenario",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "tui",
+      "dependency",
       "host-play",
       "scenario",
       "optional",
@@ -4311,19 +3751,10 @@
       "isolated-activation",
       "workspace-tests",
       "tui",
-      "host-play",
+      "dependency",
       "script",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "tui",
-      "host-play",
-      "script",
-      "normal",
+      "deno_core",
+      "optional",
       "",
       "dependencies"
     ],
@@ -4331,49 +3762,10 @@
       "isolated-activation",
       "workspace-tests",
       "tui",
+      "dependency",
       "script",
-      "client",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "tui",
-      "script",
-      "script",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "tui",
-      "script",
-      "seat-model",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "tui",
-      "tui",
-      "frontend-core",
-      "dev",
-      "",
-      "dev-dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "tui",
-      "tui",
-      "frontend-core",
-      "normal",
+      "flatbuffers",
+      "optional",
       "",
       "dependencies"
     ],
@@ -4381,61 +3773,191 @@
       "isolated-activation",
       "workspace-tests",
       "tui",
+      "dependency",
+      "script",
+      "rustyscript",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
       "tui",
+      "dependency",
+      "script",
+      "schemars",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "dependency",
+      "script",
+      "tiny-skia",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "dependency",
+      "script",
+      "tokio",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "dependency",
+      "script",
+      "v8",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "frontend-core",
+      "frontend-core",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "frontend-core",
       "host",
-      "dev",
-      "",
-      "dev-dependencies"
+      "test-support"
     ],
     [
       "isolated-activation",
       "workspace-tests",
       "tui",
-      "tui",
+      "feature-edge",
+      "frontend-core",
       "host-play",
-      "dev",
-      "",
-      "dev-dependencies"
+      "test-support"
     ],
     [
       "isolated-activation",
       "workspace-tests",
       "tui",
+      "feature-edge",
+      "host",
+      "client",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
       "tui",
+      "feature-edge",
       "host-play",
-      "normal",
-      "",
-      "dependencies"
+      "nav",
+      "test-support"
     ],
     [
       "isolated-activation",
       "workspace-tests",
       "tui",
-      "tui",
-      "scenario",
-      "normal",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "tui",
-      "tui",
+      "feature-edge",
+      "host-play",
       "script",
-      "normal",
-      "",
-      "dependencies"
+      "load"
     ],
     [
       "isolated-activation",
       "workspace-tests",
       "tui",
+      "feature-edge",
+      "host-play",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
       "tui",
-      "vault",
-      "normal",
-      "",
-      "dependencies"
+      "feature-edge",
+      "script",
+      "api",
+      "path-schema"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "script",
+      "api",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "script",
+      "script",
+      "path-schema"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "script",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "tui",
+      "frontend-core",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "tui",
+      "host-play",
+      "live-harness"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "tui",
+      "host-play",
+      "live-probe"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "tui",
+      "host-play",
+      "test-support"
     ]
   ],
   "schema_version": 1

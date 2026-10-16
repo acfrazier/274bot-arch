@@ -4,7 +4,7 @@
 Requires Python 3.11+ (stdlib tomllib). Reads Cargo.toml manifests; does not
 compile Rust or parse .rs with regex.
 
-    python3 -B check.py [--root TREE]
+    python3 -B check.py --root TREE
     python3 -B check.py --emit-provenance-baseline TREE
     python3 -B check.py --self-test
 """
@@ -36,6 +36,8 @@ DEP_TABLES = (
     ("dependencies", "normal"),
     ("dev-dependencies", "dev"),
     ("build-dependencies", "build"),
+    ("dev_dependencies", "dev"),
+    ("build_dependencies", "build"),
 )
 
 
@@ -61,10 +63,11 @@ class Policy:
     path: Path
     migrations: dict[str, dict] = field(default_factory=dict)
     configurations: list[dict] = field(default_factory=list)
+    path_packages: dict[str, str] = field(default_factory=dict)
 
     @property
     def known(self) -> set[str]:
-        return self.members | self.externals
+        return self.members | self.externals | set(self.path_packages)
 
 
 def load_toml(path: Path) -> dict:
@@ -78,18 +81,31 @@ def load_policy(path: Path) -> Policy:
     if type(raw.get("schema_version")) is not int or raw["schema_version"] != 1:
         raise ValueError("policy schema_version must be 1")
     ws = raw.get("workspace") or {}
-    require_fields(ws, {"members", "externals"}, "workspace")
+    require_fields(ws, {"members", "externals", "path_packages"}, "workspace")
     members = string_set(ws.get("members"), "workspace.members")
     externals = string_set(ws.get("externals", []), "workspace.externals")
     if not members or members & externals:
         raise ValueError("policy members must be nonempty and disjoint from externals")
+    path_packages = ws.get("path_packages", {})
+    if not isinstance(path_packages, dict) or set(path_packages) & members:
+        raise ValueError("workspace.path_packages must map non-member names to manifests")
+    for name, manifest in path_packages.items():
+        nonblank(name, "workspace.path_packages name")
+        nonblank(manifest, "workspace.path_packages manifest")
+        path_parts = Path(manifest)
+        if (path_parts.is_absolute() or ".." in path_parts.parts
+                or path_parts.name != "Cargo.toml" or path_parts.as_posix() != manifest):
+            raise ValueError(f"path package needs a tree-relative canonical manifest: {manifest}")
+    if len(set(path_packages.values())) != len(path_packages):
+        raise ValueError("workspace.path_packages contains duplicate manifests")
+    known = members | externals | set(path_packages)
     allowed: dict[tuple[str, str], Allow] = {}
     for row in raw.get("allow", []):
         require_fields(row, {"from", "to", "kinds", "reason"}, "allow")
         src, dst = row.get("from"), row.get("to")
         kinds = string_set(row.get("kinds"), "allow.kinds")
         reason = nonblank(row.get("reason"), "allow.reason")
-        if src not in members or dst not in members | externals or not kinds or not kinds <= KINDS:
+        if src not in members | set(path_packages) or dst not in known or not kinds or not kinds <= KINDS:
             raise ValueError(f"invalid allow endpoints/kinds: {row}")
         if (src, dst) in allowed:
             raise ValueError(f"duplicate allow pair: {src} -> {dst}")
@@ -102,7 +118,7 @@ def load_policy(path: Path) -> Policy:
         triple = row["from"], row["to"], row["kind"]
         if identity in migrations or triple in triples:
             raise ValueError(f"duplicate migration identity/edge: {identity}")
-        if row["from"] not in members or row["to"] not in members | externals or row["kind"] not in KINDS:
+        if row["from"] not in members | set(path_packages) or row["to"] not in known or row["kind"] not in KINDS:
             raise ValueError(f"invalid migration endpoints/kind: {identity}")
         if row["owner"] not in OWNERS or row["removal_endpoint"] not in ENDPOINTS:
             raise ValueError(f"unknown migration owner/endpoint: {identity}")
@@ -138,7 +154,7 @@ def load_policy(path: Path) -> Policy:
             raise ValueError(f"configuration status/owner invalid: {identity}")
         if row["status"] == "pending" and identity != "native-only":
             raise ValueError("only the named native-only target may be pending")
-    return Policy(members, externals, allowed, path, migrations, configurations)
+    return Policy(members, externals, allowed, path, migrations, configurations, path_packages)
 
 
 KINDS = frozenset({"normal", "target", "optional", "dev", "build"})
@@ -185,17 +201,15 @@ def workspace_dep_lookup(ws_deps: dict, key: str) -> dict:
     return spec_map(ws_deps.get(key))
 
 
-def resolve_path_package(path: Path, by_path: dict[Path, str]) -> str | None:
-    try:
-        resolved = path.resolve()
-    except OSError:
-        return None
-    if resolved in by_path:
-        return by_path[resolved]
-    manifest = resolved / "Cargo.toml"
-    if manifest.is_file():
-        return package_name(load_toml(manifest), resolved.name)
-    return None
+def resolve_path_package(manifest: Path, by_manifest: dict[Path, str]) -> str:
+    """Resolve only identities admitted by the protected manifest list."""
+    canonical = manifest.resolve()
+    if canonical not in by_manifest:
+        raise ValueError(
+            f"unlisted path package: {manifest}. It is not a workspace member or "
+            "a path package in 274bot-arch/policy.toml [workspace.path_packages]"
+        )
+    return by_manifest[canonical]
 
 
 def iter_dep_tables(manifest: dict):
@@ -231,9 +245,12 @@ def resolve_dep_name(
     ws_deps: dict,
     crate_dir: Path,
     workspace_root: Path,
-    by_path: dict[Path, str],
-) -> tuple[str | None, bool]:
-    """Return (package_name, is_path_or_workspace_path)."""
+    by_manifest: dict[Path, str],
+    overrides: set[str] = frozenset(),
+    *,
+    inherited_root: Path | None = None,
+) -> tuple[str, bool]:
+    """Return the destination whose canonical manifest was checked, if local."""
     merged = dict(spec)
     inherited_path = False
     if merged.get("workspace") is True:
@@ -249,16 +266,24 @@ def resolve_dep_name(
     name = str(merged["package"]) if merged.get("package") else key
     path_value = merged.get("path")
     if path_value:
-        base = workspace_root if inherited_path else crate_dir
-        dependency_path = (base / str(path_value)).resolve()
-        if not dependency_path.is_relative_to(workspace_root.resolve()):
+        base = (inherited_root or workspace_root) if inherited_path else crate_dir
+        dependency_manifest = (base / str(path_value) / "Cargo.toml").resolve()
+        if not dependency_manifest.is_relative_to(workspace_root.resolve()):
             raise ValueError(f"dependency path escapes data root: {key}")
-        resolved = resolve_path_package(dependency_path, by_path)
-        if resolved:
-            name = resolved
+        resolved = resolve_path_package(dependency_manifest, by_manifest)
+        if name != resolved:
+            raise ValueError(
+                f"path dependency {key!r} requests package {name!r}, "
+                f"but its canonical manifest is package {resolved!r}"
+            )
+        return resolved, True
+    if name in overrides:
         return name, True
-    if spec.get("workspace") is True:
-        return name, bool(workspace_dep_lookup(ws_deps, key).get("path"))
+    if name in by_manifest.values():
+        raise ValueError(
+            f"dependency {key!r} names local package {name!r} without its canonical path "
+            "or a path [patch]/[replace]"
+        )
     return name, False
 
 
@@ -278,7 +303,7 @@ def discover_workspace(root: Path) -> tuple[dict, dict[str, Path], dict[Path, st
     if isinstance(root_pkg, dict) and root_pkg.get("name"):
         root_name = str(root_pkg["name"])
         by_name[root_name] = root
-        by_path[root.resolve()] = root_name
+        by_path[(root / "Cargo.toml").resolve()] = root_name
     for rel in members:
         crate_dir = (root / str(rel)).resolve()
         if not crate_dir.is_relative_to(root.resolve()):
@@ -287,40 +312,118 @@ def discover_workspace(root: Path) -> tuple[dict, dict[str, Path], dict[Path, st
         if not crate_manifest.is_file():
             raise SystemExit(f"workspace member {rel!r} has no Cargo.toml")
         name = package_name(load_toml(crate_manifest), crate_dir.name)
-        if name in by_name or crate_dir in by_path:
+        if name in by_name or crate_manifest.resolve() in by_path:
             raise ValueError(f"duplicate workspace member: {name}")
         by_name[name] = crate_dir
-        by_path[crate_dir] = name
+        by_path[crate_manifest.resolve()] = name
     ws_deps = (workspace.get("workspace") or {}).get("dependencies") or {}
     if not isinstance(ws_deps, dict):
         raise ValueError("unsupported workspace dependencies")
     return workspace, by_name, by_path, ws_deps
 
 
-def collect_edges(
-    by_name: dict[str, Path],
-    by_path: dict[Path, str],
-    ws_deps: dict,
-    workspace_root: Path,
-) -> list[Edge]:
+@dataclass
+class Packages:
+    members: dict[str, Path]
+    directories: dict[str, Path]
+    by_manifest: dict[Path, str]
+    contexts: dict[str, tuple[Path, dict]]
+    overrides: set[str]
+
+
+def discover_packages(root: Path, policy: Policy) -> Packages:
+    """Scan every protected local manifest, including nested vendor workspaces."""
+    root = root.resolve()
+    _, members, by_manifest, _ = discover_workspace(root)
+    directories = dict(members)
+    for name, relative in sorted(policy.path_packages.items()):
+        manifest = root / relative
+        canonical = manifest.resolve()
+        if canonical != manifest or not canonical.is_relative_to(root):
+            raise ValueError(f"protected path package must not traverse a symlink: {relative}")
+        actual = package_name(load_toml(canonical), "")
+        if actual in members or actual != name or canonical in by_manifest:
+            raise ValueError(f"path package identity disagrees with 274bot-arch/policy.toml: {relative}")
+        directories[name] = canonical.parent
+        by_manifest[canonical] = name
+
+    contexts = {}
+    workspaces = {}
+    for name, directory in directories.items():
+        package_document = load_toml(directory / "Cargo.toml")
+        package = package_document.get("package", {})
+        explicit = package.get("workspace")
+        if explicit is not None and not isinstance(explicit, str):
+            raise ValueError(f"unsupported package workspace: {name}")
+        candidates = ([directory / explicit] if isinstance(explicit, str)
+                      else [directory, *directory.parents])
+        workspace_root, document = directory, package_document
+        for candidate in candidates:
+            candidate = candidate.resolve()
+            if not candidate.is_relative_to(root):
+                if explicit is not None:
+                    raise ValueError(f"package workspace escapes data root: {name}")
+                break
+            manifest = candidate / "Cargo.toml"
+            if manifest.is_file():
+                loaded = load_toml(manifest)
+                if "workspace" in loaded:
+                    workspace_root, document = candidate, loaded
+                    break
+        if explicit is not None and "workspace" not in document:
+            raise ValueError(f"package workspace has no workspace table: {name}")
+        ws_deps = document.get("workspace", {}).get("dependencies", {})
+        if not isinstance(ws_deps, dict):
+            raise ValueError("unsupported workspace dependencies")
+        contexts[name] = workspace_root, ws_deps
+        workspaces[workspace_root] = document
+
+    overrides = set()
+    for workspace_root, document in workspaces.items():
+        # Validate unused workspace paths and unused overrides too. A later
+        # dependency must not make an unlisted package reachable.
+        for key, raw in document.get("workspace", {}).get("dependencies", {}).items():
+            spec = spec_map(raw)
+            if "path" in spec:
+                resolve_dep_name(key, spec, {}, workspace_root, root, by_manifest)
+        patches = document.get("patch", {})
+        if not isinstance(patches, dict):
+            raise ValueError("unsupported Cargo patch table")
+        replacement_tables = list(patches.values()) + [document.get("replace", {})]
+        for table in replacement_tables:
+            if not isinstance(table, dict):
+                raise ValueError("unsupported Cargo patch/replace table")
+            for key, raw in table.items():
+                spec = spec_map(raw)
+                if "path" in spec:
+                    name, _ = resolve_dep_name(
+                        key.split(":", 1)[0], spec, {}, workspace_root, root, by_manifest
+                    )
+                    # Cargo applies patches/replacements from the checked
+                    # root, not from a dependency's nested workspace.
+                    if workspace_root == root:
+                        overrides.add(name)
+    return Packages(members, directories, by_manifest, contexts, overrides)
+
+
+def collect_edges(packages: Packages, workspace_root: Path) -> list[Edge]:
     edges: list[Edge] = []
-    for src, crate_dir in sorted(by_name.items()):
+    for src, crate_dir in sorted(packages.directories.items()):
         manifest = load_toml(crate_dir / "Cargo.toml")
+        context_root, ws_deps = packages.contexts[src]
         for table_kind, table in iter_dep_tables(manifest):
             for key, raw in table.items():
                 spec = spec_map(raw)
                 dst, is_path = resolve_dep_name(
-                    key, spec, ws_deps, crate_dir, workspace_root, by_path
+                    key, spec, ws_deps, crate_dir, workspace_root, packages.by_manifest,
+                    packages.overrides, inherited_root=context_root,
                 )
-                if not dst:
-                    continue
-                if not is_path and dst not in by_name:
+                if not is_path:
                     continue
                 kind = classify_kind(table_kind, spec)
                 via = key if key != dst else kind
-                if dst == src:
-                    continue
-                edges.append(Edge(src=src, dst=dst, kind=kind, via=str(via)))
+                if dst != src:
+                    edges.append(Edge(src=src, dst=dst, kind=kind, via=str(via)))
     return edges
 
 
@@ -329,25 +432,29 @@ def kind_permitted(actual: str, allowed: set[str]) -> bool:
 
 
 def check_graph(root: Path, policy: Policy) -> list[str]:
-    _, by_name, by_path, ws_deps = discover_workspace(root)
+    try:
+        packages = discover_packages(root, policy)
+    except (OSError, ValueError) as exc:
+        return [f"invalid graph identity: {exc}"]
     errors: list[str] = []
 
-    actual_members = set(by_name)
+    actual_members = set(packages.members)
     extra = sorted(actual_members - policy.members)
     missing = sorted(policy.members - actual_members)
     if extra:
         errors.append(
             "unknown workspace member(s) not listed in "
-            f"{policy.path}: {', '.join(extra)}. "
+            f"274bot-arch/policy.toml: {', '.join(extra)}. "
             "Add the crate to [workspace].members with ownership reasons, "
             "or remove it from the Cargo workspace."
         )
     if missing:
         errors.append(
             "policy lists workspace member(s) absent from Cargo.toml: "
-            f"{', '.join(missing)}. Update {policy.path} if the crate was removed."
+            f"{', '.join(missing)}. Update 274bot-arch/policy.toml if the crate was removed."
         )
 
+    ws_deps = load_toml(root / "Cargo.toml").get("workspace", {}).get("dependencies", {})
     for key, raw in ws_deps.items():
         if spec_map(raw).get("optional") is True:
             errors.append(
@@ -357,7 +464,10 @@ def check_graph(root: Path, policy: Policy) -> list[str]:
                 "Set optional on the member: { workspace = true, optional = true }."
             )
 
-    edges = collect_edges(by_name, by_path, ws_deps, root)
+    try:
+        edges = collect_edges(packages, root)
+    except (OSError, ValueError) as exc:
+        return errors + [f"invalid graph identity: {exc}"]
     migration_triples = {(r["from"], r["to"], r["kind"]) for r in policy.migrations.values()}
     actual_triples = {(e.src, e.dst, e.kind) for e in edges}
     for triple in sorted(migration_triples - actual_triples):
@@ -376,7 +486,8 @@ def check_graph(root: Path, policy: Policy) -> list[str]:
                 f"disallowed crate edge: {edge.src} -> {edge.dst} ({edge.kind})"
                 f"{f' via {edge.via}' if edge.via != edge.kind else ''}. "
                 f"{edge.dst!r} is not a policy member or external. "
-                f"Edit {policy.path} and docs/architecture.md if this is deliberate."
+                "Propose a 274bot-arch/policy.toml commit through the operator "
+                "and update docs/architecture.md if this is deliberate."
             )
             continue
         allow = policy.allowed.get((edge.src, edge.dst))
@@ -385,7 +496,8 @@ def check_graph(root: Path, policy: Policy) -> list[str]:
                 f"disallowed crate edge: {edge.src} -> {edge.dst} ({edge.kind}). "
                 f"No [[allow]] permits this ownership direction. "
                 f"If this is a deliberate boundary change, add an allow with a "
-                f"reason in {policy.path} and update docs/architecture.md."
+                "reason in 274bot-arch/policy.toml through the operator "
+                "and update docs/architecture.md."
             )
             continue
         if not kind_permitted(edge.kind, allow.kinds):
@@ -393,7 +505,8 @@ def check_graph(root: Path, policy: Policy) -> list[str]:
             errors.append(
                 f"disallowed crate edge kind: {edge.src} -> {edge.dst} is {edge.kind}, "
                 f"but policy allows only {sorted(allow.kinds)}. {reasons} "
-                f"Edit {policy.path} and docs/architecture.md if the kind should change."
+                "Propose a 274bot-arch/policy.toml commit through the operator "
+                "and update docs/architecture.md if the kind should change."
             )
     return errors
 
@@ -445,11 +558,7 @@ def write_crate(root: Path, name: str, deps: dict[str, dict] | None = None, **ta
             lines.append(_dep_line(dep, spec))
         lines.append("")
     for table_name, table in tables.items():
-        heading = table_name.replace("_", "-") if not table_name.startswith("target.") else None
-        if heading:
-            lines.append(f"[{heading}]")
-        else:
-            lines.append(f"[{table_name}]")
+        lines.append(f"[{table_name}]")
         for dep, spec in table.items():
             lines.append(_dep_line(dep, spec))
         lines.append("")
@@ -715,7 +824,7 @@ def run_self_test() -> int:
         failures += expect_errors(
             "path-nonmember",
             check_graph(sneak, load_policy(policy)),
-            "not a policy member or external",
+            "unlisted path package",
         )
 
         # 8. Implicit root [package] cannot escape membership. Globs fail closed.
@@ -752,17 +861,13 @@ def run_self_test() -> int:
     return 0
 
 
-def repo_root_from_script() -> Path:
-    return Path(__file__).resolve().parent
-
-
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--root",
         type=Path,
         default=None,
-        help="workspace root (default: repository containing this script)",
+        help="candidate workspace root (required when checking a tree)",
     )
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument(
@@ -789,7 +894,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.self_test:
         return run_self_test()
 
-    root = (args.root or repo_root_from_script()).resolve()
+    if args.root is None:
+        parser.error("--root is required when checking a tree")
+    root = args.root.resolve()
     policy_path = RULES_DIR / "policy.toml"
     policy = load_policy(policy_path)
     errors = check_tree(root)

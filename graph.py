@@ -8,11 +8,13 @@ from collections import defaultdict
 from pathlib import Path
 
 
-def dependency_records(checker, root):
-    _, by_name, by_path, ws_deps = checker.discover_workspace(root)
-    manifests = {name: checker.load_toml(path / "Cargo.toml") for name, path in by_name.items()}
+def dependency_records(checker, root, policy):
+    packages = checker.discover_packages(root, policy)
+    manifests = {name: checker.load_toml(path / "Cargo.toml")
+                 for name, path in packages.directories.items()}
     records = []
     for name, manifest in manifests.items():
+        context_root, ws_deps = packages.contexts[name]
         tables = [("", key, kind, manifest.get(key, {})) for key, kind in checker.DEP_TABLES]
         for cfg, target in manifest.get("target", {}).items():
             if not isinstance(target, dict):
@@ -20,18 +22,23 @@ def dependency_records(checker, root):
             tables.extend((" ".join(cfg.split()), key, "target" if kind == "normal" else kind, target.get(key, {}))
                           for key, kind in checker.DEP_TABLES)
         for cfg, table_name, table_kind, table in tables:
+            if not isinstance(table, dict):
+                raise ValueError("unsupported Cargo dependency table")
             for alias, value in table.items():
                 spec = checker.spec_map(value)
-                dst, is_path = checker.resolve_dep_name(alias, spec, ws_deps, by_name[name], root, by_path)
+                dst, is_path = checker.resolve_dep_name(
+                    alias, spec, ws_deps, packages.directories[name], root,
+                    packages.by_manifest, packages.overrides, inherited_root=context_root,
+                )
                 merged = dict(checker.workspace_dep_lookup(ws_deps, alias)) if spec.get("workspace") else {}
                 inherited_features = merged.get("features", [])
                 merged.update(spec)
                 features = sorted(set(inherited_features) | set(spec.get("features", [])))
                 records.append({
                     "from": name, "to": dst, "alias": alias, "kind": checker.classify_kind(table_kind, spec),
-                    "cfg": cfg, "table": table_name, "optional": spec.get("optional") is True,
-                    "default_features": merged.get("default-features", True),
-                    "features": features, "local": is_path or dst in by_name,
+                    "cfg": cfg, "table": table_name.replace("_", "-"), "optional": spec.get("optional") is True,
+                    "default_features": merged.get("default-features", merged.get("default_features", True)),
+                    "features": features, "local": is_path,
                 })
     return manifests, records
 
@@ -42,6 +49,7 @@ def feature_activation(manifests, records, config):
     active = set(config["packages"])
     requested_deps = set()
     activated = set()
+    feature_edges = set()
     if config["default_features"]:
         for package in active:
             enabled[package].add("default")
@@ -55,7 +63,7 @@ def feature_activation(manifests, records, config):
     previous = None
     while True:
         state = (frozenset(active), frozenset((p, f) for p, fs in enabled.items() for f in fs),
-                 frozenset(requested_deps), frozenset(activated))
+                 frozenset(requested_deps), frozenset(activated), frozenset(feature_edges))
         if state == previous:
             break
         previous = state
@@ -89,6 +97,7 @@ def feature_activation(manifests, records, config):
                         if not weak or (package, dep) in activated:
                             for row in matching:
                                 if row["to"] in manifests:
+                                    feature_edges.add(("feature-edge", package, row["to"], child_feature))
                                     enabled[row["to"]].add(child_feature)
                     else:
                         enabled[package].add(item)
@@ -103,8 +112,16 @@ def feature_activation(manifests, records, config):
                 enabled[row["to"]].update(row["features"])
                 if row["default_features"]:
                     enabled[row["to"]].add("default")
+    result_edges = {
+        ("feature-edge", row["from"], row["to"], feature)
+        for row in records
+        if row["local"] and (row["from"], row["alias"]) in activated
+        and (row["kind"] != "dev" or config["dev"])
+        for feature in row["features"]
+    }
     result = {("feature", package, feature) for package, fs in enabled.items()
               if package in active for feature in fs}
+    result.update(feature_edges | result_edges)
     result.update(("dependency", r["from"], r["to"], r["kind"], r["cfg"], r["table"])
                   for r in records if (r["from"], r["alias"]) in activated
                   and (r["kind"] != "dev" or config["dev"]))
@@ -117,29 +134,29 @@ PROVENANCE_TABLES = frozenset({"dependencies", "dev-dependencies", "build-depend
 
 
 def graph_state(checker, root):
-    """Return protected graph policy and its exceptional provenance state."""
+    """Protect cross-crate edges and optional activation, not local features."""
     policy = checker.load_policy(checker.RULES_DIR / "policy.toml")
-    manifests, records = dependency_records(checker, root)
-    migration_pairs = {(row["from"], row["to"]) for row in policy.migrations.values()}
-    exceptional = [row for row in records if row["local"] and (
-        (row["from"], row["to"]) in migration_pairs
-        or row["kind"] in {"optional", "dev", "build"}
-    )]
+    for filename in ("policy.toml", PROVENANCE_BASELINE_FILENAME):
+        candidate = root / "tools" / "architecture" / filename
+        if candidate.exists() or candidate.is_symlink():
+            raise ValueError(
+                f"candidate tools/architecture/{filename} is forbidden. "
+                f"Rules belong only in 274bot-arch/{filename}, not in the product tree"
+            )
+    manifests, records = dependency_records(checker, root, policy)
     provenance = {
         (
-            "exceptional-edge",
-            row["from"],
-            row["to"],
-            row["kind"],
-            row["cfg"],
-            row["table"],
-            row["default_features"],
-            tuple(row["features"]),
+            "edge", row["from"], row["to"], row["kind"], row["cfg"],
+            row["table"], row["default_features"], tuple(row["features"]),
         )
-        for row in exceptional
+        for row in records if row["local"] and row["from"] != row["to"]
     }
-    exceptional_pairs = {(row["from"], row["to"]) for row in exceptional}
+    optional = {
+        ("dependency", row["from"], row["to"], row["kind"], row["cfg"], row["table"])
+        for row in records if row["optional"]
+    }
     for config in policy.configurations:
+        isolated_union = set()
         for selected in config["packages"]:
             isolated = dict(
                 config,
@@ -149,17 +166,20 @@ def graph_state(checker, root):
                     if feature.startswith(selected + "/")
                 ],
             )
-            for item in feature_activation(manifests, records, isolated):
-                if item[0] == "dependency" and (item[1], item[2]) in exceptional_pairs:
-                    provenance.add(("isolated-activation", config["id"], selected, *item[1:]))
-                elif item[0] == "feature" and item[2] != "default":
-                    provenance.add(("feature-activation", config["id"], selected, *item[1:]))
+            relevant = {
+                item for item in feature_activation(manifests, records, isolated)
+                if item in optional or item[0] == "feature-edge"
+            }
+            isolated_union.update(relevant)
+            for item in relevant:
+                provenance.add(("isolated-activation", config["id"], selected, *item))
 
         activation = feature_activation(manifests, records, config)
-        for row in exceptional:
-            key = ("dependency", row["from"], row["to"], row["kind"], row["cfg"], row["table"])
-            if key in activation:
-                provenance.add(("activation", config["id"], *key[1:]))
+        # Feature unification can activate a weak dependency feature only when
+        # selected packages are combined. Keep only these additional effects.
+        for item in activation - isolated_union:
+            if item in optional or item[0] == "feature-edge":
+                provenance.add(("activation", config["id"], *item))
         if config["status"] == "enforced":
             for forbidden in config["forbidden_features"]:
                 package, feature = forbidden.split("/", 1)
@@ -200,33 +220,32 @@ def _provenance_record(checker, raw):
         if text(table_index) not in PROVENANCE_TABLES:
             raise ValueError(f"graph provenance {tag!r} has invalid dependency table")
 
-    if tag == "exceptional-edge" and len(raw) == 8:
+    if tag == "edge" and len(raw) == 8:
         text(1)
         text(2)
         edge_fields(3, 4, 5)
         if type(raw[6]) is not bool:
-            raise ValueError("graph provenance exceptional-edge has invalid default_features")
+            raise ValueError("graph provenance edge has invalid default_features")
         features = raw[7]
         if (type(features) is not list
                 or any(not isinstance(item, str) or not item.strip() for item in features)
                 or len(features) != len(set(features))):
-            raise ValueError("graph provenance exceptional-edge has invalid features")
+            raise ValueError("graph provenance edge has invalid features")
         return (tag, raw[1], raw[2], raw[3], raw[4], raw[5], raw[6], tuple(features))
-    if tag == "isolated-activation" and len(raw) == 8:
-        text(1)
-        text(2)
-        text(3)
-        text(4)
-        edge_fields(5, 6, 7)
-        return tuple(raw)
-    if tag == "feature-activation" and len(raw) == 5:
-        return (tag, *(text(index) for index in range(1, 5)))
-    if tag == "activation" and len(raw) == 7:
-        text(1)
-        text(2)
-        text(3)
-        edge_fields(4, 5, 6)
-        return tuple(raw)
+    if tag in {"isolated-activation", "activation"}:
+        offset = 3 if tag == "isolated-activation" else 2
+        for index in range(1, offset):
+            text(index)
+        effect = text(offset)
+        if effect == "dependency" and len(raw) == offset + 6:
+            text(offset + 1)
+            text(offset + 2)
+            edge_fields(offset + 3, offset + 4, offset + 5)
+            return tuple(raw)
+        if effect == "feature-edge" and len(raw) == offset + 4:
+            for index in range(offset + 1, offset + 4):
+                text(index)
+            return tuple(raw)
     raise ValueError(f"graph provenance has unknown or malformed record: {tag!r}")
 
 
@@ -255,14 +274,17 @@ def provenance_baseline_json(provenance):
 def load_provenance_baseline(checker):
     path = checker.RULES_DIR / PROVENANCE_BASELINE_FILENAME
     if path.is_symlink():
-        raise ValueError(f"protected graph provenance baseline must not be a symlink: {path}")
+        raise ValueError("protected 274bot-arch/graph-provenance.json must not be a symlink")
     try:
         raw = json.loads(
             path.read_text(encoding="utf-8"),
             object_pairs_hook=_no_duplicate_object,
         )
     except (OSError, UnicodeError, RecursionError, ValueError) as error:
-        raise ValueError(f"cannot load protected graph provenance baseline {path}: {error}") from error
+        raise ValueError(
+            "cannot load protected graph provenance baseline "
+            f"274bot-arch/graph-provenance.json ({type(error).__name__})"
+        ) from error
     if type(raw) is not dict or set(raw) != {"schema_version", "records"}:
         raise ValueError("graph provenance baseline fields must be exactly schema_version, records")
     if type(raw["schema_version"]) is not int or raw["schema_version"] != PROVENANCE_SCHEMA_VERSION:
@@ -292,7 +314,10 @@ def check_tree(checker, root: Path):
         errors = checker.check_graph(root, policy)
         protected = load_provenance_baseline(checker)
         errors.extend(
-            f"exceptional provenance/activation widened: {record}"
+            f"graph provenance/activation widened: {record}. "
+            "Propose an operator commit in 274bot-arch, updating policy.toml if needed. "
+            "In that same commit regenerate graph-provenance.json with "
+            "`python3 -B check.py --emit-provenance-baseline /path/to/candidate > graph-provenance.json`"
             for record in sorted(provenance - protected, key=repr)
         )
         return errors
