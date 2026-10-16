@@ -34,6 +34,15 @@ client = "vendor/fr-client-rust/crates/client/Cargo.toml"
 client-play = "vendor/fr-client-rust/crates/client-play/Cargo.toml"
 dear-imgui-wgpu = "vendor/dear-imgui-wgpu-0.15.1/Cargo.toml"
 
+# The only [patch.*] and [replace] entries the product root Cargo.toml may
+# carry, by package name and path. A root patch makes a local package
+# reachable from every external crate. An external manifest could then
+# carry a crate edge or a feature request into that package, and the
+# checker never reads external manifests. Any other root patch or
+# replacement is refused until an operator commit adds it here.
+[root_patches]
+dear-imgui-wgpu = "vendor/dear-imgui-wgpu-0.15.1"
+
 [[allow]]
 from = "client-play"
 to = "client"

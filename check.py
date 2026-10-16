@@ -64,6 +64,7 @@ class Policy:
     migrations: dict[str, dict] = field(default_factory=dict)
     configurations: list[dict] = field(default_factory=list)
     path_packages: dict[str, str] = field(default_factory=dict)
+    root_patches: dict[str, str] = field(default_factory=dict)
 
     @property
     def known(self) -> set[str]:
@@ -77,7 +78,7 @@ def load_toml(path: Path) -> dict:
 
 def load_policy(path: Path) -> Policy:
     raw = load_toml(path)
-    require_fields(raw, {"schema_version", "workspace", "allow", "migration", "configuration"}, "policy")
+    require_fields(raw, {"schema_version", "workspace", "allow", "migration", "configuration", "root_patches"}, "policy")
     if type(raw.get("schema_version")) is not int or raw["schema_version"] != 1:
         raise ValueError("policy schema_version must be 1")
     ws = raw.get("workspace") or {}
@@ -98,6 +99,17 @@ def load_policy(path: Path) -> Policy:
             raise ValueError(f"path package needs a tree-relative canonical manifest: {manifest}")
     if len(set(path_packages.values())) != len(path_packages):
         raise ValueError("workspace.path_packages contains duplicate manifests")
+    root_patches = raw.get("root_patches", {})
+    if not isinstance(root_patches, dict):
+        raise ValueError("root_patches must map package names to paths")
+    for name, patch_path in root_patches.items():
+        nonblank(name, "root_patches name")
+        nonblank(patch_path, "root_patches path")
+        parts = Path(patch_path)
+        if parts.is_absolute() or ".." in parts.parts or parts.as_posix() != patch_path:
+            raise ValueError(f"root patch needs a tree-relative canonical path: {patch_path}")
+    if len(set(root_patches.values())) != len(root_patches):
+        raise ValueError("root_patches contains duplicate paths")
     known = members | externals | set(path_packages)
     allowed: dict[tuple[str, str], Allow] = {}
     for row in raw.get("allow", []):
@@ -154,7 +166,7 @@ def load_policy(path: Path) -> Policy:
             raise ValueError(f"configuration status/owner invalid: {identity}")
         if row["status"] == "pending" and identity != "native-only":
             raise ValueError("only the named native-only target may be pending")
-    return Policy(members, externals, allowed, path, migrations, configurations, path_packages)
+    return Policy(members, externals, allowed, path, migrations, configurations, path_packages, root_patches)
 
 
 KINDS = frozenset({"normal", "target", "optional", "dev", "build"})
@@ -331,6 +343,78 @@ class Packages:
     overrides: set[str]
 
 
+def _manifest_label(root: Path, manifest: Path) -> str:
+    try:
+        return manifest.resolve().relative_to(root.resolve()).as_posix()
+    except ValueError:
+        return str(manifest)
+
+
+def _spec_entries(document: dict):
+    """Yield (key, raw spec) for every dependency-shaped entry in a manifest."""
+    for _kind, table in iter_dep_tables(document):
+        yield from table.items()
+    workspace = document.get("workspace")
+    if isinstance(workspace, dict):
+        ws_deps = workspace.get("dependencies")
+        if isinstance(ws_deps, dict):
+            yield from ws_deps.items()
+    patches = document.get("patch")
+    if isinstance(patches, dict):
+        for table in patches.values():
+            if isinstance(table, dict):
+                yield from table.items()
+    replace = document.get("replace")
+    if isinstance(replace, dict):
+        yield from replace.items()
+
+
+def refuse_git_sources(root: Path, manifest: Path, document: dict) -> None:
+    """Refuse a `git` key in any dependency, patch, or replace entry.
+
+    The checker never reads a git crate's manifest. A git crate could carry
+    a crate edge or a feature request into a local package unseen.
+    """
+    label = _manifest_label(root, manifest)
+    for key, raw in _spec_entries(document):
+        if "git" in spec_map(raw):
+            raise ValueError(
+                f"git source refused: {label}: entry {key!r} uses the `git` key. "
+                "Git dependency sources are not allowed in product manifests. "
+                "Use a registry or path dependency that the checker can read."
+            )
+
+
+def check_root_patches(root: Path, policy: Policy, document: dict) -> None:
+    """Refuse a root [patch.*] or [replace] entry that policy does not list.
+
+    A root patch makes a local package reachable from every external crate.
+    An external manifest could then carry an edge or a feature request into
+    that package. Only entries listed by name and path in [root_patches]
+    may appear in the product root.
+    """
+    label = _manifest_label(root, root / "Cargo.toml")
+    patches = document.get("patch", {})
+    if not isinstance(patches, dict):
+        raise ValueError("unsupported Cargo patch table")
+    tables = [(f"patch.{source}", table) for source, table in patches.items()]
+    tables.append(("replace", document.get("replace", {})))
+    for where, table in tables:
+        if not isinstance(table, dict):
+            raise ValueError("unsupported Cargo patch/replace table")
+        for key, raw in table.items():
+            spec = spec_map(raw)
+            name = key.split(":", 1)[0]
+            allowed_path = policy.root_patches.get(name)
+            if allowed_path is None or allowed_path != spec.get("path"):
+                raise ValueError(
+                    f"root [{where}] entry {key!r} in {label} is not in the protected "
+                    "root patch list in 274bot-arch/policy.toml [root_patches]. "
+                    "An operator commit must add the entry by name and path before "
+                    "the product root may carry it."
+                )
+
+
 def discover_packages(root: Path, policy: Policy) -> Packages:
     """Scan every protected local manifest, including nested vendor workspaces."""
     root = root.resolve()
@@ -382,6 +466,22 @@ def discover_packages(root: Path, policy: Policy) -> Packages:
             raise ValueError("unsupported workspace dependencies")
         contexts[name] = workspace_root, ws_deps
         workspaces[workspace_root] = document
+
+    # Git sources and unlisted root patches can carry a local edge or a
+    # feature request in a manifest the checker never reads. Refuse both
+    # before any edge is collected. The vendored client manifests in
+    # `directories` are scanned here too. The pin already freezes them.
+    root_manifest = root / "Cargo.toml"
+    root_document = load_toml(root_manifest)
+    refuse_git_sources(root, root_manifest, root_document)
+    check_root_patches(root, policy, root_document)
+    for directory in sorted(directories.values()):
+        manifest = directory / "Cargo.toml"
+        if manifest.resolve() != root_manifest.resolve():
+            refuse_git_sources(root, manifest, load_toml(manifest))
+    for workspace_root, document in workspaces.items():
+        if workspace_root != root:
+            refuse_git_sources(root, workspace_root / "Cargo.toml", document)
 
     overrides = set()
     for workspace_root, document in workspaces.items():
@@ -628,10 +728,14 @@ def write_workspace(
     (root / "Cargo.toml").write_text("\n".join(lines), encoding="utf-8")
 
 
-def write_policy(path: Path, members: list[str], allows: list[dict], externals: list[str] | None = None) -> None:
+def write_policy(path: Path, members: list[str], allows: list[dict], externals: list[str] | None = None, root_patches: dict[str, str] | None = None) -> None:
     lines = ["schema_version = 1", "[workspace]", f"members = [{', '.join(repr(m) for m in members)}]"]
     if externals:
         lines.append(f"externals = [{', '.join(repr(e) for e in externals)}]")
+    if root_patches:
+        lines.append("[root_patches]")
+        for name, patch_path in root_patches.items():
+            lines.append(f'{name} = "{patch_path}"')
     lines.append("")
     for allow in allows:
         lines.append("[[allow]]")
@@ -866,14 +970,69 @@ def run_self_test() -> int:
             if "crates/*" not in str(exc):
                 failures.append(f"self-test member-glob: unexpected SystemExit: {exc}")
 
+        # 9. A git dependency is refused and names its manifest.
+        git_dep = base / "git-dependency"
+        write_workspace(git_dep, ["vault", "api"])
+        write_crate(git_dep, "vault", {"ext": {"git": "https://example.invalid/ext.git"}})
+        write_crate(git_dep, "api")
+        write_policy(policy := base / "policy-git-dep.toml", ["vault", "api"], [])
+        failures += expect_errors(
+            "git-dependency",
+            check_graph(git_dep, load_policy(policy)),
+            "git source refused: crates/vault/Cargo.toml: entry 'ext' uses the `git` key",
+        )
+
+        # 10. A git root [patch] is refused by the same rule.
+        git_patch = base / "git-patch"
+        write_workspace(git_patch, ["vault", "api"])
+        write_crate(git_patch, "vault")
+        write_crate(git_patch, "api")
+        root_manifest = git_patch / "Cargo.toml"
+        root_manifest.write_text(
+            root_manifest.read_text(encoding="utf-8")
+            + '\n[patch.crates-io]\napi = { git = "https://example.invalid/api.git" }\n',
+            encoding="utf-8",
+        )
+        failures += expect_errors(
+            "git-patch",
+            check_graph(git_patch, load_policy(policy)),
+            "git source refused: Cargo.toml: entry 'api' uses the `git` key",
+        )
+
+        # 11. An unlisted root path [patch] is refused. The same entry is
+        #     accepted when [root_patches] lists it by name and path.
+        root_patch = base / "root-patch"
+        write_workspace(root_patch, ["vault", "api"])
+        write_crate(root_patch, "vault")
+        write_crate(root_patch, "api")
+        root_manifest = root_patch / "Cargo.toml"
+        root_manifest.write_text(
+            root_manifest.read_text(encoding="utf-8")
+            + '\n[patch.crates-io]\napi = { path = "crates/api" }\n',
+            encoding="utf-8",
+        )
+        failures += expect_errors(
+            "unlisted-root-patch",
+            check_graph(root_patch, load_policy(policy)),
+            "root [patch.crates-io] entry 'api' in Cargo.toml is not in the protected",
+        )
+        write_policy(
+            policy := base / "policy-root-patch.toml",
+            ["vault", "api"], [], root_patches={"api": "crates/api"},
+        )
+        failures += expect_clean(
+            "listed-root-patch", check_graph(root_patch, load_policy(policy))
+        )
+
     if failures:
         sys.stderr.write("\n".join(failures) + "\n")
         return 1
     print(
         "architecture self-test: rejected disallowed/alias/target/unknown/dev-bypass/"
         "required-target-vs-optional/invalid-workspace-optional/path-nonmember/"
-        "implicit-root/glob; accepted permitted dev-only, target-optional, "
-        "and member workspace+optional"
+        "implicit-root/glob/git-dependency/git-patch/unlisted-root-patch; accepted "
+        "permitted dev-only, target-optional, member workspace+optional, "
+        "and listed root patch"
     )
     return 0
 

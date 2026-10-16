@@ -45,9 +45,9 @@ class GraphPolicyTests(unittest.TestCase):
         self.addCleanup(setattr, checker, "RULES_DIR", self.previous_rules)
         self.write_pin()
 
-    def write_policy(self, allows, configuration: str = "") -> None:
+    def write_policy(self, allows, configuration: str = "", root_patches=None) -> None:
         path = self.rules / "policy.toml"
-        checker.write_policy(path, ["vault", "api"], allows)
+        checker.write_policy(path, ["vault", "api"], allows, root_patches=root_patches)
         if configuration:
             with path.open("a", encoding="utf-8") as stream:
                 stream.write(configuration)
@@ -345,7 +345,7 @@ optional_dependencies = []
         allows = [{"from": "vault", "to": "backend", "kinds": ["normal"], "reason": "fixture"}]
         if allowed:
             allows.append({"from": "backend", "to": "api", "kinds": ["normal"], "reason": "fixture"})
-        self.write_policy(allows)
+        self.write_policy(allows, root_patches={"backend": "vendor/backend"})
         policy = self.rules / "policy.toml"
         # Write the protected binding before loading endpoint permissions.
         policy.write_text(policy.read_text(encoding="utf-8").replace(
@@ -378,8 +378,14 @@ optional_dependencies = []
             stream.write('\n[replace]\n"backend:0.1.0" = { path = "vendor/backend" }\n')
         self.write_baseline(self.root)
         self.assertEqual(checker.check_graph_tree(self.root), [])
-        for heading, key in (("replace", '"other:0.1.0"'), ("workspace.dependencies", "other"),
-                             ("patch.crates-io", "other")):
+        # A patch or replace entry must also be listed in [root_patches].
+        # That refusal fires before the path identity check. A workspace
+        # dependency still fails on the unlisted path identity.
+        for heading, key, needle in (
+            ("replace", '"other:0.1.0"', "is not in the protected root patch list"),
+            ("workspace.dependencies", "other", "unlisted path package"),
+            ("patch.crates-io", "other", "is not in the protected root patch list"),
+        ):
             with self.subTest(heading=heading):
                 root_manifest.write_text(
                     '[workspace]\nmembers = ["crates/vault", "crates/api"]\n'
@@ -387,7 +393,90 @@ optional_dependencies = []
                     encoding="utf-8",
                 )
                 errors = checker.check_graph_tree(self.root)
-                self.assertTrue(any("unlisted path package" in error for error in errors), errors)
+                self.assertTrue(any(needle in error for error in errors), errors)
+
+    def test_git_dependency_is_refused_and_names_file_and_key(self) -> None:
+        self.write_policy(
+            [{"from": "vault", "to": "api", "kinds": ["normal"], "reason": "fixture"}]
+        )
+        member_tables = (
+            ("plain", "crates/vault/Cargo.toml",
+             '\n[dependencies.ext]\ngit = "https://example.invalid/ext.git"\n'),
+            ("target", "crates/vault/Cargo.toml",
+             "\n[target.'cfg(unix)'.dependencies]\n"
+             'ext = { git = "https://example.invalid/ext.git" }\n'),
+            ("dev", "crates/vault/Cargo.toml",
+             '\n[dev-dependencies]\next = { git = "https://example.invalid/ext.git" }\n'),
+        )
+        for label, where, text in member_tables:
+            with self.subTest(table=label):
+                root = workspace(self.root / f"git-member-{label}")
+                with (root / where).open("a", encoding="utf-8") as stream:
+                    stream.write(text)
+                errors = checker.check_graph_tree(root)
+                self.assertTrue(any(
+                    f"git source refused: {where}: entry 'ext' uses the `git` key" in error
+                    for error in errors
+                ), errors)
+        # An unused workspace dependency is refused too.
+        root = workspace(self.root / "git-workspace-dep")
+        with (root / "Cargo.toml").open("a", encoding="utf-8") as stream:
+            stream.write(
+                '\n[workspace.dependencies]\next = { git = "https://example.invalid/ext.git" }\n'
+            )
+        errors = checker.check_graph_tree(root)
+        self.assertTrue(any(
+            "git source refused: Cargo.toml: entry 'ext' uses the `git` key" in error
+            for error in errors
+        ), errors)
+
+    def test_git_patch_and_replace_are_refused(self) -> None:
+        self.write_policy(
+            [{"from": "vault", "to": "api", "kinds": ["normal"], "reason": "fixture"}]
+        )
+        for label, text in (
+            ("patch", '\n[patch.crates-io]\napi = { git = "https://example.invalid/api.git" }\n'),
+            ("replace", '\n[replace]\n"api:0.0.0" = { git = "https://example.invalid/api.git" }\n'),
+        ):
+            with self.subTest(table=label):
+                root = workspace(self.root / f"git-{label}")
+                with (root / "Cargo.toml").open("a", encoding="utf-8") as stream:
+                    stream.write(text)
+                errors = checker.check_graph_tree(root)
+                self.assertTrue(any(
+                    "git source refused: Cargo.toml:" in error and "`git` key" in error
+                    for error in errors
+                ), errors)
+
+    def test_unlisted_root_path_patch_is_refused_and_listed_one_passes(self) -> None:
+        # This is the reduced shape of the round-5 y1/y2/y3 trees. A root
+        # path patch for a local package lets any external crate name it.
+        allows = [{"from": "vault", "to": "api", "kinds": ["normal"], "reason": "fixture"}]
+        self.write_policy(allows)
+        workspace(self.root)
+        with (self.root / "Cargo.toml").open("a", encoding="utf-8") as stream:
+            stream.write('\n[patch.crates-io]\napi = { path = "crates/api" }\n')
+        errors = checker.check_graph_tree(self.root)
+        self.assertTrue(any(
+            "root [patch.crates-io] entry 'api' in Cargo.toml is not in the protected "
+            "root patch list" in error for error in errors
+        ), errors)
+        self.write_policy(allows, root_patches={"api": "crates/api"})
+        self.write_baseline(self.root)
+        self.assertEqual(checker.check_graph_tree(self.root), [])
+
+    def test_registry_root_replace_is_refused(self) -> None:
+        self.write_policy(
+            [{"from": "vault", "to": "api", "kinds": ["normal"], "reason": "fixture"}]
+        )
+        workspace(self.root)
+        with (self.root / "Cargo.toml").open("a", encoding="utf-8") as stream:
+            stream.write('\n[replace]\n"api:0.0.0" = { version = "0.1" }\n')
+        errors = checker.check_graph_tree(self.root)
+        self.assertTrue(any(
+            "root [replace] entry 'api:0.0.0' in Cargo.toml is not in the protected "
+            "root patch list" in error for error in errors
+        ), errors)
 
     def test_nonmember_dependency_closure_good_and_bad(self) -> None:
         self.vendor_fixture(allowed=False, dependency='\n[dependencies]\nother = { path = "../other" }\n')
@@ -556,7 +645,7 @@ optional_dependencies = []
         policy = self.rules / "policy.toml"
         checker.write_policy(policy, ["vault", "api", "seat-model"], [{
             "from": "vault", "to": "dear-imgui-wgpu", "kinds": ["normal"], "reason": "fixture"
-        }])
+        }], root_patches={"dear-imgui-wgpu": "vendor/dear-imgui-wgpu-0.15.1"})
         policy.write_text(policy.read_text(encoding="utf-8").replace(
             "[workspace]", '[workspace]\npath_packages = { '
             'dear-imgui-wgpu = "vendor/dear-imgui-wgpu-0.15.1/Cargo.toml" }'

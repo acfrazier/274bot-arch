@@ -55,6 +55,20 @@ Every listed manifest is scanned, even when unused. Path dependencies,
 `workspace.dependencies`, `[patch]`, and `[replace]` must resolve to members
 or listed manifests. Edges from a listed package require ordinary protected
 `[[allow]]` permissions, including edges back into the product workspace.
+
+The checker refuses a `git` key in any dependency table, target table,
+`[workspace.dependencies]`, `[patch.*]`, or `[replace]` entry.
+The refusal names the manifest file and the entry.
+The checker never reads a git crate's manifest.
+A git crate could carry a crate edge or a feature request into a local package.
+Vendored manifests need no separate rule. The pin below already freezes them.
+
+Only root `[patch.*]` and `[replace]` entries listed by name and path in
+`policy.toml` `[root_patches]` may appear in the product root.
+The list now holds only `dear-imgui-wgpu` at `vendor/dear-imgui-wgpu-0.15.1`.
+A root patch makes a local package reachable from every external crate.
+Any other root patch or replacement needs an operator commit that adds it.
+Registry dependencies stay allowed. A crates.io crate cannot name a local path package without a root patch, and the root patch list covers that route.
 A non-member cannot impersonate a member through `package = "<member>"`.
 Product workspace `members`, `default-members`, and `exclude` entries must
 resolve to protected manifests. The client workspace uses the exact pin below.
@@ -90,6 +104,13 @@ The checker does not interpret the client workspace's member lists, exclusions, 
 The pinned set has no `workspace = true` dependencies.
 The pin command and checker refuse a pin that introduces such dependencies.
 Product workspace checks remain unchanged.
+Directory symlinks below `vendor/fr-client-rust/` are refused.
+This applies to every directory in that tree, not only to manifest paths.
+
+One limit stays with review. A product build script can rewrite a vendored
+manifest on disk during a CI job, between steps.
+The checker reads committed manifests only. It does not run build scripts.
+A new `build.rs` needs an ownership row, so a reviewer sees it.
 
 Print the digest for a product tree:
 
@@ -117,6 +138,7 @@ Prepare a reviewed `274bot-arch` commit for any of these changes:
 - optional-dependency activation in a protected package or supported configuration;
 - a vendored path package or its protected manifest binding;
 - any added, removed, or changed client `Cargo.toml`, including comments and local features;
+- a root `[patch.*]` or `[replace]` entry, listed by name and path in `[root_patches]`;
 - a checker change.
 
 Edit `policy.toml` where required. First merge current `dev` into the branch
