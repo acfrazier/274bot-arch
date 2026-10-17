@@ -80,6 +80,12 @@ are matched without ASCII case distinctions. These files can override the
 graph that `274bot-arch` protects.
 Unicode look-alike names are outside this refusal because Cargo on Linux does not read them.
 
+The checker refuses any file whose name matches `cargo.toml` without ASCII
+case distinctions but is not exactly `Cargo.toml`.
+This rule covers the whole candidate tree, including vendored trees and symlinks.
+On a case-insensitive file system, that file replaces the scanned `Cargo.toml`.
+The macOS and Windows release builds use such file systems.
+
 Default-feature and dev-dependency activation is checked for every protected
 member and listed path package. Named configurations add their own activation
 checks. A package does not escape these checks when no configuration reaches it.
@@ -99,6 +105,7 @@ Each path and content field has an eight-byte big-endian byte length before it.
 The digest is identity data for a protected input, like policy data, not bookkeeping.
 
 The checker refuses added, removed, or changed manifests and names each difference.
+A case variant of `Cargo.toml` in that tree is refused by name and never enters the pin.
 An operator commit to this repository must update the pin before that product change lands.
 The checker does not interpret the client workspace's member lists, exclusions, globs, or inheritance.
 The pinned set has no `workspace = true` dependencies.

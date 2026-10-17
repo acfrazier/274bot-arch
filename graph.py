@@ -7,6 +7,10 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
+_ASCII_LOWER = str.maketrans(
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"
+)
+
 
 def dependency_records(checker, root, policy):
     packages = checker.discover_packages(root, policy)
@@ -142,6 +146,14 @@ def graph_state(checker, root):
             raise ValueError(
                 f"candidate tools/architecture/{filename} is forbidden. "
                 f"Rules belong only in 274bot-arch/{filename}, not in the product tree"
+            )
+    for candidate in sorted(root.rglob("*")):
+        if candidate.name != "Cargo.toml" and candidate.name.translate(_ASCII_LOWER) == "cargo.toml":
+            raise ValueError(
+                f"candidate {candidate.relative_to(root)} is forbidden. "
+                "A manifest file name must use the exact spelling Cargo.toml. "
+                "A different ASCII case spelling replaces Cargo.toml "
+                "on a case-insensitive file system"
             )
     for directory in sorted(path for path in root.rglob("*") if path.name.lower() == ".cargo"):
         if not directory.is_dir():

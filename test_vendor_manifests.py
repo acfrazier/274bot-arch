@@ -67,6 +67,31 @@ class VendoredManifestTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "directory must not be a symlink"):
             pin.check_pin(self.root, self.protected)
 
+    def test_case_variant_manifest_name_is_refused(self):
+        # Exact Cargo.toml alone passes.
+        pin.check_pin(self.root, self.protected)
+        probe = self.tree / "crates/probe"
+        probe.mkdir(parents=True)
+        for name in ("cargo.toml", "CARGO.TOML", "CaRgO.ToMl"):
+            for symlink in (False, True):
+                with self.subTest(name=name, symlink=symlink):
+                    variant = probe / name
+                    if symlink:
+                        variant.symlink_to(self.root / "missing-manifest")
+                    else:
+                        variant.write_text("[workspace]\n", encoding="utf-8")
+                    with self.assertRaises(ValueError) as raised:
+                        pin.check_pin(self.root, self.protected)
+                    self.assertIn(
+                        "vendored manifest must use the exact name Cargo.toml, "
+                        f"not a case variant: vendor/fr-client-rust/crates/probe/{name}",
+                        str(raised.exception),
+                    )
+                    with self.assertRaises(ValueError):
+                        pin.pin_json(self.root)
+                    variant.unlink()
+        pin.check_pin(self.root, self.protected)
+
     def test_changed_pin_content_needs_matching_digest(self):
         raw = json.loads(self.protected.read_text())
         raw["manifests"]["Cargo.toml"] += "# changed\n"

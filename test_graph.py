@@ -717,6 +717,59 @@ optional_dependencies = []
         self.assertTrue(any("candidate .Cargo/Config.toml is forbidden" in error
                             for error in errors), errors)
 
+    def test_case_variant_cargo_toml_is_refused_in_product_and_vendored_trees(self) -> None:
+        self.write_policy([])
+        workspace(self.root, kind="none")
+        self.write_baseline(self.root)
+        # Exact Cargo.toml names alone pass.
+        self.assertEqual(checker.check_graph_tree(self.root), [])
+        scenarios = (
+            # o22 analog: a product manifest variant with a hidden edge
+            # and a git source.
+            (
+                "crates/vault/cargo.toml",
+                '[package]\nname = "vault"\nversion = "0.0.0"\n'
+                '[dependencies]\napi = { path = "../api" }\n'
+                'ext = { git = "https://example.invalid/ext.git" }\n',
+            ),
+            # o24 analog: a product manifest variant with a hidden
+            # feature request.
+            (
+                "crates/api/cargo.toml",
+                '[package]\nname = "api"\nversion = "0.0.0"\n'
+                '[dependencies]\nvault = { path = "../vault", '
+                'features = ["probe"] }\n',
+            ),
+            # o23 analog: a vendored manifest variant with a hidden
+            # edge into the product tree.
+            (
+                "vendor/fr-client-rust/crates/client/cargo.toml",
+                '[package]\nname = "client"\nversion = "0.0.0"\n'
+                '[dependencies]\nvault = { path = "../../../../crates/vault" }\n',
+            ),
+            ("crates/vault/CARGO.TOML", "[package]\n"),
+            ("crates/vault/CaRgO.ToMl", "[package]\n"),
+            ("cargo.toml", "[workspace]\n"),
+        )
+        for relative, content in scenarios:
+            for symlink in (False, True):
+                with self.subTest(relative=relative, symlink=symlink):
+                    candidate = self.root / relative
+                    candidate.parent.mkdir(parents=True, exist_ok=True)
+                    if symlink:
+                        candidate.symlink_to(self.root / "missing-manifest")
+                    else:
+                        candidate.write_text(content, encoding="utf-8")
+                    errors = checker.check_graph_tree(self.root)
+                    self.assertTrue(any(
+                        f"candidate {candidate.relative_to(self.root)} is forbidden" in error
+                        and "exact spelling Cargo.toml" in error
+                        for error in errors
+                    ), errors)
+                    candidate.unlink()
+        # Removal returns the tree to exact Cargo.toml names alone.
+        self.assertEqual(checker.check_graph_tree(self.root), [])
+
     def client_play_fixture(self) -> Path:
         workspace(self.root, kind="none")
         self.write_policy([{

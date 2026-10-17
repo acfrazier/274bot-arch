@@ -9,6 +9,9 @@ import tomllib
 
 TREE = Path("vendor/fr-client-rust")
 PIN = "vendor-manifests.json"
+_ASCII_LOWER = str.maketrans(
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"
+)
 
 
 def manifest_digest(manifests):
@@ -35,6 +38,13 @@ def snapshot(root):
         raise error
 
     for directory, children, files in os.walk(tree, onerror=walk_error, followlinks=False):
+        for name in (*children, *files):
+            if name != "Cargo.toml" and name.translate(_ASCII_LOWER) == "cargo.toml":
+                path = Path(directory) / name
+                raise ValueError(
+                    "vendored manifest must use the exact name Cargo.toml, "
+                    f"not a case variant: {path.relative_to(root)}"
+                )
         for child in children:
             path = Path(directory) / child
             if path.is_symlink():
