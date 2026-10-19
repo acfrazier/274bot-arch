@@ -240,8 +240,8 @@ reason = "dev-only: lifecycle tests drive a real Client through Play::run_with_i
 [[allow]]
 from = "frontend-core"
 to = "scenario"
-kinds = ["dev"]
-reason = "dev-only: the blocked-stop LIVE cell runs the shared ScenarioRunner against the shared panel/TUI presentation. Production frontend-core never hosts a scenario."
+kinds = ["dev", "optional"]
+reason = "dev: the blocked-stop LIVE cell runs the shared ScenarioRunner against the shared panel/TUI presentation. optional: frontend-core's live-harness feature (Main, T3.3 r2 D2, 2026-10-18) hosts the --live/--smoke harness that panel and TUI reached directly before T3.3; product builds without live-harness have no scenario in their graph."
 
 [[allow]]
 from = "panel"
@@ -267,26 +267,6 @@ to = "client"
 kinds = ["normal"]
 reason = "panel blits the client frame and feeds input; GPU 3D stays in the client."
 
-[[migration]]
-id = "UI-PANEL-HOST"
-from = "panel"
-to = "host"
-kind = "normal"
-owner = "T3"
-consumers = ["panel:lib:panel", "panel:bin:panel-play"]
-reason = "Temporary direct UI access while commands and views migrate to frontend-core."
-removal_endpoint = "T3.3"
-
-[[migration]]
-id = "UI-PANEL-PLAY"
-from = "panel"
-to = "host-play"
-kind = "normal"
-owner = "T3"
-consumers = ["panel:lib:panel", "panel:bin:panel-play"]
-reason = "Temporary direct UI access while commands and views migrate to frontend-core."
-removal_endpoint = "T3.3"
-
 [[allow]]
 from = "panel"
 to = "host-play"
@@ -298,36 +278,6 @@ from = "panel"
 to = "nav"
 kinds = ["normal"]
 reason = "WalkTo picker and nav paints are panel chrome over host nav."
-
-[[migration]]
-id = "UI-PANEL-SCENARIO"
-from = "panel"
-to = "scenario"
-kind = "normal"
-owner = "T3"
-consumers = ["panel:lib:panel", "panel:bin:panel-play"]
-reason = "Temporary direct UI access while commands and views migrate to frontend-core."
-removal_endpoint = "T3.3"
-
-[[migration]]
-id = "UI-PANEL-SCRIPT"
-from = "panel"
-to = "script"
-kind = "normal"
-owner = "T3"
-consumers = ["panel:lib:panel", "panel:bin:panel-play"]
-reason = "Temporary direct UI access while commands and views migrate to frontend-core."
-removal_endpoint = "T3.3"
-
-[[migration]]
-id = "UI-PANEL-VAULT"
-from = "panel"
-to = "vault"
-kind = "normal"
-owner = "T3"
-consumers = ["panel:lib:panel", "panel:bin:panel-play"]
-reason = "Temporary direct UI access while commands and views migrate to frontend-core."
-removal_endpoint = "T3.3"
 
 [[allow]]
 from = "tui"
@@ -341,16 +291,6 @@ to = "client"
 kinds = ["normal"]
 reason = "tui observes client facts with raster Off; it does not own a GPU loop."
 
-[[migration]]
-id = "UI-TUI-PLAY"
-from = "tui"
-to = "host-play"
-kind = "normal"
-owner = "T3"
-consumers = ["tui:lib:tui", "tui:bin:tui-play"]
-reason = "Temporary direct UI access while commands and views migrate to frontend-core."
-removal_endpoint = "T3.3"
-
 [[allow]]
 from = "tui"
 to = "host-play"
@@ -362,36 +302,6 @@ from = "tui"
 to = "nav"
 kinds = ["normal"]
 reason = "tui map pane reads packed collision/pins."
-
-[[migration]]
-id = "UI-TUI-SCENARIO"
-from = "tui"
-to = "scenario"
-kind = "normal"
-owner = "T3"
-consumers = ["tui:lib:tui", "tui:bin:tui-play"]
-reason = "Temporary direct UI access while commands and views migrate to frontend-core."
-removal_endpoint = "T3.3"
-
-[[migration]]
-id = "UI-TUI-SCRIPT"
-from = "tui"
-to = "script"
-kind = "normal"
-owner = "T3"
-consumers = ["tui:lib:tui", "tui:bin:tui-play"]
-reason = "Temporary direct UI access while commands and views migrate to frontend-core."
-removal_endpoint = "T3.3"
-
-[[migration]]
-id = "UI-TUI-VAULT"
-from = "tui"
-to = "vault"
-kind = "normal"
-owner = "T3"
-consumers = ["tui:lib:tui", "tui:bin:tui-play"]
-reason = "Temporary direct UI access while commands and views migrate to frontend-core."
-removal_endpoint = "T3.3"
 
 [[allow]]
 from = "tui"
