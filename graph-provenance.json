@@ -299,6 +299,16 @@
     [
       "edge",
       "host-play",
+      "nav-executor",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "host-play",
       "scenario",
       "dev",
       "",
@@ -364,6 +374,48 @@
       "edge",
       "nav",
       "client",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "nav-executor",
+      "api",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "nav-executor",
+      "client",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "nav-executor",
+      "nav",
+      "dev",
+      "",
+      "dev-dependencies",
+      true,
+      [
+        "test-support"
+      ]
+    ],
+    [
+      "edge",
+      "nav-executor",
+      "nav",
       "normal",
       "",
       "dependencies",
@@ -473,6 +525,16 @@
       "edge",
       "scenario",
       "nav",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "scenario",
+      "nav-executor",
       "normal",
       "",
       "dependencies",
@@ -2459,6 +2521,28 @@
       "package-defaults",
       "e2e",
       "dependency",
+      "nav",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "e2e",
+      "dependency",
+      "nav",
+      "syn",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "e2e",
+      "dependency",
       "script",
       "deno_core",
       "optional",
@@ -2581,6 +2665,15 @@
       "package-defaults",
       "e2e",
       "feature-edge",
+      "nav-executor",
+      "nav",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "e2e",
+      "feature-edge",
       "script",
       "api",
       "path-schema"
@@ -2641,6 +2734,28 @@
       "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "frontend-core",
+      "dependency",
+      "nav",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "frontend-core",
+      "dependency",
+      "nav",
+      "syn",
       "optional",
       "",
       "dependencies"
@@ -2790,6 +2905,15 @@
       "package-defaults",
       "frontend-core",
       "feature-edge",
+      "nav-executor",
+      "nav",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "frontend-core",
+      "feature-edge",
       "script",
       "api",
       "path-schema"
@@ -2848,6 +2972,28 @@
       "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "host-play",
+      "dependency",
+      "nav",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "host-play",
+      "dependency",
+      "nav",
+      "syn",
       "optional",
       "",
       "dependencies"
@@ -2961,6 +3107,15 @@
       "package-defaults",
       "host-play",
       "feature-edge",
+      "nav-executor",
+      "nav",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "host-play",
+      "feature-edge",
       "script",
       "api",
       "path-schema"
@@ -2991,6 +3146,59 @@
       "script",
       "script",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "nav",
+      "dependency",
+      "nav",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "nav",
+      "dependency",
+      "nav",
+      "syn",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "nav-executor",
+      "dependency",
+      "nav",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "nav-executor",
+      "dependency",
+      "nav",
+      "syn",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "nav-executor",
+      "feature-edge",
+      "nav-executor",
+      "nav",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -3054,6 +3262,28 @@
       "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "panel",
+      "dependency",
+      "nav",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "panel",
+      "dependency",
+      "nav",
+      "syn",
       "optional",
       "",
       "dependencies"
@@ -3224,6 +3454,15 @@
       "host-play",
       "script",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "panel",
+      "feature-edge",
+      "nav-executor",
+      "nav",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -3322,11 +3561,42 @@
       "package-defaults",
       "scenario",
       "dependency",
+      "nav",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "scenario",
+      "dependency",
+      "nav",
+      "syn",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "scenario",
+      "dependency",
       "script",
       "schemars",
       "optional",
       "",
       "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "scenario",
+      "feature-edge",
+      "nav-executor",
+      "nav",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -3371,6 +3641,28 @@
       "dependency",
       "api",
       "schemars",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "script",
+      "dependency",
+      "nav",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "script",
+      "dependency",
+      "nav",
+      "syn",
       "optional",
       "",
       "dependencies"
@@ -3517,6 +3809,28 @@
       "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "tui",
+      "dependency",
+      "nav",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "tui",
+      "dependency",
+      "nav",
+      "syn",
       "optional",
       "",
       "dependencies"
@@ -3669,6 +3983,15 @@
       "host-play",
       "script",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "tui",
+      "feature-edge",
+      "nav-executor",
+      "nav",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -3831,6 +4154,28 @@
       "render-diagnostics",
       "panel",
       "dependency",
+      "nav",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "dependency",
+      "nav",
+      "syn",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "dependency",
       "script",
       "deno_core",
       "optional",
@@ -4010,6 +4355,15 @@
       "host-play",
       "script",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "nav-executor",
+      "nav",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -4126,6 +4480,28 @@
       "script-load-tests",
       "script",
       "dependency",
+      "nav",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "script-load-tests",
+      "script",
+      "dependency",
+      "nav",
+      "syn",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "script-load-tests",
+      "script",
+      "dependency",
       "script",
       "deno_core",
       "optional",
@@ -4252,6 +4628,28 @@
       "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "dependency",
+      "nav",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "dependency",
+      "nav",
+      "syn",
       "optional",
       "",
       "dependencies"
@@ -4383,6 +4781,15 @@
       "workspace-tests",
       "e2e",
       "feature-edge",
+      "nav-executor",
+      "nav",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "feature-edge",
       "script",
       "api",
       "path-schema"
@@ -4443,6 +4850,28 @@
       "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "dependency",
+      "nav",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "dependency",
+      "nav",
+      "syn",
       "optional",
       "",
       "dependencies"
@@ -4592,6 +5021,15 @@
       "workspace-tests",
       "frontend-core",
       "feature-edge",
+      "nav-executor",
+      "nav",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
       "script",
       "api",
       "path-schema"
@@ -4650,6 +5088,28 @@
       "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "dependency",
+      "nav",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "dependency",
+      "nav",
+      "syn",
       "optional",
       "",
       "dependencies"
@@ -4763,6 +5223,15 @@
       "workspace-tests",
       "host-play",
       "feature-edge",
+      "nav-executor",
+      "nav",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "feature-edge",
       "script",
       "api",
       "path-schema"
@@ -4793,6 +5262,59 @@
       "script",
       "script",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "nav",
+      "dependency",
+      "nav",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "nav",
+      "dependency",
+      "nav",
+      "syn",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "nav-executor",
+      "dependency",
+      "nav",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "nav-executor",
+      "dependency",
+      "nav",
+      "syn",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "nav-executor",
+      "feature-edge",
+      "nav-executor",
+      "nav",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -4865,6 +5387,28 @@
       "workspace-tests",
       "panel",
       "dependency",
+      "nav",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "dependency",
+      "nav",
+      "syn",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "dependency",
       "script",
       "deno_core",
       "optional",
@@ -5026,6 +5570,15 @@
       "host-play",
       "script",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "nav-executor",
+      "nav",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -5124,11 +5677,42 @@
       "workspace-tests",
       "scenario",
       "dependency",
+      "nav",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "scenario",
+      "dependency",
+      "nav",
+      "syn",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "scenario",
+      "dependency",
       "script",
       "schemars",
       "optional",
       "",
       "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "scenario",
+      "feature-edge",
+      "nav-executor",
+      "nav",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -5173,6 +5757,28 @@
       "dependency",
       "api",
       "schemars",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "dependency",
+      "nav",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "dependency",
+      "nav",
+      "syn",
       "optional",
       "",
       "dependencies"
@@ -5319,6 +5925,28 @@
       "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "dependency",
+      "nav",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "dependency",
+      "nav",
+      "syn",
       "optional",
       "",
       "dependencies"
@@ -5471,6 +6099,15 @@
       "host-play",
       "script",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "nav-executor",
+      "nav",
+      "test-support"
     ],
     [
       "isolated-activation",
