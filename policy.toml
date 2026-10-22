@@ -15,6 +15,7 @@ members = [
     "host",
     "host-play",
     "nav",
+    "nav-executor",
     "panel",
     "scenario",
     # Dev-only executable seat model (contract §27 §8); depends on no workspace crate.
@@ -93,6 +94,24 @@ to = "client"
 kinds = ["normal"]
 reason = "nav bake/collision reads packed client world data."
 
+[[allow]]
+from = "nav-executor"
+to = "api"
+kinds = ["normal"]
+reason = "The walk executor sends through api::interact and settles through api::settle over the host's GameSnapshot. It owns the per-slot Traveller state. It plans nothing."
+
+[[allow]]
+from = "nav-executor"
+to = "nav"
+kinds = ["normal", "dev"]
+reason = "The executor follows planner plans and reads transport facts, world state, quest evidence and the essence session through lists A and C of NAV-CRATE-SPLIT design-r3 2.4 (Route, Leg, CompactRouteLeg, RoutePlanLease, TransportEdge, TransportKind, DoorDir, WorldState, QuestEvidence, QuestGates, the essence items, and the raw forwarding module executor_adapter), enforced by the executor's own source test. The planner never depends on the executor. The script facade (contract) is unchanged by the split. dev: list B through the planner's test-support feature (test_support fixture builders, StepGrid fixtures, find_on_grid, NavWorld::load_default_pack_or_skip)."
+
+[[allow]]
+from = "nav-executor"
+to = "client"
+kinds = ["normal"]
+reason = "Scene collision flag bits (client::dash3d::CollisionFlag) for approach-stand selection (snapshot.rs scene_standable, npc_hop.rs cardinal_stand), and the real Client driver in the executor's tests. api uses the type internally and does not re-export it. A later api::query helper may remove this edge."
+
 # --- script kernel ---
 
 [[allow]]
@@ -153,6 +172,12 @@ reason = "Play drives Traveller/WalkTo; the build script bakes/stages the select
 
 [[allow]]
 from = "host-play"
+to = "nav-executor"
+kinds = ["normal"]
+reason = "Play owns the per-slot Traveller (NavBot for script walks, WalkArm for manual WalkTo) and polls Traveller::follow one step per tick. host-play's own tests and live tests construct a Traveller. host-play's test-support feature exposes WalkArm::with_latched_essence so frontend tests never name the executor."
+
+[[allow]]
+from = "host-play"
 to = "script"
 kinds = ["normal", "dev"]
 reason = "Play owns the per-slot script transaction (start/pause/stop/load) as one cohesive unit. dev: host-play's own tests install native fixtures through script's test-hooks seams (start_test_script, prepare_for_test); production builds never enable them."
@@ -186,6 +211,12 @@ from = "scenario"
 to = "nav"
 kinds = ["normal"]
 reason = "nav-family scenarios share the packed world/router, not script isolate internals."
+
+[[allow]]
+from = "scenario"
+to = "nav-executor"
+kinds = ["normal"]
+reason = "nav-family scenarios drive Traveller::follow over a real Client. scenario never starts or hosts a script."
 
 [[allow]]
 from = "scenario"
@@ -368,7 +399,7 @@ optional_dependencies = []
 
 [[configuration]]
 id = "workspace-tests"
-packages = ["api", "e2e", "frontend-core", "host", "host-play", "nav", "panel", "scenario", "script", "seat-model", "tui", "vault"]
+packages = ["api", "e2e", "frontend-core", "host", "host-play", "nav", "nav-executor", "panel", "scenario", "script", "seat-model", "tui", "vault"]
 features = []
 default_features = true
 dev = true
