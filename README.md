@@ -41,6 +41,12 @@ Ownership, inventories, and foreign-type classifications come only from the
 candidate's `tools/architecture/` directory. Candidate copies of protected rules
 in that directory are errors, not overrides.
 
+The script inventory scans both `crates/script` and `crates/script-js`.
+Each source, test, and generated-schema root is optional when the other root exists.
+This lets the same checker accept the trees before and after the script split.
+Required optional dependencies are checked only for dependency kinds that the
+selected configuration activates. A configuration with `dev = false` excludes dev rows.
+
 ## Graph identity
 
 The checker reads manifests without Cargo resolution. It scans all target

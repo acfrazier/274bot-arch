@@ -33,9 +33,16 @@ FOREIGN_PATH_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(?:::[A-Za-z_][A-Za-z0-9_]*
 FOREIGN_PATH_RESERVED_ROOTS = frozenset({"crate", "self", "super", "Self"})
 VIEWS_RELATIVE = Path("crates/frontend-core/src/views.rs")
 FRONTEND_SRC_RELATIVE = Path("crates/frontend-core/src")
-SCRIPT_SRC_RELATIVE = Path("crates/script/src")
-SCRIPT_TESTS_RELATIVE = Path("crates/script/tests")
-SCRIPT_AUX_RELATIVE = (Path("crates/script/schema/generated/isolate_generated.rs"),)
+# Each tuple covers the native core and the JS surface. A missing root is
+# optional, but at least one root in each tuple must exist.
+SCRIPT_SRC_RELATIVE = (Path("crates/script/src"), Path("crates/script-js/src"))
+SCRIPT_TESTS_RELATIVE = (Path("crates/script/tests"), Path("crates/script-js/tests"))
+SCRIPT_AUX_RELATIVE = (
+    Path("crates/script/schema/generated/isolate_generated.rs"),
+    Path("crates/script-js/schema/generated/isolate_generated.rs"),
+)
+SCRIPT_SRC_PREFIXES = tuple(f"{relative.as_posix()}/" for relative in SCRIPT_SRC_RELATIVE)
+SCRIPT_TESTS_PREFIXES = tuple(f"{relative.as_posix()}/" for relative in SCRIPT_TESTS_RELATIVE)
 
 OWNERS = frozenset({"T3", "T5"})
 ENDPOINTS = frozenset({"T3.1", "T5.1"})
@@ -82,6 +89,8 @@ TEST_EXCEPTION_TARGETS: dict[str, frozenset[str]] = {
     "crates/script/tests/path_schema.rs": frozenset({"integration-test"}),
     "crates/script/tests/cook_location_shape.rs": frozenset({"integration-test"}),
     "crates/script/tests/named_bank_locations.rs": frozenset({"integration-test"}),
+    "crates/script-js/tests/cook_location_shape.rs": frozenset({"integration-test"}),
+    "crates/script-js/tests/named_bank_locations.rs": frozenset({"integration-test"}),
 }
 
 # These nav modules contain implementation/storage representations.  Other
@@ -219,20 +228,26 @@ TRUSTED_FOREIGN_TYPE_CLASSES = {
     "host::CapacityWarning": "scalar",
     # CatalogDiff stays owning across the supported script feature configurations.
     "script::CatalogDiff": "owning",
+    "script_js::CatalogDiff": "owning",
     "script::CompiledId": "scalar",
     "script::native::CompiledCard": "owning",
     "nav_planner::router::FindOptions": "scalar",
     "host::FrameBuf": "owning",
     "host_play::InstancePermit": "owning",
     "script::JsCard": "owning",
+    "script_js::JsCard": "owning",
     "script::JsLibrary": "owning",
+    "script_js::JsLibrary": "owning",
     "api::hostlog::Level": "scalar",
     "script::LoadFailure": "owning",
+    "script_js::LoadFailure": "owning",
     "script::LoadShape": "scalar",
+    "script_js::LoadShape": "scalar",
     "host_play::walk_map::MapContext": "scalar",
     "host_play::walk_map::MapWalkPlan": "scalar",
     "host_play::Play": "owning",
     "script::PreparedCard": "owning",
+    "script_js::PreparedCard": "owning",
     "script::PreparedConfig": "owning",
     "vault::Profile": "owning",
     "host::RenderPolicyLabel": "scalar",
@@ -358,6 +373,7 @@ FRONTEND_CRATE_NAMES = frozenset(
         "nav_planner",
         "nav_executor",
         "script",
+        "script_js",
         "vault",
     }
 )
@@ -768,8 +784,13 @@ def _check_rust_editions(root: Path) -> list[str]:
     errors: list[str] = []
     for relative in (
         Path("crates/script/Cargo.toml"),
+        Path("crates/script-js/Cargo.toml"),
         Path("crates/frontend-core/Cargo.toml"),
     ):
+        if relative == Path("crates/script-js/Cargo.toml") and not (
+            (root / relative).exists() or (root / relative).is_symlink()
+        ):
+            continue
         try:
             if _traverses_symlink(root, relative):
                 raise OSError("symlinked manifest is unsupported")
@@ -787,32 +808,43 @@ def _check_rust_editions(root: Path) -> list[str]:
 def _read_rust_files(root: Path, executable: str) -> tuple[dict[str, dict[str, Any]], list[str]]:
     parsed: dict[str, dict[str, Any]] = {}
     errors: list[str] = []
-    roots = (SCRIPT_SRC_RELATIVE, SCRIPT_TESTS_RELATIVE)
-    for relative_root in roots:
-        directory = root / relative_root
-        if _traverses_symlink(root, relative_root):
-            errors.append(f"{relative_root.as_posix()}: symlinked Rust input is unsupported")
-            continue
-        if not directory.is_dir():
-            errors.append(f"missing Rust source tree: {relative_root.as_posix()}")
-            continue
-        for path in sorted(directory.rglob("*.rs")):
-            relative = path.relative_to(root).as_posix()
-            if _traverses_symlink(root, path.relative_to(root)):
-                errors.append(f"{relative}: symlinked Rust input is unsupported")
+    for group in (SCRIPT_SRC_RELATIVE, SCRIPT_TESTS_RELATIVE):
+        found = False
+        for relative_root in group:
+            directory = root / relative_root
+            if _traverses_symlink(root, relative_root):
+                errors.append(f"{relative_root.as_posix()}: symlinked Rust input is unsupported")
+                found = True
                 continue
-            try:
-                source = path.read_text(encoding="utf-8")
-                tree = _parse_source(executable, relative, source)
-            except (OSError, UnicodeError, _InventoryError) as error:
-                errors.append(str(error))
+            if not directory.is_dir():
                 continue
-            parsed[relative] = {"source": source, "tree": tree}
+            found = True
+            for path in sorted(directory.rglob("*.rs")):
+                relative = path.relative_to(root).as_posix()
+                if _traverses_symlink(root, path.relative_to(root)):
+                    errors.append(f"{relative}: symlinked Rust input is unsupported")
+                    continue
+                try:
+                    source = path.read_text(encoding="utf-8")
+                    tree = _parse_source(executable, relative, source)
+                except (OSError, UnicodeError, _InventoryError) as error:
+                    errors.append(str(error))
+                    continue
+                parsed[relative] = {"source": source, "tree": tree}
+        if not found:
+            errors.extend(
+                f"missing Rust source tree: {relative_root.as_posix()}" for relative_root in group
+            )
+    found = False
     for relative in SCRIPT_AUX_RELATIVE:
         path = root / relative
         if _traverses_symlink(root, relative):
             errors.append(f"{relative.as_posix()}: symlinked Rust input is unsupported")
+            found = True
             continue
+        if not path.is_file():
+            continue
+        found = True
         try:
             source = path.read_text(encoding="utf-8")
             tree = _parse_source(executable, relative.as_posix(), source)
@@ -820,6 +852,10 @@ def _read_rust_files(root: Path, executable: str) -> tuple[dict[str, dict[str, A
             errors.append(str(error))
             continue
         parsed[relative.as_posix()] = {"source": source, "tree": tree}
+    if not found:
+        errors.extend(
+            f"missing Rust source file: {relative.as_posix()}" for relative in SCRIPT_AUX_RELATIVE
+        )
     return parsed, errors
 def _read_frontend_files(
     root: Path, executable: str
@@ -1066,9 +1102,9 @@ def _root_test_scopes(
     """Resolve external module and include provenance for the syntax scan."""
     contexts: dict[str, set[str]] = {}
     errors: list[str] = []
-    root_file = "crates/script/src/lib.rs"
-    if root_file not in parsed:
-        return {}, [f"missing Rust crate root: {root_file}"]
+    root_files = ("crates/script/src/lib.rs", "crates/script-js/src/lib.rs")
+    if not any(root_file in parsed for root_file in root_files):
+        return {}, [f"missing Rust crate root: {root_files[0]}"]
 
     def module_base(file_path: Path) -> Path:
         if file_path.name in {"lib.rs", "main.rs", "mod.rs"}:
@@ -1182,7 +1218,7 @@ def _root_test_scopes(
             )
 
     for relative, entry in sorted(parsed.items()):
-        if not relative.startswith("crates/script/src/"):
+        if not relative.startswith(SCRIPT_SRC_PREFIXES):
             continue
         file_path = Path(relative)
         walk(entry["tree"], relative, module_base(file_path), (), "production")
@@ -1688,6 +1724,11 @@ ALLOWED_TEST_INCLUDES = frozenset(
     {
         (
             "crates/script/src/isolate_fb.rs",
+            "cfg(test)::tests",
+            "isolate_fb_schema_roundtrip.rs",
+        ),
+        (
+            "crates/script-js/src/wire/isolate_fb.rs",
             "cfg(test)::tests",
             "isolate_fb_schema_roundtrip.rs",
         )
@@ -2958,7 +2999,7 @@ def _seam_records(
 
 
 def _cfg_for_scope(path: str, node_scope: str) -> str:
-    if path.startswith("crates/script/tests/"):
+    if path.startswith(SCRIPT_TESTS_PREFIXES):
         return "integration-test"
     return node_scope
 
@@ -3148,7 +3189,7 @@ def _script_records(
     for path, entry in sorted(parsed.items()):
         root_scope = (
             "integration-test"
-            if path.startswith("crates/script/tests/")
+            if path.startswith(SCRIPT_TESTS_PREFIXES)
             else root_scopes.get(path, "production")
         )
         tree = entry["tree"]
