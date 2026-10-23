@@ -169,14 +169,19 @@ def _write_fixture(
     test_exceptions: tuple[dict[str, str], ...] = (),
     foreign_types: str | None = None,
     workspace_files: dict[str, str] | None = None,
+    script_manifest: str | None = None,
 ) -> Path:
     for crate in ("script", "frontend-core"):
         crate_root = root / "crates" / crate
         crate_root.mkdir(parents=True)
-        (crate_root / "Cargo.toml").write_text(
-            f'[package]\nname = "{crate}"\nversion = "0.0.0"\nedition = "2021"\n',
-            encoding="utf-8",
+        manifest = (
+            script_manifest
+            if crate == "script" and script_manifest is not None
+            else f'[package]\nname = "{crate}"\nversion = "0.0.0"\nedition = "2021"\n'
         )
+        if crate == "script" and script_manifest is None:
+            manifest += '\n[dependencies]\nnav = { path = "../nav" }\n'
+        (crate_root / "Cargo.toml").write_text(manifest, encoding="utf-8")
     frontend_src = root / "crates" / "frontend-core" / "src"
     frontend_src.mkdir()
     (frontend_src / "lib.rs").write_text(frontend_lib, encoding="utf-8")
@@ -244,6 +249,7 @@ class InventoryBehaviorTests(unittest.TestCase):
         return _write_fixture(Path(temporary.name), **kwargs)
 
     def clean_fixture(self, **kwargs: Any) -> Path:
+        kwargs.setdefault("views", self.baseline_views())
         kwargs.setdefault(
             "seam_types", (("FleetCounts", "scalar"), ("FleetView", "borrowed"))
         )
@@ -567,6 +573,305 @@ pub struct FleetView<'a> {
         self.assertTrue(any("public_signature" in error for error in qualified_errors), qualified_errors)
         self.assertTrue(any("public_type_alias" in error for error in alias_errors), alias_errors)
         self.assertTrue(any("public_signature" in error for error in alias_errors), alias_errors)
+
+    def test_planner_roots_follow_manifest_and_keep_contract(self) -> None:
+        path = "crates/script/src/lib.rs"
+        seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"))
+        cases = (
+            ("nav", "nav", "../nav", "nav"),
+            ("nav-planner", "nav-planner", "../nav-planner", "nav_planner"),
+        )
+        for key, package, relative_path, root in cases:
+            with self.subTest(crate_root=root):
+                manifest = (
+                    '[package]\nname = "script"\nversion = "0.0.0"\n'
+                    'edition = "2021"\n[dependencies]\n'
+                    f'{key} = {{ package = "{package}", path = "{relative_path}" }}\n'
+                )
+                raw = inventories.check_tree(
+                    self.clean_fixture(
+                        script_manifest=manifest,
+                        script_files={
+                            path: f"pub fn leak() -> {root}::router::Route {{ loop {{}} }}\n"
+                        },
+                    )
+                )
+                self.assertTrue(
+                    any(
+                        "production_nav_implementation_import" in error
+                        and f"{root}::router::Route" in error
+                        for error in raw
+                    ),
+                    raw,
+                )
+                contract = inventories.check_tree(
+                    self.clean_fixture(
+                        script_manifest=manifest,
+                        script_files={path: f"use {root}::contract::RouteView;\n"},
+                    )
+                )
+                self.assertEqual(contract, [])
+
+    def test_planner_cargo_alias_and_module_alias_remain_raw(self) -> None:
+        manifest = (
+            '[package]\nname = "script"\nversion = "0.0.0"\nedition = "2021"\n'
+            '[dependencies]\nnavp = { package = "nav-planner", version = "0.0.0" }\n'
+        )
+        alias_errors = inventories.check_tree(
+            self.clean_fixture(
+                script_manifest=manifest,
+                script_files={
+                    "crates/script/src/lib.rs": "use navp::router::Route;\n"
+                },
+            )
+        )
+        self.assertTrue(
+            any("production_nav_implementation_import" in error and "navp::router::Route" in error
+                for error in alias_errors),
+            alias_errors,
+        )
+
+        module_alias_errors = inventories.check_tree(
+            self.clean_fixture(
+                script_manifest=(
+                    '[package]\nname = "script"\nversion = "0.0.0"\n'
+                    'edition = "2021"\n[dependencies]\n'
+                    'nav-planner = { path = "../nav-planner" }\n'
+                ),
+                script_files={
+                    "crates/script/src/lib.rs": (
+                        "use nav_planner::router as r;\n"
+                        "pub fn leak() -> r::Route { loop {} }\n"
+                    )
+                },
+            )
+        )
+        self.assertTrue(
+            any("production_nav_implementation_import" in error for error in module_alias_errors),
+            module_alias_errors,
+        )
+        self.assertTrue(
+            any("public_signature" in error for error in module_alias_errors),
+            module_alias_errors,
+        )
+
+    def test_both_planner_spellings_in_macro_definitions_are_rejected(self) -> None:
+        for key, package, relative_path, root in (
+            ("nav", "nav", "../nav", "nav"),
+            ("nav-planner", "nav-planner", "../nav-planner", "nav_planner"),
+        ):
+            with self.subTest(crate_root=root):
+                errors = inventories.check_tree(
+                    self.clean_fixture(
+                        script_manifest=(
+                            '[package]\nname = "script"\nversion = "0.0.0"\n'
+                            'edition = "2021"\n[dependencies]\n'
+                            f'{key} = {{ package = "{package}", path = "{relative_path}" }}\n'
+                        ),
+                        script_files={
+                            "crates/script/src/lib.rs": (
+                                f"macro_rules! hidden {{ () => {{ {root}::world::WorldState }}; }}\n"
+                            )
+                        },
+                    )
+                )
+                self.assertTrue(
+                    any("raw navigation path in macro definition is unsupported" in error
+                        for error in errors),
+                    errors,
+                )
+
+    def test_crate_root_aliases_and_extern_crate_fail_closed(self) -> None:
+        cases = (
+            (
+                "nav",
+                '[dependencies]\nnav = { path = "../nav" }\n',
+                "use nav as p;\nfn f() { let _ = p::executor_adapter::plan_owned_leg; }\n",
+                "bare nav crate root import is unsupported",
+            ),
+            (
+                "nav_planner",
+                '[dependencies]\nnav-planner = { path = "../nav-planner" }\n',
+                "use nav_planner::{self as p};\n",
+                "bare nav crate root import is unsupported",
+            ),
+            (
+                "nav_planner",
+                '[dependencies]\nnav-planner = { path = "../nav-planner" }\n',
+                "use nav_planner;\n",
+                "bare nav crate root import is unsupported",
+            ),
+            (
+                "nav_planner",
+                '[dependencies]\nnav-planner = { path = "../nav-planner" }\n',
+                "extern crate nav_planner as p;\n",
+                "extern crate nav_planner is unsupported for a nav crate",
+            ),
+            (
+                "nav_executor",
+                "",
+                "extern crate nav_executor;\n",
+                "extern crate nav_executor is unsupported for a nav crate",
+            ),
+        )
+        for root, dependencies, source, expected in cases:
+            with self.subTest(root=root, source=source):
+                errors = inventories.check_tree(
+                    self.clean_fixture(
+                        script_manifest=(
+                            '[package]\nname = "script"\nversion = "0.0.0"\n'
+                            'edition = "2021"\n'
+                            + dependencies
+                        ),
+                        script_files={"crates/script/src/lib.rs": source},
+                    )
+                )
+                self.assertTrue(any(expected in error for error in errors), errors)
+
+    def test_executor_imports_are_never_test_exceptions(self) -> None:
+        runner = "crates/script/src/gatherer/runner.rs"
+        lib = '#[path = "gatherer/runner.rs"]\nmod runner;\nuse nav_executor::Traveller;\n'
+        errors = inventories.check_tree(
+            self.clean_fixture(
+                script_files={
+                    "crates/script/src/lib.rs": lib,
+                    runner: "#[cfg(test)] mod tests { use nav_executor::TravelOutcome; }\n",
+                    "crates/script/tests/path_schema.rs": "use nav_executor::Traveller;\n",
+                }
+            )
+        )
+        for path in (runner, "crates/script/tests/path_schema.rs"):
+            self.assertTrue(
+                any(
+                    "test_nav_implementation_import" in error and path in error
+                    for error in errors
+                ),
+                errors,
+            )
+        self.assertTrue(
+            any(
+                "production_nav_implementation_import" in error
+                and "crates/script/src/lib.rs" in error
+                for error in errors
+            ),
+            errors,
+        )
+        self.assertFalse(any("unregistered test import exception" in error for error in errors))
+
+        registered = self.fixture(
+            views=self.baseline_views(),
+            script_files={
+                "crates/script/src/lib.rs": '#[path = "gatherer/runner.rs"]\nmod runner;\n',
+                runner: "#[cfg(test)] mod tests {}\n",
+            },
+            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
+            test_exceptions=(
+                _record(
+                    "test_import_exception",
+                    runner,
+                    "nav_executor::Traveller",
+                    "cfg(test)::tests",
+                    "exact_test_fixture_oracle_import",
+                ),
+            ),
+        )
+        registered_errors = inventories.check_tree(registered)
+        self.assertTrue(
+            any("test exception may not name the executor crate" in error
+                for error in registered_errors),
+            registered_errors,
+        )
+
+    def test_executor_adapter_is_raw_and_not_a_planner_trusted_type(self) -> None:
+        manifest = (
+            '[package]\nname = "script"\nversion = "0.0.0"\nedition = "2021"\n'
+            '[dependencies]\nnav-planner = { path = "../nav-planner" }\n'
+            'nav_executor = { package = "nav-executor", path = "../nav-executor" }\n'
+        )
+        direct = inventories.check_tree(
+            self.clean_fixture(
+                script_manifest=manifest,
+                script_files={
+                    "crates/script/src/lib.rs": (
+                        "use nav_planner::executor_adapter::plan_leg_count;\n"
+                    )
+                },
+            )
+        )
+        self.assertTrue(
+            any("production_nav_implementation_import" in error for error in direct),
+            direct,
+        )
+        reexport = inventories.check_tree(
+            self.clean_fixture(
+                script_manifest=manifest,
+                script_files={
+                    "crates/script/src/lib.rs": (
+                        "pub use nav_planner::executor_adapter::plan_leg_count;\n"
+                    )
+                },
+            )
+        )
+        self.assertTrue(
+            any("public_reexport" in error for error in reexport),
+            reexport,
+        )
+
+        views = self.baseline_views() + (
+            "#[derive(Clone, Copy)]\n"
+            "pub struct ExecutorView { pub state: nav_executor::WorldState }\n"
+        )
+        executor_view = self.fixture(
+            views=views,
+            seam_types=(
+                ("FleetCounts", "scalar"),
+                ("FleetView", "borrowed"),
+                ("ExecutorView", "scalar"),
+            ),
+            workspace_files={
+                "crates/nav-executor/src/lib.rs": (
+                    "#[derive(Clone, Copy)]\npub struct WorldState(pub u64);\n"
+                )
+            },
+            script_manifest=manifest,
+        )
+        self.assertEqual(inventories.check_tree(executor_view), [])
+
+    def test_macro_root_aliases_fail_but_resolved_macro_paths_are_recorded(self) -> None:
+        manifest = (
+            '[package]\nname = "script"\nversion = "0.0.0"\nedition = "2021"\n'
+            '[dependencies]\nnav-planner = { path = "../nav-planner" }\n'
+        )
+        cases = (
+            "macro_rules! m { () => { use nav_planner as p; p::router::Route }; }\n",
+            "macro_rules! m { () => { use nav_planner::{router::Route}; }; }\n",
+        )
+        for source in cases:
+            with self.subTest(source=source):
+                errors = inventories.check_tree(
+                    self.clean_fixture(
+                        script_manifest=manifest,
+                        script_files={"crates/script/src/lib.rs": source},
+                    )
+                )
+                self.assertTrue(
+                    any("bare or unresolved nav crate root in macro tokens is unsupported" in error
+                        for error in errors),
+                    errors,
+                )
+
+        resolved = inventories.check_tree(
+            self.clean_fixture(
+                script_manifest=manifest,
+                script_files={
+                    "crates/script/src/lib.rs": (
+                        "macro_rules! m { ($item:path) => { let _: Option<$item> = None; }; }\n"
+                        "fn f() { m!(nav_planner::router::Route); }\n"
+                    )
+                },
+            )
+        )
+        self.assertTrue(any("macro_token_path" in error for error in resolved), resolved)
 
     def test_stale_test_import_exception_is_rejected(self) -> None:
         path = "crates/script/src/gatherer/runner.rs"

@@ -94,12 +94,12 @@ RAW_NAV_MODULES = frozenset(
         "transport",
         "zones",
         "pack",
-        "traveller",
         "world",
         "world_state",
         "grid",
         "bundle",
         "map",
+        "executor_adapter",
     }
 )
 RAW_NAV_ROOT_SYMBOLS = frozenset({"WorldState"})
@@ -215,13 +215,13 @@ TRUSTED_SEAM_TYPE_CLASSES = {
 TRUSTED_FOREIGN_TYPE_CLASSES = {
     "host_play::walk_map::ActionError": "owning",
     "host::login_queue::AdmitBlocker": "scalar",
-    "nav::bank_fetch::BankRows": "owning",
+    "nav_planner::bank_fetch::BankRows": "owning",
     "host::CapacityWarning": "scalar",
     # CatalogDiff stays owning across the supported script feature configurations.
     "script::CatalogDiff": "owning",
     "script::CompiledId": "scalar",
     "script::native::CompiledCard": "owning",
-    "nav::router::FindOptions": "scalar",
+    "nav_planner::router::FindOptions": "scalar",
     "host::FrameBuf": "owning",
     "host_play::InstancePermit": "owning",
     "script::JsCard": "owning",
@@ -250,12 +250,12 @@ TRUSTED_FOREIGN_TYPE_CLASSES = {
     "host_play::SlotStatus": "owning",
     "api::hostlog::Source": "scalar",
     "script::StartOutcome": "owning",
-    "nav::tile::Tile": "scalar",
+    "nav_planner::tile::Tile": "scalar",
     "vault::Vault": "owning",
     "host_play::WalkArms": "owning",
     "host_play::WalkGlobals": "scalar",
-    "nav::WorldState": "owning",
-    "nav::world_state::WorldState": "owning",
+    "nav_planner::WorldState": "owning",
+    "nav_planner::world_state::WorldState": "owning",
     "std::time::Duration": "scalar",
     "std::time::Instant": "scalar",
     "std::time::SystemTime": "scalar",
@@ -349,7 +349,18 @@ DEPENDENCY_TABLES = (
     "build_dependencies",
 )
 
-FRONTEND_CRATE_NAMES = frozenset({"api", "host", "host_play", "nav", "script", "vault"})
+FRONTEND_CRATE_NAMES = frozenset(
+    {
+        "api",
+        "host",
+        "host_play",
+        "nav",
+        "nav_planner",
+        "nav_executor",
+        "script",
+        "vault",
+    }
+)
 
 OWNED_FIELD_TYPES = frozenset(
     {
@@ -1430,21 +1441,85 @@ def _walk_ast(
         yield from _walk_ast(child, next_scope, next_stack, kind, next_in_use)
 
 
-def _is_nav_raw(segments: tuple[str, ...]) -> bool:
+def _nav_crate_roots(root: Path) -> tuple[frozenset[str], frozenset[str]]:
+    relative = Path("crates/script/Cargo.toml")
+    if _traverses_symlink(root, relative):
+        raise _InventoryError(f"{relative.as_posix()} must not traverse a symlink")
+    try:
+        with (root / relative).open("rb") as stream:
+            manifest = tomllib.load(stream)
+    except (OSError, tomllib.TOMLDecodeError) as error:
+        raise _InventoryError(f"cannot read {relative.as_posix()}: {error}") from error
+
+    tables = [(kind, manifest[kind]) for kind in DEPENDENCY_TABLES if kind in manifest]
+    targets = manifest.get("target", {})
+    if not isinstance(targets, dict):
+        raise _InventoryError(f"{relative.as_posix()}: unsupported target table")
+    for platform, target in sorted(targets.items()):
+        if not isinstance(target, dict):
+            raise _InventoryError(f"{relative.as_posix()}: unsupported target table")
+        tables.extend(
+            (f"target.{platform}.{kind}", target[kind])
+            for kind in DEPENDENCY_TABLES
+            if kind in target
+        )
+
+    planner_roots = {"nav_planner"}
+    executor_roots = {"nav_executor"}
+    for label, table in tables:
+        if not isinstance(table, dict):
+            raise _InventoryError(f"{relative.as_posix()}: unsupported [{label}] table")
+        for key, spec in table.items():
+            package = spec.get("package", key) if isinstance(spec, dict) else key
+            if not isinstance(key, str) or not isinstance(package, str):
+                raise _InventoryError(f"{relative.as_posix()}: invalid [{label}] dependency")
+            crate_root = key.replace("-", "_")
+            if package in {"nav", "nav-planner"}:
+                planner_roots.add(crate_root)
+            elif package == "nav-executor":
+                executor_roots.add(crate_root)
+    return frozenset(planner_roots), frozenset(executor_roots)
+
+
+def _canonical_trusted_foreign_path(
+    segments: tuple[str, ...], planner_roots: frozenset[str]
+) -> str:
+    canonical = list(segments)
+    if canonical and canonical[0] in planner_roots:
+        canonical[0] = "nav_planner"
+    return "::".join(canonical)
+
+
+def _is_nav_raw(
+    segments: tuple[str, ...],
+    planner_roots: frozenset[str],
+    executor_roots: frozenset[str],
+) -> bool:
     return any(
-        segment == "nav" and index + 1 < len(segments) and segments[index + 1] != "contract"
+        index + 1 < len(segments)
+        and (
+            (segment in planner_roots and segments[index + 1] != "contract")
+            or segment in executor_roots
+        )
         for index, segment in enumerate(segments)
     )
 
 
-def _is_raw_representation(segments: tuple[str, ...]) -> bool:
+def _is_raw_representation(
+    segments: tuple[str, ...],
+    planner_roots: frozenset[str],
+    executor_roots: frozenset[str],
+) -> bool:
     return any(
-        segment == "nav"
-        and (
-            segments[index + 1] in RAW_NAV_MODULES
-            or (
-                index + 2 == len(segments)
-                and segments[index + 1] in RAW_NAV_ROOT_SYMBOLS
+        (segment in executor_roots)
+        or (
+            segment in planner_roots
+            and (
+                segments[index + 1] in RAW_NAV_MODULES
+                or (
+                    index + 2 == len(segments)
+                    and segments[index + 1] in RAW_NAV_ROOT_SYMBOLS
+                )
             )
         )
         for index, segment in enumerate(segments[:-1])
@@ -1539,7 +1614,12 @@ def _macro_string_argument(node: dict[str, Any]) -> str | None:
     return text[1:-1]
 
 
-def _macro_nav_paths(node: dict[str, Any]) -> set[str]:
+def _macro_nav_paths(
+    node: dict[str, Any],
+    planner_roots: frozenset[str],
+    executor_roots: frozenset[str],
+) -> set[str]:
+    roots = planner_roots | executor_roots
     paths: set[str] = set()
     for token_tree in _direct_children(node, "TOKEN_TREE"):
         tokens = [
@@ -1548,9 +1628,31 @@ def _macro_nav_paths(node: dict[str, Any]) -> set[str]:
             if kind not in {"WHITESPACE", "COMMENT"}
         ]
         for index, (kind, text) in enumerate(tokens):
-            if kind not in {"IDENT", "RAW_IDENT"} or text.removeprefix("r#") != "nav":
+            if kind not in {"IDENT", "RAW_IDENT"}:
                 continue
-            segments = ["nav"]
+            root = text.removeprefix("r#")
+            if root not in roots:
+                continue
+
+            position = index + 1
+            if position < len(tokens) and tokens[position][1] == "::":
+                position += 1
+            elif (
+                position + 1 < len(tokens)
+                and tokens[position][1] == ":"
+                and tokens[position + 1][1] == ":"
+            ):
+                position += 2
+            else:
+                raise _InventoryError(
+                    "bare or unresolved nav crate root in macro tokens is unsupported"
+                )
+            if position >= len(tokens) or tokens[position][0] not in {"IDENT", "RAW_IDENT"}:
+                raise _InventoryError(
+                    "bare or unresolved nav crate root in macro tokens is unsupported"
+                )
+
+            segments = [root]
             if (
                 index >= 3
                 and tokens[index - 3][0] in {"IDENT", "RAW_IDENT"}
@@ -1559,8 +1661,10 @@ def _macro_nav_paths(node: dict[str, Any]) -> set[str]:
                 and tokens[index - 1][1] == ":"
             ):
                 segments.insert(0, tokens[index - 3][1])
-            position = index + 1
+            segments.append(tokens[position][1].removeprefix("r#"))
+            position += 1
             while position < len(tokens):
+                segment_position = None
                 if tokens[position][1] == "::":
                     segment_position = position + 1
                 elif (
@@ -1569,16 +1673,13 @@ def _macro_nav_paths(node: dict[str, Any]) -> set[str]:
                     and tokens[position + 1][1] == ":"
                 ):
                     segment_position = position + 2
-                else:
+                if segment_position is None or segment_position >= len(tokens):
                     break
-                if (
-                    segment_position >= len(tokens)
-                    or tokens[segment_position][0] not in {"IDENT", "RAW_IDENT"}
-                ):
+                if tokens[segment_position][0] not in {"IDENT", "RAW_IDENT"}:
                     break
                 segments.append(tokens[segment_position][1].removeprefix("r#"))
                 position = segment_position + 1
-            if _is_nav_raw(tuple(segments)):
+            if _is_nav_raw(tuple(segments), planner_roots, executor_roots):
                 paths.add("::".join(segments))
     return paths
 
@@ -1928,6 +2029,7 @@ def _seam_records(
     foreign_classes: dict[str, str],
     consulted_foreign: set[str],
     workspace_crates: dict[str, _WorkspaceCrate],
+    planner_roots: frozenset[str],
 ) -> tuple[dict[_TypeKey, str], set[_RecordKey], list[str]]:
     try:
         executable = _parser_executable()
@@ -2181,7 +2283,9 @@ def _seam_records(
             issue = workspace_issue(module_path, absolute[0])
             if issue is not None:
                 return ("workspace_error", issue, None)
-            canonical = "::".join(absolute)
+            canonical = _canonical_trusted_foreign_path(
+                tuple(absolute), planner_roots
+            )
             if canonical in TRUSTED_FOREIGN_TYPE_CLASSES:
                 return ("foreign", canonical, None)
             if absolute[0] in workspace_crates:
@@ -2337,7 +2441,7 @@ def _seam_records(
                     if resolved is not None:
                         return resolved
 
-        canonical = "::".join(segments)
+        canonical = _canonical_trusted_foreign_path(segments, planner_roots)
         # A built-in entry keeps precedence for its exact path.  Any other path
         # rooted at a workspace crate resolves to that crate's definition.
         if canonical in TRUSTED_FOREIGN_TYPE_CLASSES:
@@ -2858,7 +2962,12 @@ def _cfg_for_scope(path: str, node_scope: str) -> str:
         return "integration-test"
     return node_scope
 
-def _type_alias_targets(tree: dict[str, Any], imported: dict[str, str]) -> dict[str, str]:
+def _type_alias_targets(
+    tree: dict[str, Any],
+    imported: dict[str, str],
+    planner_roots: frozenset[str],
+    executor_roots: frozenset[str],
+) -> dict[str, str]:
     aliases = dict(imported)
     type_nodes: list[tuple[str, tuple[tuple[str, ...], ...]]] = []
     for node, _, _, _, _ in _walk_ast(tree, "production", ()):
@@ -2882,12 +2991,14 @@ def _type_alias_targets(tree: dict[str, Any], imported: dict[str, str]) -> dict[
                 continue
             raw_target = None
             for segments in paths:
-                if _is_raw_representation(segments):
+                if _is_raw_representation(segments, planner_roots, executor_roots):
                     raw_target = "::".join(segments)
                     break
                 for index, segment in enumerate(segments):
                     target = aliases.get(segment)
-                    if target is not None and _is_raw_symbol(target):
+                    if target is not None and _is_raw_symbol(
+                        target, planner_roots, executor_roots
+                    ):
                         suffix = "::".join(segments[index + 1 :])
                         raw_target = target + (f"::{suffix}" if suffix else "")
                         break
@@ -2901,9 +3012,13 @@ def _type_alias_targets(tree: dict[str, Any], imported: dict[str, str]) -> dict[
     return aliases
 
 
-def _is_raw_symbol(symbol: str) -> bool:
+def _is_raw_symbol(
+    symbol: str,
+    planner_roots: frozenset[str],
+    executor_roots: frozenset[str],
+) -> bool:
     segments = tuple(part for part in symbol.split("::") if part)
-    return _is_raw_representation(segments)
+    return _is_raw_representation(segments, planner_roots, executor_roots)
 
 
 def _exposed_type_paths(node: dict[str, Any]) -> Iterator[dict[str, Any]]:
@@ -2925,9 +3040,11 @@ def _public_api_exposures(
     tree: dict[str, Any],
     root_scope: str,
     imported_aliases: dict[str, str],
+    planner_roots: frozenset[str],
+    executor_roots: frozenset[str],
 ) -> set[_RecordKey]:
     exposures: set[_RecordKey] = set()
-    aliases = _type_alias_targets(tree, imported_aliases)
+    aliases = _type_alias_targets(tree, imported_aliases, planner_roots, executor_roots)
 
     def record_type_paths(
         item: dict[str, Any],
@@ -2938,9 +3055,11 @@ def _public_api_exposures(
         for path_node in _exposed_type_paths(item):
             segments = _path_segments(path_node)
             raw_symbol: str | None = None
-            if _is_raw_representation(segments):
+            if _is_raw_representation(segments, planner_roots, executor_roots):
                 raw_symbol = "::".join(segments)
-            elif segments and segments[0] in aliases and _is_raw_symbol(aliases[segments[0]]):
+            elif segments and segments[0] in aliases and _is_raw_symbol(
+                aliases[segments[0]], planner_roots, executor_roots
+            ):
                 raw_symbol = aliases[segments[0]]
             if raw_symbol is not None:
                 exposures.add(
@@ -2959,7 +3078,7 @@ def _public_api_exposures(
         if kind == "USE" and _is_public(node):
             for use_tree in _direct_children(node, "USE_TREE"):
                 for symbol, _ in _use_tree_imports(use_tree):
-                    if _is_raw_symbol(symbol):
+                    if _is_raw_symbol(symbol, planner_roots, executor_roots):
                         exposures.add(
                             _RecordKey(
                                 "transitive_raw_representation_exposure",
@@ -3006,7 +3125,11 @@ def _public_api_exposures(
     return exposures
 
 
-def _script_records(root: Path) -> tuple[set[_RecordKey], set[_RecordKey], list[str]]:
+def _script_records(
+    root: Path,
+    planner_roots: frozenset[str],
+    executor_roots: frozenset[str],
+) -> tuple[set[_RecordKey], set[_RecordKey], list[str]]:
     errors: list[str] = []
     try:
         executable = _parser_executable()
@@ -3020,6 +3143,7 @@ def _script_records(root: Path) -> tuple[set[_RecordKey], set[_RecordKey], list[
     errors.extend(scope_errors)
     imports: set[_RecordKey] = set()
     exceptions: set[_RecordKey] = set()
+    nav_roots = planner_roots | executor_roots
 
     for path, entry in sorted(parsed.items()):
         root_scope = (
@@ -3031,7 +3155,8 @@ def _script_records(root: Path) -> tuple[set[_RecordKey], set[_RecordKey], list[
         aliases: dict[str, str] = {}
 
         def register_nav(symbol: str, node_scope: str, classification: str) -> None:
-            if not _is_nav_raw(tuple(symbol.split("::"))):
+            segments = tuple(symbol.split("::"))
+            if not _is_nav_raw(segments, planner_roots, executor_roots):
                 return
             actual_scope = _cfg_for_scope(path, node_scope)
             category = (
@@ -3039,6 +3164,11 @@ def _script_records(root: Path) -> tuple[set[_RecordKey], set[_RecordKey], list[
                 if _is_test_scope(actual_scope)
                 else "production_nav_implementation_import"
             )
+            if any(segment in executor_roots for segment in segments):
+                imports.add(
+                    _RecordKey(category, path, symbol, actual_scope, classification)
+                )
+                return
             if _is_exception_scope(path, actual_scope):
                 exceptions.add(
                     _RecordKey(
@@ -3057,12 +3187,24 @@ def _script_records(root: Path) -> tuple[set[_RecordKey], set[_RecordKey], list[
         for node, scope, _, parent_kind, in_use in _walk_ast(tree, root_scope, ()):
             kind = node.get("kind")
             if kind == "MACRO_RULES":
-                if _macro_nav_paths(node):
-                    errors.append(f"{path}: raw navigation path in macro definition is unsupported")
+                try:
+                    macro_paths = _macro_nav_paths(node, planner_roots, executor_roots)
+                except _InventoryError as error:
+                    errors.append(f"{path}: {error}")
+                else:
+                    if macro_paths:
+                        errors.append(
+                            f"{path}: raw navigation path in macro definition is unsupported"
+                        )
                 continue
             if kind == "MACRO_CALL":
-                for symbol in _macro_nav_paths(node):
-                    register_nav(symbol, scope, "macro_token_path")
+                try:
+                    macro_paths = _macro_nav_paths(node, planner_roots, executor_roots)
+                except _InventoryError as error:
+                    errors.append(f"{path}: {error}")
+                else:
+                    for symbol in macro_paths:
+                        register_nav(symbol, scope, "macro_token_path")
                 if _macro_call_name(node) == "include":
                     target = _macro_string_argument(node)
                     actual_scope = _cfg_for_scope(path, scope)
@@ -3072,17 +3214,37 @@ def _script_records(root: Path) -> tuple[set[_RecordKey], set[_RecordKey], list[
             if kind == "USE":
                 for use_tree in _direct_children(node, "USE_TREE"):
                     for symbol, local_name in _use_tree_imports(use_tree):
+                        segments = tuple(part for part in symbol.split("::") if part)
+                        if len(segments) == 1 and segments[0] in nav_roots:
+                            errors.append(f"{path}: bare nav crate root import is unsupported")
+                            continue
                         register_nav(symbol, scope, "use_import")
-                        if _is_raw_symbol(symbol):
+                        if _is_raw_symbol(symbol, planner_roots, executor_roots):
                             aliases[local_name] = symbol
+                continue
+            if kind == "EXTERN_CRATE":
+                binding = _extern_crate_binding(node)
+                if binding is not None and binding[0] in nav_roots:
+                    errors.append(
+                        f"{path}: extern crate {binding[0]} is unsupported for a nav crate"
+                    )
                 continue
             if kind != "PATH" or parent_kind == "PATH" or in_use:
                 continue
             segments = _path_segments(node)
-            if _is_nav_raw(segments):
+            if _is_nav_raw(segments, planner_roots, executor_roots):
                 register_nav("::".join(segments), scope, "qualified_path")
 
-        imports.update(_public_api_exposures(path, tree, root_scope, aliases))
+        imports.update(
+            _public_api_exposures(
+                path,
+                tree,
+                root_scope,
+                aliases,
+                planner_roots,
+                executor_roots,
+            )
+        )
 
     # Imports in modules outside the contract's exact test targets remain
     # ordinary migration debt; there is no file-wide test exemption.
@@ -3116,7 +3278,9 @@ def _relative_source_path(value: Any) -> bool:
     )
 
 
-def _validate_inventory_shape(raw: Any) -> tuple[dict[str, Any] | None, list[str]]:
+def _validate_inventory_shape(
+    raw: Any, executor_roots: frozenset[str]
+) -> tuple[dict[str, Any] | None, list[str]]:
     errors: list[str] = []
     if not isinstance(raw, dict) or set(raw) != TOP_FIELDS:
         return None, ["inventory schema: top-level fields must be exactly schema_version, seam_types, violations, test_exceptions"]
@@ -3208,13 +3372,21 @@ def _validate_inventory_shape(raw: Any) -> tuple[dict[str, Any] | None, list[str
             ):
                 errors.append(f"inventory schema: {where}.id is not the stable path/symbol id")
             if list_name == "test_exceptions":
+                if isinstance(symbol, str) and any(
+                    segment in executor_roots for segment in symbol.split("::")
+                ):
+                    errors.append(
+                        "inventory schema: test exception may not name the executor crate"
+                    )
                 allowed_scopes = TEST_EXCEPTION_TARGETS.get(str(path), frozenset())
                 if category != "test_import_exception" or cfg not in allowed_scopes:
                     errors.append(f"inventory schema: {where} is not an exact §21 §5.3 test exception")
     return raw, errors
 
 
-def _load_inventory(root: Path) -> tuple[dict[str, Any] | None, list[str]]:
+def _load_inventory(
+    root: Path, executor_roots: frozenset[str]
+) -> tuple[dict[str, Any] | None, list[str]]:
     relative = DATA_DIR_RELATIVE / INVENTORY_RELATIVE
     path = root / relative
     if _traverses_symlink(root, relative):
@@ -3226,16 +3398,19 @@ def _load_inventory(root: Path) -> tuple[dict[str, Any] | None, list[str]]:
         )
     except (OSError, UnicodeError, RecursionError, json.JSONDecodeError, _InventoryError) as error:
         return None, [f"inventory: cannot load {relative.as_posix()}: {error}"]
-    return _validate_inventory_shape(raw)
+    return _validate_inventory_shape(raw, executor_roots)
 
 
 
 def _analyze_tree(root: Path) -> list[str]:
-
-
-
     errors: list[str] = _check_rust_editions(root)
-    inventory, shape_errors = _load_inventory(root)
+    try:
+        planner_roots, executor_roots = _nav_crate_roots(root)
+    except _InventoryError as error:
+        errors.append(f"navigation crate roots: {error}")
+        planner_roots = frozenset({"nav_planner"})
+        executor_roots = frozenset({"nav_executor"})
+    inventory, shape_errors = _load_inventory(root, executor_roots)
     errors.extend(shape_errors)
     workspace_crates, workspace_errors = _workspace_crates(root)
     errors.extend(workspace_errors)
@@ -3247,9 +3422,12 @@ def _analyze_tree(root: Path) -> list[str]:
         {**TRUSTED_FOREIGN_TYPE_CLASSES, **foreign_rows},
         consulted_foreign,
         workspace_crates,
+        planner_roots,
     )
     errors.extend(seam_errors)
-    nav_violations, nav_exceptions, nav_errors = _script_records(root)
+    nav_violations, nav_exceptions, nav_errors = _script_records(
+        root, planner_roots, executor_roots
+    )
     errors.extend(nav_errors)
     actual_violations = set(seam_violations) | set(nav_violations)
     for type_path in sorted(set(foreign_rows) - consulted_foreign):
