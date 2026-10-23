@@ -75,7 +75,7 @@
     [
       "edge",
       "e2e",
-      "nav",
+      "nav-planner",
       "normal",
       "",
       "dependencies",
@@ -157,7 +157,7 @@
     [
       "edge",
       "frontend-core",
-      "nav",
+      "nav-planner",
       "normal",
       "",
       "dependencies",
@@ -303,17 +303,7 @@
     [
       "edge",
       "host-play",
-      "nav",
-      "build",
-      "",
-      "build-dependencies",
-      true,
-      []
-    ],
-    [
-      "edge",
-      "host-play",
-      "nav",
+      "nav-executor",
       "normal",
       "",
       "dependencies",
@@ -323,7 +313,17 @@
     [
       "edge",
       "host-play",
-      "nav-executor",
+      "nav-planner",
+      "build",
+      "",
+      "build-dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "host-play",
+      "nav-planner",
       "normal",
       "",
       "dependencies",
@@ -386,26 +386,6 @@
     ],
     [
       "edge",
-      "nav",
-      "api",
-      "normal",
-      "",
-      "dependencies",
-      true,
-      []
-    ],
-    [
-      "edge",
-      "nav",
-      "client",
-      "normal",
-      "",
-      "dependencies",
-      true,
-      []
-    ],
-    [
-      "edge",
       "nav-executor",
       "api",
       "dev",
@@ -439,7 +419,7 @@
     [
       "edge",
       "nav-executor",
-      "nav",
+      "nav-planner",
       "dev",
       "",
       "dev-dependencies",
@@ -451,7 +431,27 @@
     [
       "edge",
       "nav-executor",
-      "nav",
+      "nav-planner",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "nav-planner",
+      "api",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "nav-planner",
+      "client",
       "normal",
       "",
       "dependencies",
@@ -530,7 +530,7 @@
     [
       "edge",
       "panel",
-      "nav",
+      "nav-planner",
       "normal",
       "",
       "dependencies",
@@ -560,7 +560,7 @@
     [
       "edge",
       "scenario",
-      "nav",
+      "nav-executor",
       "normal",
       "",
       "dependencies",
@@ -570,7 +570,7 @@
     [
       "edge",
       "scenario",
-      "nav-executor",
+      "nav-planner",
       "normal",
       "",
       "dependencies",
@@ -622,7 +622,7 @@
     [
       "edge",
       "script",
-      "nav",
+      "nav-planner",
       "normal",
       "",
       "dependencies",
@@ -731,7 +731,7 @@
     [
       "edge",
       "tui",
-      "nav",
+      "nav-planner",
       "normal",
       "",
       "dependencies",
@@ -2608,7 +2608,7 @@
       "package-defaults",
       "e2e",
       "dependency",
-      "nav",
+      "nav-planner",
       "proc-macro2",
       "optional",
       "",
@@ -2619,7 +2619,7 @@
       "package-defaults",
       "e2e",
       "dependency",
-      "nav",
+      "nav-planner",
       "syn",
       "optional",
       "",
@@ -2753,7 +2753,7 @@
       "e2e",
       "feature-edge",
       "host-play",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [
@@ -2789,7 +2789,7 @@
       "e2e",
       "feature-edge",
       "nav-executor",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [
@@ -2875,7 +2875,7 @@
       "package-defaults",
       "frontend-core",
       "dependency",
-      "nav",
+      "nav-planner",
       "proc-macro2",
       "optional",
       "",
@@ -2886,7 +2886,7 @@
       "package-defaults",
       "frontend-core",
       "dependency",
-      "nav",
+      "nav-planner",
       "syn",
       "optional",
       "",
@@ -3038,7 +3038,7 @@
       "frontend-core",
       "feature-edge",
       "host-play",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [
@@ -3074,7 +3074,7 @@
       "frontend-core",
       "feature-edge",
       "nav-executor",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [
@@ -3176,7 +3176,7 @@
       "package-defaults",
       "host-play",
       "dependency",
-      "nav",
+      "nav-planner",
       "proc-macro2",
       "optional",
       "",
@@ -3187,7 +3187,7 @@
       "package-defaults",
       "host-play",
       "dependency",
-      "nav",
+      "nav-planner",
       "syn",
       "optional",
       "",
@@ -3339,7 +3339,7 @@
       "host-play",
       "feature-edge",
       "nav-executor",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [
@@ -3390,40 +3390,9 @@
     [
       "isolated-activation",
       "package-defaults",
-      "nav",
-      "dependency",
-      "nav",
-      "proc-macro2",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "nav",
-      "dependency",
-      "nav",
-      "syn",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "nav",
-      "feature-edge",
-      "api",
-      "api",
-      "test-support"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
       "nav-executor",
       "dependency",
-      "nav",
+      "nav-planner",
       "proc-macro2",
       "optional",
       "",
@@ -3434,7 +3403,7 @@
       "package-defaults",
       "nav-executor",
       "dependency",
-      "nav",
+      "nav-planner",
       "syn",
       "optional",
       "",
@@ -3464,7 +3433,38 @@
       "nav-executor",
       "feature-edge",
       "nav-executor",
-      "nav",
+      "nav-planner",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "nav-planner",
+      "dependency",
+      "nav-planner",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "nav-planner",
+      "dependency",
+      "nav-planner",
+      "syn",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "nav-planner",
+      "feature-edge",
+      "api",
+      "api",
       "test-support"
     ],
     [
@@ -3538,7 +3538,7 @@
       "package-defaults",
       "panel",
       "dependency",
-      "nav",
+      "nav-planner",
       "proc-macro2",
       "optional",
       "",
@@ -3549,7 +3549,7 @@
       "package-defaults",
       "panel",
       "dependency",
-      "nav",
+      "nav-planner",
       "syn",
       "optional",
       "",
@@ -3728,7 +3728,7 @@
       "panel",
       "feature-edge",
       "host-play",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [
@@ -3764,7 +3764,7 @@
       "panel",
       "feature-edge",
       "nav-executor",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [
@@ -3873,7 +3873,7 @@
       "package-defaults",
       "scenario",
       "dependency",
-      "nav",
+      "nav-planner",
       "proc-macro2",
       "optional",
       "",
@@ -3884,7 +3884,7 @@
       "package-defaults",
       "scenario",
       "dependency",
-      "nav",
+      "nav-planner",
       "syn",
       "optional",
       "",
@@ -3925,7 +3925,7 @@
       "scenario",
       "feature-edge",
       "nav-executor",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [
@@ -3989,7 +3989,7 @@
       "package-defaults",
       "script",
       "dependency",
-      "nav",
+      "nav-planner",
       "proc-macro2",
       "optional",
       "",
@@ -4000,7 +4000,7 @@
       "package-defaults",
       "script",
       "dependency",
-      "nav",
+      "nav-planner",
       "syn",
       "optional",
       "",
@@ -4175,7 +4175,7 @@
       "package-defaults",
       "tui",
       "dependency",
-      "nav",
+      "nav-planner",
       "proc-macro2",
       "optional",
       "",
@@ -4186,7 +4186,7 @@
       "package-defaults",
       "tui",
       "dependency",
-      "nav",
+      "nav-planner",
       "syn",
       "optional",
       "",
@@ -4347,7 +4347,7 @@
       "tui",
       "feature-edge",
       "host-play",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [
@@ -4383,7 +4383,7 @@
       "tui",
       "feature-edge",
       "nav-executor",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [
@@ -4583,7 +4583,7 @@
       "render-diagnostics",
       "panel",
       "dependency",
-      "nav",
+      "nav-planner",
       "proc-macro2",
       "optional",
       "",
@@ -4594,7 +4594,7 @@
       "render-diagnostics",
       "panel",
       "dependency",
-      "nav",
+      "nav-planner",
       "syn",
       "optional",
       "",
@@ -4791,7 +4791,7 @@
       "panel",
       "feature-edge",
       "host-play",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [
@@ -4827,7 +4827,7 @@
       "panel",
       "feature-edge",
       "nav-executor",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [
@@ -4954,7 +4954,7 @@
       "script-load-tests",
       "script",
       "dependency",
-      "nav",
+      "nav-planner",
       "proc-macro2",
       "optional",
       "",
@@ -4965,7 +4965,7 @@
       "script-load-tests",
       "script",
       "dependency",
-      "nav",
+      "nav-planner",
       "syn",
       "optional",
       "",
@@ -5138,7 +5138,7 @@
       "workspace-tests",
       "e2e",
       "dependency",
-      "nav",
+      "nav-planner",
       "proc-macro2",
       "optional",
       "",
@@ -5149,7 +5149,7 @@
       "workspace-tests",
       "e2e",
       "dependency",
-      "nav",
+      "nav-planner",
       "syn",
       "optional",
       "",
@@ -5283,7 +5283,7 @@
       "e2e",
       "feature-edge",
       "host-play",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [
@@ -5319,7 +5319,7 @@
       "e2e",
       "feature-edge",
       "nav-executor",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [
@@ -5405,7 +5405,7 @@
       "workspace-tests",
       "frontend-core",
       "dependency",
-      "nav",
+      "nav-planner",
       "proc-macro2",
       "optional",
       "",
@@ -5416,7 +5416,7 @@
       "workspace-tests",
       "frontend-core",
       "dependency",
-      "nav",
+      "nav-planner",
       "syn",
       "optional",
       "",
@@ -5568,7 +5568,7 @@
       "frontend-core",
       "feature-edge",
       "host-play",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [
@@ -5604,7 +5604,7 @@
       "frontend-core",
       "feature-edge",
       "nav-executor",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [
@@ -5706,7 +5706,7 @@
       "workspace-tests",
       "host-play",
       "dependency",
-      "nav",
+      "nav-planner",
       "proc-macro2",
       "optional",
       "",
@@ -5717,7 +5717,7 @@
       "workspace-tests",
       "host-play",
       "dependency",
-      "nav",
+      "nav-planner",
       "syn",
       "optional",
       "",
@@ -5869,7 +5869,7 @@
       "host-play",
       "feature-edge",
       "nav-executor",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [
@@ -5920,40 +5920,9 @@
     [
       "isolated-activation",
       "workspace-tests",
-      "nav",
-      "dependency",
-      "nav",
-      "proc-macro2",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "nav",
-      "dependency",
-      "nav",
-      "syn",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "nav",
-      "feature-edge",
-      "api",
-      "api",
-      "test-support"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
       "nav-executor",
       "dependency",
-      "nav",
+      "nav-planner",
       "proc-macro2",
       "optional",
       "",
@@ -5964,7 +5933,7 @@
       "workspace-tests",
       "nav-executor",
       "dependency",
-      "nav",
+      "nav-planner",
       "syn",
       "optional",
       "",
@@ -5994,7 +5963,38 @@
       "nav-executor",
       "feature-edge",
       "nav-executor",
-      "nav",
+      "nav-planner",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "nav-planner",
+      "dependency",
+      "nav-planner",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "nav-planner",
+      "dependency",
+      "nav-planner",
+      "syn",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "nav-planner",
+      "feature-edge",
+      "api",
+      "api",
       "test-support"
     ],
     [
@@ -6068,7 +6068,7 @@
       "workspace-tests",
       "panel",
       "dependency",
-      "nav",
+      "nav-planner",
       "proc-macro2",
       "optional",
       "",
@@ -6079,7 +6079,7 @@
       "workspace-tests",
       "panel",
       "dependency",
-      "nav",
+      "nav-planner",
       "syn",
       "optional",
       "",
@@ -6258,7 +6258,7 @@
       "panel",
       "feature-edge",
       "host-play",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [
@@ -6294,7 +6294,7 @@
       "panel",
       "feature-edge",
       "nav-executor",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [
@@ -6403,7 +6403,7 @@
       "workspace-tests",
       "scenario",
       "dependency",
-      "nav",
+      "nav-planner",
       "proc-macro2",
       "optional",
       "",
@@ -6414,7 +6414,7 @@
       "workspace-tests",
       "scenario",
       "dependency",
-      "nav",
+      "nav-planner",
       "syn",
       "optional",
       "",
@@ -6455,7 +6455,7 @@
       "scenario",
       "feature-edge",
       "nav-executor",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [
@@ -6519,7 +6519,7 @@
       "workspace-tests",
       "script",
       "dependency",
-      "nav",
+      "nav-planner",
       "proc-macro2",
       "optional",
       "",
@@ -6530,7 +6530,7 @@
       "workspace-tests",
       "script",
       "dependency",
-      "nav",
+      "nav-planner",
       "syn",
       "optional",
       "",
@@ -6705,7 +6705,7 @@
       "workspace-tests",
       "tui",
       "dependency",
-      "nav",
+      "nav-planner",
       "proc-macro2",
       "optional",
       "",
@@ -6716,7 +6716,7 @@
       "workspace-tests",
       "tui",
       "dependency",
-      "nav",
+      "nav-planner",
       "syn",
       "optional",
       "",
@@ -6877,7 +6877,7 @@
       "tui",
       "feature-edge",
       "host-play",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [
@@ -6913,7 +6913,7 @@
       "tui",
       "feature-edge",
       "nav-executor",
-      "nav",
+      "nav-planner",
       "test-support"
     ],
     [

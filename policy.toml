@@ -14,7 +14,7 @@ members = [
     "frontend-core",
     "host",
     "host-play",
-    "nav",
+    "nav-planner",
     "nav-executor",
     "panel",
     "scenario",
@@ -83,16 +83,16 @@ kinds = ["normal"]
 reason = "host reads vaulted credentials/assignments; vault stays a leaf store."
 
 [[allow]]
-from = "nav"
+from = "nav-planner"
 to = "api"
 kinds = ["normal"]
-reason = "nav execute uses host-facing types; it does not own panel/script lifecycle."
+reason = "nav-planner search, pack and facade code uses host-facing snapshot, work and quest types. It never names api::interact, api::settle, api::prot or a public re-export of them in production scope (planner source test, NAV-CRATE-SPLIT design-r3 2.6)."
 
 [[allow]]
-from = "nav"
+from = "nav-planner"
 to = "client"
 kinds = ["normal"]
-reason = "nav bake/collision reads packed client world data."
+reason = "nav bake/collision reads packed client world data. Production scope never names client::client, the client's outgoing opcode tables or socket (client::io::{client_prot, client_prot_289, client_stream}) or a public re-export of them (planner source test, NAV-CRATE-SPLIT design-r3 2.6)."
 
 [[allow]]
 from = "nav-executor"
@@ -102,7 +102,7 @@ reason = "The walk executor sends through api::interact and settles through api:
 
 [[allow]]
 from = "nav-executor"
-to = "nav"
+to = "nav-planner"
 kinds = ["normal", "dev"]
 reason = "The executor follows planner plans and reads transport facts, world state, quest evidence and the essence session through lists A and C of NAV-CRATE-SPLIT design-r3 2.4 (Route, Leg, CompactRouteLeg, RoutePlanLease, TransportEdge, TransportKind, DoorDir, WorldState, QuestEvidence, QuestGates, the essence items, and the raw forwarding module executor_adapter), enforced by the executor's own source test. The planner never depends on the executor. The script facade (contract) is unchanged by the split. dev: list B through the planner's test-support feature (test_support fixture builders, StepGrid fixtures, find_on_grid, NavWorld::load_default_pack_or_skip)."
 
@@ -140,9 +140,9 @@ reason = "Main 2026-10-12, F0-SCRIPT-SEAM conformance oracle, §27 §2.2 / ADR 0
 
 [[allow]]
 from = "script"
-to = "nav"
+to = "nav-planner"
 kinds = ["normal"]
-reason = "Permanent script -> nav edge. F0 freezes nav::contract semantics; T5.1 removes exact production representation exceptions without removing this edge."
+reason = "Permanent script -> nav-planner edge. F0 freezes nav_planner::contract semantics; T5.1 removes exact production representation exceptions without removing this edge."
 
 # --- orchestration and composition ---
 
@@ -166,9 +166,9 @@ reason = "Play is the lifecycle owner over host slots (login FIFO, tick, park)."
 
 [[allow]]
 from = "host-play"
-to = "nav"
+to = "nav-planner"
 kinds = ["normal", "build"]
-reason = "Play drives Traveller/WalkTo; the build script bakes/stages the selected revision nav identity."
+reason = "Play plans routes and bank fetches over the shared world. The build script bakes and stages the selected revision nav identity."
 
 [[allow]]
 from = "host-play"
@@ -208,7 +208,7 @@ reason = "scenarios observe client scene/login facts for live gates."
 
 [[allow]]
 from = "scenario"
-to = "nav"
+to = "nav-planner"
 kinds = ["normal"]
 reason = "nav-family scenarios share the packed world/router, not script isolate internals."
 
@@ -258,7 +258,7 @@ reason = "the core owns the unlocked vault and profile setting writes for both f
 
 [[allow]]
 from = "frontend-core"
-to = "nav"
+to = "nav-planner"
 kinds = ["normal"]
 reason = "group walk and the durable walk permissions name the nav vocabulary Play's API already exposes (FindOptions, Tile, WorldState); the 0.2.1 move of panel's WalkTo/nav chrome into frontend-core widens this, never the reverse."
 
@@ -306,7 +306,7 @@ reason = "Test-only live-probe feature for panel manual-click LIVE cells."
 
 [[allow]]
 from = "panel"
-to = "nav"
+to = "nav-planner"
 kinds = ["normal"]
 reason = "WalkTo picker and nav paints are panel chrome over host nav."
 
@@ -330,7 +330,7 @@ reason = "Test-only test-support and live-probe fixtures; never production permi
 
 [[allow]]
 from = "tui"
-to = "nav"
+to = "nav-planner"
 kinds = ["normal"]
 reason = "tui map pane reads packed collision/pins."
 
@@ -368,7 +368,7 @@ reason = "e2e reuses Play for login/RSS/null-raster twins and suite child launch
 
 [[allow]]
 from = "e2e"
-to = "nav"
+to = "nav-planner"
 kinds = ["normal"]
 reason = "nav-family live twins share packed world/router."
 
@@ -399,7 +399,7 @@ optional_dependencies = []
 
 [[configuration]]
 id = "workspace-tests"
-packages = ["api", "e2e", "frontend-core", "host", "host-play", "nav", "nav-executor", "panel", "scenario", "script", "seat-model", "tui", "vault"]
+packages = ["api", "e2e", "frontend-core", "host", "host-play", "nav-executor", "nav-planner", "panel", "scenario", "script", "seat-model", "tui", "vault"]
 features = []
 default_features = true
 dev = true
