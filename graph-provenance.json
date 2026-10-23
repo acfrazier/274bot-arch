@@ -208,6 +208,18 @@
       "edge",
       "host",
       "api",
+      "dev",
+      "",
+      "dev-dependencies",
+      true,
+      [
+        "test-support"
+      ]
+    ],
+    [
+      "edge",
+      "host",
+      "api",
       "normal",
       "",
       "dependencies",
@@ -245,6 +257,18 @@
       "dependencies",
       true,
       []
+    ],
+    [
+      "edge",
+      "host-play",
+      "api",
+      "dev",
+      "",
+      "dev-dependencies",
+      true,
+      [
+        "test-support"
+      ]
     ],
     [
       "edge",
@@ -379,6 +403,18 @@
       "dependencies",
       true,
       []
+    ],
+    [
+      "edge",
+      "nav-executor",
+      "api",
+      "dev",
+      "",
+      "dev-dependencies",
+      true,
+      [
+        "test-support"
+      ]
     ],
     [
       "edge",
@@ -555,6 +591,18 @@
       "edge",
       "script",
       "api",
+      "dev",
+      "",
+      "dev-dependencies",
+      true,
+      [
+        "test-support"
+      ]
+    ],
+    [
+      "edge",
+      "script",
+      "api",
       "normal",
       "",
       "dependencies",
@@ -600,6 +648,18 @@
       "dependencies",
       true,
       []
+    ],
+    [
+      "edge",
+      "tui",
+      "api",
+      "dev",
+      "",
+      "dev-dependencies",
+      true,
+      [
+        "test-support"
+      ]
     ],
     [
       "edge",
@@ -1051,6 +1111,24 @@
       "tui",
       "frontend-core",
       "live-harness"
+    ],
+    [
+      "isolated-activation",
+      "host-performance",
+      "host",
+      "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "host-performance",
+      "host",
+      "feature-edge",
+      "host",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -2424,6 +2502,15 @@
     [
       "isolated-activation",
       "package-defaults",
+      "api",
+      "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
       "client-play",
       "dependency",
       "client",
@@ -2620,6 +2707,15 @@
       "package-defaults",
       "e2e",
       "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "e2e",
+      "feature-edge",
       "e2e",
       "host-play",
       "test-support"
@@ -2630,7 +2726,25 @@
       "e2e",
       "feature-edge",
       "host",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "e2e",
+      "feature-edge",
+      "host",
       "client",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "e2e",
+      "feature-edge",
+      "host-play",
+      "api",
       "test-support"
     ],
     [
@@ -2666,6 +2780,15 @@
       "e2e",
       "feature-edge",
       "nav-executor",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "e2e",
+      "feature-edge",
+      "nav-executor",
       "nav",
       "test-support"
     ],
@@ -2686,6 +2809,15 @@
       "script",
       "api",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "e2e",
+      "feature-edge",
+      "script",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -2842,6 +2974,15 @@
       "package-defaults",
       "frontend-core",
       "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "frontend-core",
+      "feature-edge",
       "frontend-core",
       "frontend-core",
       "test-support"
@@ -2870,7 +3011,25 @@
       "frontend-core",
       "feature-edge",
       "host",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "frontend-core",
+      "feature-edge",
+      "host",
       "client",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "frontend-core",
+      "feature-edge",
+      "host-play",
+      "api",
       "test-support"
     ],
     [
@@ -2906,6 +3065,15 @@
       "frontend-core",
       "feature-edge",
       "nav-executor",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "frontend-core",
+      "feature-edge",
+      "nav-executor",
       "nav",
       "test-support"
     ],
@@ -2933,6 +3101,15 @@
       "frontend-core",
       "feature-edge",
       "script",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "frontend-core",
+      "feature-edge",
+      "script",
       "script",
       "path-schema"
     ],
@@ -2944,6 +3121,24 @@
       "script",
       "script",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "host",
+      "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "host",
+      "feature-edge",
+      "host",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -3080,8 +3275,35 @@
       "package-defaults",
       "host-play",
       "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "host-play",
+      "feature-edge",
+      "host",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "host-play",
+      "feature-edge",
       "host",
       "client",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "host-play",
+      "feature-edge",
+      "host-play",
+      "api",
       "test-support"
     ],
     [
@@ -3108,6 +3330,15 @@
       "host-play",
       "feature-edge",
       "nav-executor",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "host-play",
+      "feature-edge",
+      "nav-executor",
       "nav",
       "test-support"
     ],
@@ -3135,6 +3366,15 @@
       "host-play",
       "feature-edge",
       "script",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "host-play",
+      "feature-edge",
+      "script",
       "script",
       "path-schema"
     ],
@@ -3172,6 +3412,15 @@
     [
       "isolated-activation",
       "package-defaults",
+      "nav",
+      "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
       "nav-executor",
       "dependency",
       "nav",
@@ -3190,6 +3439,24 @@
       "optional",
       "",
       "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "nav-executor",
+      "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "nav-executor",
+      "feature-edge",
+      "nav-executor",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -3370,6 +3637,15 @@
       "package-defaults",
       "panel",
       "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "panel",
+      "feature-edge",
       "frontend-core",
       "frontend-core",
       "test-support"
@@ -3416,6 +3692,15 @@
       "panel",
       "feature-edge",
       "host",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "panel",
+      "feature-edge",
+      "host",
       "client",
       "test-support"
     ],
@@ -3427,6 +3712,15 @@
       "host-play",
       "api",
       "debug-catalog"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "panel",
+      "feature-edge",
+      "host-play",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -3454,6 +3748,15 @@
       "host-play",
       "script",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "panel",
+      "feature-edge",
+      "nav-executor",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -3533,6 +3836,15 @@
       "panel",
       "feature-edge",
       "script",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "panel",
+      "feature-edge",
+      "script",
       "script",
       "path-schema"
     ],
@@ -3594,6 +3906,24 @@
       "package-defaults",
       "scenario",
       "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "scenario",
+      "feature-edge",
+      "nav-executor",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "scenario",
+      "feature-edge",
       "nav-executor",
       "nav",
       "test-support"
@@ -3615,6 +3945,15 @@
       "script",
       "api",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "scenario",
+      "feature-edge",
+      "script",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -3749,6 +4088,15 @@
       "package-defaults",
       "script",
       "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "script",
+      "feature-edge",
       "script",
       "api",
       "path-schema"
@@ -3761,6 +4109,15 @@
       "script",
       "api",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "script",
+      "feature-edge",
+      "script",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -3911,6 +4268,15 @@
       "optional",
       "",
       "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "tui",
+      "feature-edge",
+      "api",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -3954,7 +4320,25 @@
       "tui",
       "feature-edge",
       "host",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "tui",
+      "feature-edge",
+      "host",
       "client",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "tui",
+      "feature-edge",
+      "host-play",
+      "api",
       "test-support"
     ],
     [
@@ -3990,6 +4374,15 @@
       "tui",
       "feature-edge",
       "nav-executor",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "tui",
+      "feature-edge",
+      "nav-executor",
       "nav",
       "test-support"
     ],
@@ -4017,6 +4410,15 @@
       "tui",
       "feature-edge",
       "script",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "tui",
+      "feature-edge",
+      "script",
       "script",
       "path-schema"
     ],
@@ -4028,6 +4430,15 @@
       "script",
       "script",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "tui",
+      "feature-edge",
+      "tui",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -4063,6 +4474,24 @@
       "feature-edge",
       "tui",
       "host-play",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "host",
+      "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "host",
+      "feature-edge",
+      "host",
+      "api",
       "test-support"
     ],
     [
@@ -4253,6 +4682,15 @@
       "render-diagnostics",
       "panel",
       "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
       "frontend-core",
       "frontend-core",
       "test-support"
@@ -4308,6 +4746,15 @@
       "panel",
       "feature-edge",
       "host",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "host",
       "client",
       "render-diagnostics"
     ],
@@ -4335,6 +4782,15 @@
       "panel",
       "feature-edge",
       "host-play",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "host-play",
       "nav",
       "test-support"
     ],
@@ -4355,6 +4811,15 @@
       "host-play",
       "script",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "nav-executor",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -4452,6 +4917,15 @@
       "panel",
       "feature-edge",
       "script",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "script",
       "script",
       "path-schema"
     ],
@@ -4579,6 +5053,15 @@
       "script-load-tests",
       "script",
       "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "script-load-tests",
+      "script",
+      "feature-edge",
       "script",
       "api",
       "path-schema"
@@ -4598,6 +5081,15 @@
       "script",
       "feature-edge",
       "script",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "script-load-tests",
+      "script",
+      "feature-edge",
+      "script",
       "script",
       "path-schema"
     ],
@@ -4609,6 +5101,15 @@
       "script",
       "script",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "api",
+      "feature-edge",
+      "api",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -4736,6 +5237,15 @@
       "workspace-tests",
       "e2e",
       "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "feature-edge",
       "e2e",
       "host-play",
       "test-support"
@@ -4746,7 +5256,25 @@
       "e2e",
       "feature-edge",
       "host",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "feature-edge",
+      "host",
       "client",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "feature-edge",
+      "host-play",
+      "api",
       "test-support"
     ],
     [
@@ -4782,6 +5310,15 @@
       "e2e",
       "feature-edge",
       "nav-executor",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "feature-edge",
+      "nav-executor",
       "nav",
       "test-support"
     ],
@@ -4802,6 +5339,15 @@
       "script",
       "api",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "feature-edge",
+      "script",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -4958,6 +5504,15 @@
       "workspace-tests",
       "frontend-core",
       "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
       "frontend-core",
       "frontend-core",
       "test-support"
@@ -4986,7 +5541,25 @@
       "frontend-core",
       "feature-edge",
       "host",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
+      "host",
       "client",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
+      "host-play",
+      "api",
       "test-support"
     ],
     [
@@ -5022,6 +5595,15 @@
       "frontend-core",
       "feature-edge",
       "nav-executor",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
+      "nav-executor",
       "nav",
       "test-support"
     ],
@@ -5049,6 +5631,15 @@
       "frontend-core",
       "feature-edge",
       "script",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
+      "script",
       "script",
       "path-schema"
     ],
@@ -5060,6 +5651,24 @@
       "script",
       "script",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host",
+      "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host",
+      "feature-edge",
+      "host",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -5196,8 +5805,35 @@
       "workspace-tests",
       "host-play",
       "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "feature-edge",
+      "host",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "feature-edge",
       "host",
       "client",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "feature-edge",
+      "host-play",
+      "api",
       "test-support"
     ],
     [
@@ -5224,6 +5860,15 @@
       "host-play",
       "feature-edge",
       "nav-executor",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "feature-edge",
+      "nav-executor",
       "nav",
       "test-support"
     ],
@@ -5251,6 +5896,15 @@
       "host-play",
       "feature-edge",
       "script",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "feature-edge",
+      "script",
       "script",
       "path-schema"
     ],
@@ -5288,6 +5942,15 @@
     [
       "isolated-activation",
       "workspace-tests",
+      "nav",
+      "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
       "nav-executor",
       "dependency",
       "nav",
@@ -5306,6 +5969,24 @@
       "optional",
       "",
       "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "nav-executor",
+      "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "nav-executor",
+      "feature-edge",
+      "nav-executor",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -5486,6 +6167,15 @@
       "workspace-tests",
       "panel",
       "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
       "frontend-core",
       "frontend-core",
       "test-support"
@@ -5532,6 +6222,15 @@
       "panel",
       "feature-edge",
       "host",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "host",
       "client",
       "test-support"
     ],
@@ -5543,6 +6242,15 @@
       "host-play",
       "api",
       "debug-catalog"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "host-play",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -5570,6 +6278,15 @@
       "host-play",
       "script",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "nav-executor",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -5649,6 +6366,15 @@
       "panel",
       "feature-edge",
       "script",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "script",
       "script",
       "path-schema"
     ],
@@ -5710,6 +6436,24 @@
       "workspace-tests",
       "scenario",
       "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "scenario",
+      "feature-edge",
+      "nav-executor",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "scenario",
+      "feature-edge",
       "nav-executor",
       "nav",
       "test-support"
@@ -5731,6 +6475,15 @@
       "script",
       "api",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "scenario",
+      "feature-edge",
+      "script",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -5865,6 +6618,15 @@
       "workspace-tests",
       "script",
       "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "feature-edge",
       "script",
       "api",
       "path-schema"
@@ -5877,6 +6639,15 @@
       "script",
       "api",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "feature-edge",
+      "script",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -6027,6 +6798,15 @@
       "optional",
       "",
       "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "api",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
@@ -6070,7 +6850,25 @@
       "tui",
       "feature-edge",
       "host",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "host",
       "client",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "host-play",
+      "api",
       "test-support"
     ],
     [
@@ -6106,6 +6904,15 @@
       "tui",
       "feature-edge",
       "nav-executor",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "nav-executor",
       "nav",
       "test-support"
     ],
@@ -6133,6 +6940,15 @@
       "tui",
       "feature-edge",
       "script",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "script",
       "script",
       "path-schema"
     ],
@@ -6144,6 +6960,15 @@
       "script",
       "script",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "tui",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
