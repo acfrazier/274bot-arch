@@ -834,6 +834,17 @@
       "host-play",
       "dependency",
       "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "host-play",
+      "dependency",
+      "script",
       "deno_core",
       "optional",
       "",
@@ -964,6 +975,17 @@
       "panel",
       "dependency",
       "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "panel",
+      "dependency",
+      "script",
       "deno_core",
       "optional",
       "",
@@ -1041,6 +1063,15 @@
       "frontend-core",
       "host-play",
       "live-harness"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "panel",
+      "feature-edge",
+      "frontend-core",
+      "script",
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -1115,6 +1146,17 @@
       "tui",
       "dependency",
       "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "tui",
+      "dependency",
+      "script",
       "deno_core",
       "optional",
       "",
@@ -1183,6 +1225,15 @@
       "frontend-core",
       "host-play",
       "live-harness"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "tui",
+      "feature-edge",
+      "frontend-core",
+      "script",
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -1246,6 +1297,17 @@
       "host-play",
       "dependency",
       "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "host-play",
+      "dependency",
+      "script",
       "deno_core",
       "optional",
       "",
@@ -1394,6 +1456,17 @@
       "panel",
       "dependency",
       "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "panel",
+      "dependency",
+      "script",
       "deno_core",
       "optional",
       "",
@@ -1480,6 +1553,15 @@
       "frontend-core",
       "host-play",
       "memory-profile"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "panel",
+      "feature-edge",
+      "frontend-core",
+      "script",
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -1581,6 +1663,17 @@
       "tui",
       "dependency",
       "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "tui",
+      "dependency",
+      "script",
       "deno_core",
       "optional",
       "",
@@ -1664,6 +1757,15 @@
       "memory-profile",
       "tui",
       "feature-edge",
+      "frontend-core",
+      "script",
+      "canvas-raster"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "tui",
+      "feature-edge",
       "host-play",
       "host",
       "performance-profile"
@@ -1711,6 +1813,17 @@
       "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "host-play",
+      "dependency",
+      "script",
+      "ab_glyph",
       "optional",
       "",
       "dependencies"
@@ -1869,6 +1982,17 @@
       "panel",
       "dependency",
       "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "panel",
+      "dependency",
+      "script",
       "deno_core",
       "optional",
       "",
@@ -1964,6 +2088,15 @@
       "frontend-core",
       "host-play",
       "memory-profile-no-alloc"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "panel",
+      "feature-edge",
+      "frontend-core",
+      "script",
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -2074,6 +2207,17 @@
       "tui",
       "dependency",
       "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "tui",
+      "dependency",
+      "script",
       "deno_core",
       "optional",
       "",
@@ -2166,6 +2310,15 @@
       "memory-profile-no-alloc",
       "tui",
       "feature-edge",
+      "frontend-core",
+      "script",
+      "canvas-raster"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "tui",
+      "feature-edge",
       "host-play",
       "host",
       "performance-profile"
@@ -2214,6 +2367,17 @@
       "tui",
       "frontend-core",
       "memory-profile-no-alloc"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "host-play",
+      "dependency",
+      "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
     ],
     [
       "isolated-activation",
@@ -2351,6 +2515,17 @@
       "panel",
       "dependency",
       "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "panel",
+      "dependency",
+      "script",
       "deno_core",
       "optional",
       "",
@@ -2428,6 +2603,15 @@
       "frontend-core",
       "host-play",
       "live-harness"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "panel",
+      "feature-edge",
+      "frontend-core",
+      "script",
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -2502,6 +2686,17 @@
       "tui",
       "dependency",
       "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "tui",
+      "dependency",
+      "script",
       "deno_core",
       "optional",
       "",
@@ -2570,6 +2765,15 @@
       "frontend-core",
       "host-play",
       "live-harness"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "tui",
+      "feature-edge",
+      "frontend-core",
+      "script",
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -2721,6 +2925,17 @@
       "e2e",
       "dependency",
       "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "e2e",
+      "dependency",
+      "script",
       "deno_core",
       "optional",
       "",
@@ -2988,6 +3203,17 @@
       "frontend-core",
       "dependency",
       "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "frontend-core",
+      "dependency",
+      "script",
       "deno_core",
       "optional",
       "",
@@ -3094,6 +3320,15 @@
       "frontend-core",
       "host-play",
       "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "frontend-core",
+      "feature-edge",
+      "frontend-core",
+      "script",
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -3279,6 +3514,17 @@
       "dependency",
       "nav-planner",
       "syn",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "host-play",
+      "dependency",
+      "script",
+      "ab_glyph",
       "optional",
       "",
       "dependencies"
@@ -3682,6 +3928,17 @@
       "panel",
       "dependency",
       "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "panel",
+      "dependency",
+      "script",
       "deno_core",
       "optional",
       "",
@@ -3806,6 +4063,15 @@
       "frontend-core",
       "host-play",
       "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "panel",
+      "feature-edge",
+      "frontend-core",
+      "script",
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -4133,6 +4399,17 @@
       "script",
       "dependency",
       "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "script",
+      "dependency",
+      "script",
       "deno_core",
       "optional",
       "",
@@ -4319,6 +4596,17 @@
       "tui",
       "dependency",
       "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "tui",
+      "dependency",
+      "script",
       "deno_core",
       "optional",
       "",
@@ -4434,6 +4722,15 @@
       "frontend-core",
       "host-play",
       "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "tui",
+      "feature-edge",
+      "frontend-core",
+      "script",
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -4727,6 +5024,17 @@
       "panel",
       "dependency",
       "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "dependency",
+      "script",
       "deno_core",
       "optional",
       "",
@@ -4860,6 +5168,15 @@
       "frontend-core",
       "host-play",
       "test-support"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "frontend-core",
+      "script",
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -5098,6 +5415,17 @@
       "script",
       "dependency",
       "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "script-load-tests",
+      "script",
+      "dependency",
+      "script",
       "deno_core",
       "optional",
       "",
@@ -5272,6 +5600,17 @@
       "dependency",
       "nav-planner",
       "syn",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "dependency",
+      "script",
+      "ab_glyph",
       "optional",
       "",
       "dependencies"
@@ -5549,6 +5888,17 @@
       "frontend-core",
       "dependency",
       "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "dependency",
+      "script",
       "deno_core",
       "optional",
       "",
@@ -5655,6 +6005,15 @@
       "frontend-core",
       "host-play",
       "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
+      "frontend-core",
+      "script",
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -5840,6 +6199,17 @@
       "dependency",
       "nav-planner",
       "syn",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "dependency",
+      "script",
+      "ab_glyph",
       "optional",
       "",
       "dependencies"
@@ -6243,6 +6613,17 @@
       "panel",
       "dependency",
       "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "dependency",
+      "script",
       "deno_core",
       "optional",
       "",
@@ -6367,6 +6748,15 @@
       "frontend-core",
       "host-play",
       "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "frontend-core",
+      "script",
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -6694,6 +7084,17 @@
       "script",
       "dependency",
       "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "dependency",
+      "script",
       "deno_core",
       "optional",
       "",
@@ -6880,6 +7281,17 @@
       "tui",
       "dependency",
       "script",
+      "ab_glyph",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "dependency",
+      "script",
       "deno_core",
       "optional",
       "",
@@ -6995,6 +7407,15 @@
       "frontend-core",
       "host-play",
       "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "frontend-core",
+      "script",
+      "canvas-raster"
     ],
     [
       "isolated-activation",
