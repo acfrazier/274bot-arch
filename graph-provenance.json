@@ -75,6 +75,16 @@
     [
       "edge",
       "e2e",
+      "nav-bake",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "e2e",
       "nav-planner",
       "normal",
       "",
@@ -297,6 +307,26 @@
       "normal",
       "",
       "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "host-play",
+      "nav-bake",
+      "build",
+      "",
+      "build-dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "host-play",
+      "nav-bake",
+      "dev",
+      "",
+      "dev-dependencies",
       true,
       []
     ],
@@ -378,6 +408,36 @@
       "edge",
       "host-play",
       "vault",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "nav-bake",
+      "api",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "nav-bake",
+      "client",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "nav-bake",
+      "nav-planner",
       "normal",
       "",
       "dependencies",
@@ -526,6 +586,16 @@
       [
         "live-probe"
       ]
+    ],
+    [
+      "edge",
+      "panel",
+      "nav-bake",
+      "dev",
+      "",
+      "dev-dependencies",
+      true,
+      []
     ],
     [
       "edge",
@@ -3390,6 +3460,37 @@
     [
       "isolated-activation",
       "package-defaults",
+      "nav-bake",
+      "dependency",
+      "nav-planner",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "nav-bake",
+      "dependency",
+      "nav-planner",
+      "syn",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "nav-bake",
+      "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
       "nav-executor",
       "dependency",
       "nav-planner",
@@ -5916,6 +6017,37 @@
       "script",
       "script",
       "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "nav-bake",
+      "dependency",
+      "nav-planner",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "nav-bake",
+      "dependency",
+      "nav-planner",
+      "syn",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "nav-bake",
+      "feature-edge",
+      "api",
+      "api",
+      "test-support"
     ],
     [
       "isolated-activation",
