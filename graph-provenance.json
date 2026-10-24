@@ -167,6 +167,16 @@
     [
       "edge",
       "frontend-core",
+      "nav-bake",
+      "dev",
+      "",
+      "dev-dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "frontend-core",
       "nav-planner",
       "normal",
       "",
@@ -797,6 +807,16 @@
         "live-probe",
         "test-support"
       ]
+    ],
+    [
+      "edge",
+      "tui",
+      "nav-bake",
+      "dev",
+      "",
+      "dev-dependencies",
+      true,
+      []
     ],
     [
       "edge",
