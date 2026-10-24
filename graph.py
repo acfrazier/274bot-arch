@@ -222,7 +222,8 @@ def graph_state(checker, root):
             for requirement in config["optional_dependencies"]:
                 package, dependency = requirement.split("/", 1)
                 matched = [row for row in records
-                           if row["from"] == package and row["to"] == dependency]
+                           if row["from"] == package and row["to"] == dependency
+                           and (row["kind"] != "dev" or config["dev"])]
                 if not matched or any(not row["optional"] for row in matched):
                     raise ValueError(f"required optional dependency: {config['id']}: {requirement}")
     return policy, provenance

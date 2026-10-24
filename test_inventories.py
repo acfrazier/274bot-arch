@@ -170,6 +170,7 @@ def _write_fixture(
     foreign_types: str | None = None,
     workspace_files: dict[str, str] | None = None,
     script_manifest: str | None = None,
+    script_aux: tuple[Path, ...] = inventories.SCRIPT_AUX_RELATIVE[:1],
 ) -> Path:
     for crate in ("script", "frontend-core"):
         crate_root = root / "crates" / crate
@@ -199,7 +200,7 @@ def _write_fixture(
         path = root / relative
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(contents, encoding="utf-8")
-    for relative in inventories.SCRIPT_AUX_RELATIVE:
+    for relative in script_aux:
         path = root / relative
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("// generated fixture input\n", encoding="utf-8")
@@ -596,6 +597,44 @@ pub struct FleetView<'a> {
                     errors,
                 )
                 self.assertTrue(any("public_signature" in error for error in errors), errors)
+
+    def test_script_js_crate_is_scanned_for_raw_navigation_imports(self) -> None:
+        path = "crates/script-js/src/x.rs"
+        root = self.fixture(
+            views=self.baseline_views(),
+            script_files={
+                "crates/script-js/src/lib.rs": "mod x;\n",
+                path: "use nav::router::Route;\n",
+            },
+            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
+        )
+        errors = inventories.check_tree(root)
+        self.assertTrue(
+            any("production_nav_implementation_import" in error and path in error for error in errors),
+            errors,
+        )
+
+    def test_script_js_roots_are_optional_when_the_crate_is_absent(self) -> None:
+        self.assertIn(Path("crates/script-js/src"), inventories.SCRIPT_SRC_RELATIVE)
+        self.assertIn(Path("crates/script-js/tests"), inventories.SCRIPT_TESTS_RELATIVE)
+        root = self.fixture(
+            views=self.baseline_views(),
+            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
+        )
+        self.assertFalse((root / "crates/script-js").exists())
+        self.assertEqual(inventories.check_tree(root), [])
+
+    def test_script_aux_path_may_move_to_the_js_crate(self) -> None:
+        moved = Path("crates/script-js/schema/generated/isolate_generated.rs")
+        self.assertIn(moved, inventories.SCRIPT_AUX_RELATIVE)
+        root = self.fixture(
+            views=self.baseline_views(),
+            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
+            script_aux=(moved,),
+        )
+        self.assertFalse((root / inventories.SCRIPT_AUX_RELATIVE[0]).exists())
+        self.assertTrue((root / moved).is_file())
+        self.assertEqual(inventories.check_tree(root), [])
 
     def test_planner_roots_follow_manifest_and_keep_contract(self) -> None:
         path = "crates/script/src/lib.rs"

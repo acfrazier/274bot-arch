@@ -191,6 +191,50 @@ optional_dependencies = ["vault/api"]
 
 
 
+    def required_optional_fixture(self, *, dev: bool, optional: bool) -> None:
+        """Allow normal and dev vault -> api rows in one configuration."""
+        self.write_policy(
+            [{"from": "vault", "to": "api", "kinds": ["optional", "normal", "dev"], "reason": "fixture"}],
+            f"""
+[[configuration]]
+id = "fixture"
+packages = ["vault"]
+features = []
+default_features = true
+dev = {str(dev).lower()}
+status = "enforced"
+owner = "T1"
+forbidden_features = []
+optional_dependencies = ["vault/api"]
+""",
+        )
+        checker.write_workspace(self.root, ["vault", "api"])
+        normal = {"path": "../api"}
+        if optional:
+            normal["optional"] = True
+        checker.write_crate(
+            self.root,
+            "vault",
+            deps={"api": normal},
+            dev_dependencies={"api": {"path": "../api"}},
+        )
+        checker.write_crate(self.root, "api")
+
+    def test_dev_row_does_not_defeat_required_optional_dependency_without_dev(self) -> None:
+        self.required_optional_fixture(dev=False, optional=True)
+        self.write_baseline(self.root)
+        self.assertEqual(checker.check_graph_tree(self.root), [])
+
+    def test_dev_row_defeats_required_optional_dependency_with_dev(self) -> None:
+        self.required_optional_fixture(dev=True, optional=True)
+        errors = checker.check_graph_tree(self.root)
+        self.assertTrue(any("required optional dependency: fixture: vault/api" in error for error in errors), errors)
+
+    def test_non_optional_normal_row_defeats_required_optional_dependency_beside_a_dev_row(self) -> None:
+        self.required_optional_fixture(dev=False, optional=False)
+        errors = checker.check_graph_tree(self.root)
+        self.assertTrue(any("required optional dependency: fixture: vault/api" in error for error in errors), errors)
+
     def test_exceptional_provenance_widening_is_rejected(self) -> None:
         self.write_policy(
             [{"from": "vault", "to": "api", "kinds": ["optional"], "reason": "fixture"}],
