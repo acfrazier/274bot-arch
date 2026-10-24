@@ -22,6 +22,7 @@ members = [
     # Dev-only executable seat model (contract §27 §8); depends on no workspace crate.
     "seat-model",
     "script",
+    "script-js",
     "tui",
     "vault",
 ]
@@ -193,6 +194,36 @@ to = "nav-planner"
 kinds = ["normal"]
 reason = "Permanent script -> nav-planner edge. F0 freezes nav_planner::contract semantics; T5.1 removes exact production representation exceptions without removing this edge."
 
+[[allow]]
+from = "script-js"
+to = "script"
+kinds = ["normal", "dev"]
+reason = "The JS surface binds the native Core. Tests use the Core test hooks."
+
+[[allow]]
+from = "script-js"
+to = "api"
+kinds = ["normal", "dev"]
+reason = "The JS surface consumes snapshot, script-contract, game-data, selection and identity vocabulary. Dev-only: API test-support exposes raw packet recorders to the moved tests."
+
+[[allow]]
+from = "script-js"
+to = "vault"
+kinds = ["normal"]
+reason = "The JS card store and cache use private-file I/O."
+
+[[allow]]
+from = "script-js"
+to = "client"
+kinds = ["dev"]
+reason = "Moved integration tests use real client revision and snapshot fixtures."
+
+[[allow]]
+from = "script-js"
+to = "nav-planner"
+kinds = ["dev"]
+reason = "The two named bank-location tests use the planner as an exact fixture oracle. Production uses the Core facade."
+
 # --- orchestration and composition ---
 
 [[allow]]
@@ -230,6 +261,12 @@ from = "host-play"
 to = "script"
 kinds = ["normal", "dev"]
 reason = "Play owns the per-slot script transaction (start/pause/stop/load) as one cohesive unit. dev: host-play's own tests install native fixtures through script's test-hooks seams (start_test_script, prepare_for_test); production builds never enable them."
+
+[[allow]]
+from = "host-play"
+to = "script-js"
+kinds = ["normal", "dev"]
+reason = "Play binds the JS surface factory and catalog. Tests use the JS test hooks. S2 makes the normal edge optional."
 
 [[allow]]
 from = "host-play"
@@ -298,6 +335,12 @@ from = "frontend-core"
 to = "script"
 kinds = ["normal"]
 reason = "script Start/Pause/Stop settlement uses the kernel's run-state and start-outcome types."
+
+[[allow]]
+from = "frontend-core"
+to = "script-js"
+kinds = ["normal", "dev"]
+reason = "Operator script coordination consumes the JS catalog and library. S2 makes the normal edge optional."
 
 [[allow]]
 from = "frontend-core"
@@ -448,7 +491,7 @@ optional_dependencies = []
 
 [[configuration]]
 id = "workspace-tests"
-packages = ["api", "e2e", "frontend-core", "host", "host-play", "nav-bake", "nav-executor", "nav-planner", "panel", "scenario", "script", "seat-model", "tui", "vault"]
+packages = ["api", "e2e", "frontend-core", "host", "host-play", "nav-bake", "nav-executor", "nav-planner", "panel", "scenario", "script", "script-js", "seat-model", "tui", "vault"]
 features = []
 default_features = true
 dev = true
@@ -465,13 +508,13 @@ default_features = false
 dev = false
 status = "enforced"
 owner = "T2"
-forbidden_features = ["script/load"]
+forbidden_features = []
 optional_dependencies = []
 
 [[configuration]]
-id = "script-load-tests"
-packages = ["script"]
-features = ["script/load"]
+id = "script-js-tests"
+packages = ["script-js"]
+features = []
 default_features = true
 dev = true
 status = "enforced"
@@ -523,8 +566,8 @@ owner = "T4"
 forbidden_features = []
 optional_dependencies = []
 
-# Native-only policy remains pending until T2 makes deno_ast optional and
-# removes script/load activation. Only an operator policy commit changes status.
+# Native-only policy remains pending until S2 makes the JS surface optional.
+# Only an operator policy commit changes this status.
 [[configuration]]
 id = "native-only"
 packages = ["panel", "tui", "host-play"]
@@ -533,5 +576,5 @@ default_features = false
 dev = false
 status = "pending"
 owner = "T2"
-forbidden_features = ["script/load"]
-optional_dependencies = ["script/deno_ast"]
+forbidden_features = []
+optional_dependencies = []
