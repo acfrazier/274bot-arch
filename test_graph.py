@@ -71,8 +71,9 @@ class GraphPolicyTests(unittest.TestCase):
     def test_baked_reach_producer_edges_have_exact_kinds(self) -> None:
         protected = checker.load_policy(Path(__file__).with_name("policy.toml"))
         members = [
-            "api", "client", "e2e", "host-play", "nav-bake", "nav-executor",
-            "nav-planner", "panel", "script", "script-js",
+            "api", "client", "e2e", "frontend-core", "host", "host-play",
+            "nav-bake", "nav-executor", "nav-planner", "panel", "script",
+            "script-js", "tui",
         ]
         allows = [
             {"from": src, "to": dst, "kinds": sorted(row.kinds), "reason": "protected policy"}
@@ -87,11 +88,19 @@ class GraphPolicyTests(unittest.TestCase):
             ("host-play", "nav-bake", "dev"),
             ("host-play", "nav-planner", "build"),
             ("panel", "nav-bake", "dev"),
+            ("frontend-core", "nav-bake", "dev"),
+            ("tui", "nav-bake", "dev"),
             ("e2e", "nav-bake", "normal"),
         ]
         refused = [
             (source, "nav-bake", "normal")
-            for source in ("host-play", "panel", "nav-planner", "nav-executor", "script", "script-js")
+            for source in (
+                "frontend-core", "host", "host-play", "panel", "nav-planner",
+                "nav-executor", "script", "script-js", "tui",
+            )
+        ] + [
+            (source, "nav-bake", "build")
+            for source in ("frontend-core", "panel", "tui")
         ]
         for index, (source, target, kind) in enumerate(admitted + refused):
             with self.subTest(source=source, target=target, kind=kind):

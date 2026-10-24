@@ -126,6 +126,18 @@ kinds = ["dev"]
 reason = "BAKED-REACH-1023 BR1: panel tests generate flags and pack fixtures. Panel runtime reads planner views only."
 
 [[allow]]
+from = "frontend-core"
+to = "nav-bake"
+kinds = ["dev"]
+reason = "BAKED-REACH-1023 BR1: frontend tests include host-play's shared map fixture, which generates a pack. No normal runtime baker edge is admitted."
+
+[[allow]]
+from = "tui"
+to = "nav-bake"
+kinds = ["dev"]
+reason = "BAKED-REACH-1023 BR1: TUI tests include host-play's shared map and upgrade fixtures, which generate packs and sidecars. No normal runtime baker edge is admitted."
+
+[[allow]]
 from = "e2e"
 to = "nav-bake"
 kinds = ["normal"]
