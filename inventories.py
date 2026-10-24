@@ -97,8 +97,10 @@ RAW_NAV_MODULES = frozenset(
         "world",
         "world_state",
         "grid",
-        "bundle",
         "map",
+        "movement",
+        "reachability",
+        "atlas",
         "executor_adapter",
     }
 )

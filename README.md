@@ -96,6 +96,20 @@ behavior. `cargo metadata --offline --locked` would depend on the local
 registry cache and would not provide this all-target declaration check.
 Unsupported or unresolved local identities fail closed.
 
+### Navigation producer boundary
+
+`nav-bake` owns release generation. Its normal dependencies may include
+`nav-planner`, `api` and the pinned client cache decoder.
+`host-play` admits only build and dev edges to the baker; panel admits only
+its producer-fixture dev edge. The e2e tool admits a normal input-audit edge.
+Runtime host, panel, planner, executor, script and script-js edges to the baker
+are forbidden. The host's existing planner build edge remains for wire
+schemas, manifest hashes and pack identity.
+
+Raw movement and atlas modules are planner implementation details, not script
+facade types. New semantic script views need their own reviewed seam.
+
+
 ### Vendored client manifests
 
 Every `Cargo.toml` below `vendor/fr-client-rust/` is a protected input.

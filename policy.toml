@@ -16,6 +16,7 @@ members = [
     "host-play",
     "nav-planner",
     "nav-executor",
+    "nav-bake",
     "panel",
     "scenario",
     # Dev-only executable seat model (contract §27 §8); depends on no workspace crate.
@@ -92,7 +93,43 @@ reason = "nav-planner search, pack and facade code uses host-facing snapshot, wo
 from = "nav-planner"
 to = "client"
 kinds = ["normal"]
-reason = "nav bake/collision reads packed client world data. Production scope never names client::client, the client's outgoing opcode tables or socket (client::io::{client_prot, client_prot_289, client_stream}) or a public re-export of them (planner source test, NAV-CRATE-SPLIT design-r3 2.6)."
+reason = "Runtime collision, movement and map views read client cache types and flag definitions. Generation belongs to nav-bake. Production scope never names client execution, outgoing opcode tables or sockets."
+
+[[allow]]
+from = "nav-bake"
+to = "nav-planner"
+kinds = ["normal"]
+reason = "BAKED-REACH-1023 BR1: release producers consume runtime schemas, collision and movement rules, transport data, and the retained paint producer utility. The planner never depends on the baker."
+
+[[allow]]
+from = "nav-bake"
+to = "api"
+kinds = ["normal"]
+reason = "BAKED-REACH-1023 BR1: content generation consumes selected game facts and shared reach geometry, never script or client execution."
+
+[[allow]]
+from = "nav-bake"
+to = "client"
+kinds = ["normal"]
+reason = "BAKED-REACH-1023 BR1: generation decodes the selected cache. The shared navigation action deny list forbids client execution APIs."
+
+[[allow]]
+from = "host-play"
+to = "nav-bake"
+kinds = ["build", "dev"]
+reason = "BAKED-REACH-1023 BR1: the build script stages release packs. Tests generate pack and sidecar fixtures. No normal runtime baker edge is admitted."
+
+[[allow]]
+from = "panel"
+to = "nav-bake"
+kinds = ["dev"]
+reason = "BAKED-REACH-1023 BR1: panel tests generate flags and pack fixtures. Panel runtime reads planner views only."
+
+[[allow]]
+from = "e2e"
+to = "nav-bake"
+kinds = ["normal"]
+reason = "BAKED-REACH-1023 BR1: the developer suite audits content-input paths through the extracted producer. This is a tool edge, not product routing."
 
 [[allow]]
 from = "nav-executor"
@@ -168,7 +205,7 @@ reason = "Play is the lifecycle owner over host slots (login FIFO, tick, park)."
 from = "host-play"
 to = "nav-planner"
 kinds = ["normal", "build"]
-reason = "Play plans routes and bank fetches over the shared world. The build script bakes and stages the selected revision nav identity."
+reason = "Play plans routes over the shared world. Its retained build edge reads runtime CacheManifest, hash_file and FORMAT_ID. nav-bake owns generation and staging."
 
 [[allow]]
 from = "host-play"
@@ -399,7 +436,7 @@ optional_dependencies = []
 
 [[configuration]]
 id = "workspace-tests"
-packages = ["api", "e2e", "frontend-core", "host", "host-play", "nav-executor", "nav-planner", "panel", "scenario", "script", "seat-model", "tui", "vault"]
+packages = ["api", "e2e", "frontend-core", "host", "host-play", "nav-bake", "nav-executor", "nav-planner", "panel", "scenario", "script", "seat-model", "tui", "vault"]
 features = []
 default_features = true
 dev = true

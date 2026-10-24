@@ -68,6 +68,52 @@ class GraphPolicyTests(unittest.TestCase):
         self.write_baseline(self.root)
         self.assertEqual(checker.check_graph_tree(self.root), [])
 
+    def test_baked_reach_producer_edges_have_exact_kinds(self) -> None:
+        protected = checker.load_policy(Path(__file__).with_name("policy.toml"))
+        members = [
+            "api", "client", "e2e", "host-play", "nav-bake", "nav-executor",
+            "nav-planner", "panel", "script", "script-js",
+        ]
+        allows = [
+            {"from": src, "to": dst, "kinds": sorted(row.kinds), "reason": "protected policy"}
+            for (src, dst), row in protected.allowed.items()
+            if src in members and dst in members
+        ]
+        admitted = [
+            ("nav-bake", "api", "normal"),
+            ("nav-bake", "client", "normal"),
+            ("nav-bake", "nav-planner", "normal"),
+            ("host-play", "nav-bake", "build"),
+            ("host-play", "nav-bake", "dev"),
+            ("host-play", "nav-planner", "build"),
+            ("panel", "nav-bake", "dev"),
+            ("e2e", "nav-bake", "normal"),
+        ]
+        refused = [
+            (source, "nav-bake", "normal")
+            for source in ("host-play", "panel", "nav-planner", "nav-executor", "script", "script-js")
+        ]
+        for index, (source, target, kind) in enumerate(admitted + refused):
+            with self.subTest(source=source, target=target, kind=kind):
+                root = self.root / str(index)
+                checker.write_workspace(root, members)
+                table = {
+                    "normal": "dependencies", "dev": "dev_dependencies",
+                    "build": "build_dependencies",
+                }[kind]
+                for member in members:
+                    tables = {table: {target: {"path": f"../{target}"}}} if member == source else {}
+                    checker.write_crate(root, member, **tables)
+                checker.write_policy(self.rules / "policy.toml", members, allows)
+                self.write_baseline(root)
+                errors = checker.check_graph_tree(root)
+                if (source, target, kind) in admitted:
+                    self.assertEqual(errors, [])
+                else:
+                    self.assertTrue(
+                        any("disallowed crate edge" in error for error in errors), errors
+                    )
+
     def test_disallowed_edge(self) -> None:
         self.write_policy([])
         workspace(self.root)

@@ -574,6 +574,29 @@ pub struct FleetView<'a> {
         self.assertTrue(any("public_type_alias" in error for error in alias_errors), alias_errors)
         self.assertTrue(any("public_signature" in error for error in alias_errors), alias_errors)
 
+    def test_baked_atlas_storage_stays_outside_script_facade(self) -> None:
+        manifest = (
+            '[package]\nname = "script"\nversion = "0.0.0"\n'
+            'edition = "2021"\n[dependencies]\n'
+            'nav-planner = { path = "../nav-planner" }\n'
+        )
+        for module in ("reachability", "atlas", "movement"):
+            with self.subTest(module=module):
+                errors = inventories.check_tree(
+                    self.clean_fixture(
+                        script_manifest=manifest,
+                        script_files={
+                            "crates/script/src/lib.rs":
+                                f"pub fn leak() -> nav_planner::{module}::Raw {{ loop {{}} }}\n"
+                        },
+                    )
+                )
+                self.assertTrue(
+                    any("production_nav_implementation_import" in error for error in errors),
+                    errors,
+                )
+                self.assertTrue(any("public_signature" in error for error in errors), errors)
+
     def test_planner_roots_follow_manifest_and_keep_contract(self) -> None:
         path = "crates/script/src/lib.rs"
         seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"))
