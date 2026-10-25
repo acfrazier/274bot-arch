@@ -57,7 +57,7 @@
       "dev",
       "",
       "dev-dependencies",
-      true,
+      false,
       [
         "test-support"
       ]
@@ -69,7 +69,7 @@
       "normal",
       "",
       "dependencies",
-      true,
+      false,
       []
     ],
     [
@@ -149,7 +149,7 @@
       "dev",
       "",
       "dev-dependencies",
-      true,
+      false,
       [
         "test-support"
       ]
@@ -161,7 +161,7 @@
       "normal",
       "",
       "dependencies",
-      true,
+      false,
       []
     ],
     [
@@ -218,7 +218,7 @@
       "edge",
       "frontend-core",
       "script-js",
-      "normal",
+      "optional",
       "",
       "dependencies",
       true,
@@ -438,7 +438,7 @@
       "edge",
       "host-play",
       "script-js",
-      "normal",
+      "optional",
       "",
       "dependencies",
       true,
@@ -597,7 +597,7 @@
       "dev",
       "",
       "dev-dependencies",
-      true,
+      false,
       [
         "test-support"
       ]
@@ -609,7 +609,7 @@
       "normal",
       "",
       "dependencies",
-      true,
+      false,
       [
         "debug-catalog",
         "live-harness"
@@ -622,7 +622,7 @@
       "dev",
       "",
       "dev-dependencies",
-      true,
+      false,
       [
         "live-probe"
       ]
@@ -874,7 +874,7 @@
       "dev",
       "",
       "dev-dependencies",
-      true,
+      false,
       [
         "test-support"
       ]
@@ -886,7 +886,7 @@
       "normal",
       "",
       "dependencies",
-      true,
+      false,
       [
         "live-harness"
       ]
@@ -908,7 +908,7 @@
       "dev",
       "",
       "dev-dependencies",
-      true,
+      false,
       [
         "live-probe",
         "test-support"
@@ -939,6 +939,17 @@
       "full-products",
       "host-play",
       "dependency",
+      "host-play",
+      "script-js",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "host-play",
+      "dependency",
       "script",
       "ab_glyph",
       "optional",
@@ -1014,8 +1025,30 @@
       "full-products",
       "panel",
       "dependency",
+      "frontend-core",
+      "script-js",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "panel",
+      "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "panel",
+      "dependency",
+      "host-play",
+      "script-js",
       "optional",
       "",
       "dependencies"
@@ -1050,6 +1083,15 @@
       "frontend-core",
       "host-play",
       "debug-catalog"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "panel",
+      "feature-edge",
+      "frontend-core",
+      "host-play",
+      "js"
     ],
     [
       "isolated-activation",
@@ -1103,6 +1145,15 @@
       "feature-edge",
       "panel",
       "frontend-core",
+      "js"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "panel",
+      "feature-edge",
+      "panel",
+      "frontend-core",
       "live-harness"
     ],
     [
@@ -1130,8 +1181,30 @@
       "full-products",
       "tui",
       "dependency",
+      "frontend-core",
+      "script-js",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "tui",
+      "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "tui",
+      "dependency",
+      "host-play",
+      "script-js",
       "optional",
       "",
       "dependencies"
@@ -1165,6 +1238,15 @@
       "feature-edge",
       "frontend-core",
       "host-play",
+      "js"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "tui",
+      "feature-edge",
+      "frontend-core",
+      "host-play",
       "live-harness"
     ],
     [
@@ -1184,6 +1266,15 @@
       "script-js",
       "script",
       "canvas-raster"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "tui",
+      "feature-edge",
+      "tui",
+      "frontend-core",
+      "js"
     ],
     [
       "isolated-activation",
@@ -1237,6 +1328,17 @@
       "memory-profile",
       "host-play",
       "dependency",
+      "host-play",
+      "script-js",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "host-play",
+      "dependency",
       "script",
       "ab_glyph",
       "optional",
@@ -1330,8 +1432,30 @@
       "memory-profile",
       "panel",
       "dependency",
+      "frontend-core",
+      "script-js",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "panel",
+      "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "panel",
+      "dependency",
+      "host-play",
+      "script-js",
       "optional",
       "",
       "dependencies"
@@ -1366,6 +1490,15 @@
       "frontend-core",
       "host-play",
       "debug-catalog"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "panel",
+      "feature-edge",
+      "frontend-core",
+      "host-play",
+      "js"
     ],
     [
       "isolated-activation",
@@ -1446,6 +1579,15 @@
       "feature-edge",
       "panel",
       "frontend-core",
+      "js"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "panel",
+      "feature-edge",
+      "panel",
+      "frontend-core",
       "live-harness"
     ],
     [
@@ -1482,8 +1624,30 @@
       "memory-profile",
       "tui",
       "dependency",
+      "frontend-core",
+      "script-js",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "tui",
+      "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "tui",
+      "dependency",
+      "host-play",
+      "script-js",
       "optional",
       "",
       "dependencies"
@@ -1509,6 +1673,15 @@
       "optional",
       "",
       "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "tui",
+      "feature-edge",
+      "frontend-core",
+      "host-play",
+      "js"
     ],
     [
       "isolated-activation",
@@ -1571,6 +1744,15 @@
       "feature-edge",
       "tui",
       "frontend-core",
+      "js"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
+      "tui",
+      "feature-edge",
+      "tui",
+      "frontend-core",
       "live-harness"
     ],
     [
@@ -1589,6 +1771,17 @@
       "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "host-play",
+      "dependency",
+      "host-play",
+      "script-js",
       "optional",
       "",
       "dependencies"
@@ -1691,8 +1884,30 @@
       "memory-profile-no-alloc",
       "panel",
       "dependency",
+      "frontend-core",
+      "script-js",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "panel",
+      "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "panel",
+      "dependency",
+      "host-play",
+      "script-js",
       "optional",
       "",
       "dependencies"
@@ -1727,6 +1942,15 @@
       "frontend-core",
       "host-play",
       "debug-catalog"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "panel",
+      "feature-edge",
+      "frontend-core",
+      "host-play",
+      "js"
     ],
     [
       "isolated-activation",
@@ -1816,6 +2040,15 @@
       "feature-edge",
       "panel",
       "frontend-core",
+      "js"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "panel",
+      "feature-edge",
+      "panel",
+      "frontend-core",
       "live-harness"
     ],
     [
@@ -1861,8 +2094,30 @@
       "memory-profile-no-alloc",
       "tui",
       "dependency",
+      "frontend-core",
+      "script-js",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "tui",
+      "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "tui",
+      "dependency",
+      "host-play",
+      "script-js",
       "optional",
       "",
       "dependencies"
@@ -1888,6 +2143,15 @@
       "optional",
       "",
       "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "tui",
+      "feature-edge",
+      "frontend-core",
+      "host-play",
+      "js"
     ],
     [
       "isolated-activation",
@@ -1959,6 +2223,15 @@
       "feature-edge",
       "tui",
       "frontend-core",
+      "js"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
+      "tui",
+      "feature-edge",
+      "tui",
+      "frontend-core",
       "live-harness"
     ],
     [
@@ -1978,37 +2251,6 @@
       "tui",
       "frontend-core",
       "memory-profile-no-alloc"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "host-play",
-      "dependency",
-      "script",
-      "ab_glyph",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "host-play",
-      "dependency",
-      "script",
-      "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "host-play",
-      "feature-edge",
-      "script-js",
-      "script",
-      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -2069,28 +2311,6 @@
       "isolated-activation",
       "native-only",
       "panel",
-      "dependency",
-      "script",
-      "ab_glyph",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "panel",
-      "dependency",
-      "script",
-      "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "panel",
       "feature-edge",
       "frontend-core",
       "host-play",
@@ -2104,15 +2324,6 @@
       "frontend-core",
       "host-play",
       "live-harness"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "panel",
-      "feature-edge",
-      "frontend-core",
-      "script",
-      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -2153,15 +2364,6 @@
     [
       "isolated-activation",
       "native-only",
-      "panel",
-      "feature-edge",
-      "script-js",
-      "script",
-      "canvas-raster"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
       "tui",
       "dependency",
       "frontend-core",
@@ -2177,28 +2379,6 @@
       "dependency",
       "host-play",
       "scenario",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "tui",
-      "dependency",
-      "script",
-      "ab_glyph",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "tui",
-      "dependency",
-      "script",
-      "tiny-skia",
       "optional",
       "",
       "dependencies"
@@ -2211,24 +2391,6 @@
       "frontend-core",
       "host-play",
       "live-harness"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "tui",
-      "feature-edge",
-      "frontend-core",
-      "script",
-      "canvas-raster"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "tui",
-      "feature-edge",
-      "script-js",
-      "script",
-      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -2348,6 +2510,17 @@
       "package-defaults",
       "e2e",
       "dependency",
+      "host-play",
+      "script-js",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "e2e",
+      "dependency",
       "nav-planner",
       "proc-macro2",
       "optional",
@@ -2414,6 +2587,15 @@
       "feature-edge",
       "e2e",
       "host-play",
+      "js"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "e2e",
+      "feature-edge",
+      "e2e",
+      "host-play",
       "test-support"
     ],
     [
@@ -2596,8 +2778,30 @@
       "package-defaults",
       "frontend-core",
       "dependency",
+      "frontend-core",
+      "script-js",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "frontend-core",
+      "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "frontend-core",
+      "dependency",
+      "host-play",
+      "script-js",
       "optional",
       "",
       "dependencies"
@@ -2691,6 +2895,15 @@
       "feature-edge",
       "frontend-core",
       "host-play",
+      "js"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "frontend-core",
+      "feature-edge",
+      "frontend-core",
+      "host-play",
       "test-support"
     ],
     [
@@ -2900,6 +3113,17 @@
       "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "host-play",
+      "dependency",
+      "host-play",
+      "script-js",
       "optional",
       "",
       "dependencies"
@@ -3283,8 +3507,30 @@
       "package-defaults",
       "panel",
       "dependency",
+      "frontend-core",
+      "script-js",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "panel",
+      "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "panel",
+      "dependency",
+      "host-play",
+      "script-js",
       "optional",
       "",
       "dependencies"
@@ -3379,6 +3625,15 @@
       "frontend-core",
       "host-play",
       "debug-catalog"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "panel",
+      "feature-edge",
+      "frontend-core",
+      "host-play",
+      "js"
     ],
     [
       "isolated-activation",
@@ -3505,6 +3760,15 @@
       "panel",
       "frontend-core",
       "debug-catalog"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "panel",
+      "feature-edge",
+      "panel",
+      "frontend-core",
+      "js"
     ],
     [
       "isolated-activation",
@@ -4011,8 +4275,30 @@
       "package-defaults",
       "tui",
       "dependency",
+      "frontend-core",
+      "script-js",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "tui",
+      "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "tui",
+      "dependency",
+      "host-play",
+      "script-js",
       "optional",
       "",
       "dependencies"
@@ -4098,6 +4384,15 @@
       "frontend-core",
       "host",
       "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "tui",
+      "feature-edge",
+      "frontend-core",
+      "host-play",
+      "js"
     ],
     [
       "isolated-activation",
@@ -4287,6 +4582,15 @@
       "tui",
       "api",
       "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "tui",
+      "feature-edge",
+      "tui",
+      "frontend-core",
+      "js"
     ],
     [
       "isolated-activation",
@@ -4420,8 +4724,30 @@
       "render-diagnostics",
       "panel",
       "dependency",
+      "frontend-core",
+      "script-js",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "dependency",
+      "host-play",
+      "script-js",
       "optional",
       "",
       "dependencies"
@@ -4525,6 +4851,15 @@
       "frontend-core",
       "host-play",
       "debug-catalog"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "frontend-core",
+      "host-play",
+      "js"
     ],
     [
       "isolated-activation",
@@ -4669,6 +5004,15 @@
       "panel",
       "frontend-core",
       "debug-catalog"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "panel",
+      "frontend-core",
+      "js"
     ],
     [
       "isolated-activation",
@@ -4979,6 +5323,17 @@
       "workspace-tests",
       "e2e",
       "dependency",
+      "host-play",
+      "script-js",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "dependency",
       "nav-planner",
       "proc-macro2",
       "optional",
@@ -5045,6 +5400,15 @@
       "feature-edge",
       "e2e",
       "host-play",
+      "js"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "feature-edge",
+      "e2e",
+      "host-play",
       "test-support"
     ],
     [
@@ -5227,8 +5591,30 @@
       "workspace-tests",
       "frontend-core",
       "dependency",
+      "frontend-core",
+      "script-js",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "dependency",
+      "host-play",
+      "script-js",
       "optional",
       "",
       "dependencies"
@@ -5322,6 +5708,15 @@
       "feature-edge",
       "frontend-core",
       "host-play",
+      "js"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
+      "frontend-core",
+      "host-play",
       "test-support"
     ],
     [
@@ -5531,6 +5926,17 @@
       "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "dependency",
+      "host-play",
+      "script-js",
       "optional",
       "",
       "dependencies"
@@ -5914,8 +6320,30 @@
       "workspace-tests",
       "panel",
       "dependency",
+      "frontend-core",
+      "script-js",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "dependency",
+      "host-play",
+      "script-js",
       "optional",
       "",
       "dependencies"
@@ -6010,6 +6438,15 @@
       "frontend-core",
       "host-play",
       "debug-catalog"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "frontend-core",
+      "host-play",
+      "js"
     ],
     [
       "isolated-activation",
@@ -6136,6 +6573,15 @@
       "panel",
       "frontend-core",
       "debug-catalog"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "panel",
+      "frontend-core",
+      "js"
     ],
     [
       "isolated-activation",
@@ -6642,8 +7088,30 @@
       "workspace-tests",
       "tui",
       "dependency",
+      "frontend-core",
+      "script-js",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "dependency",
       "host-play",
       "scenario",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "dependency",
+      "host-play",
+      "script-js",
       "optional",
       "",
       "dependencies"
@@ -6729,6 +7197,15 @@
       "frontend-core",
       "host",
       "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "frontend-core",
+      "host-play",
+      "js"
     ],
     [
       "isolated-activation",
@@ -6918,6 +7395,15 @@
       "tui",
       "api",
       "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "tui",
+      "frontend-core",
+      "js"
     ],
     [
       "isolated-activation",
