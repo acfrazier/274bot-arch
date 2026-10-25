@@ -265,8 +265,8 @@ reason = "Play owns the per-slot script transaction (start/pause/stop/load) as o
 [[allow]]
 from = "host-play"
 to = "script-js"
-kinds = ["normal", "dev"]
-reason = "Play binds the JS surface factory and catalog. Tests use the JS test hooks. S2 makes the normal edge optional."
+kinds = ["optional", "dev"]
+reason = "Optional: Play binds the JS surface factory and catalog only with js. Dev: tests use the JS test hooks."
 
 [[allow]]
 from = "host-play"
@@ -339,8 +339,8 @@ reason = "script Start/Pause/Stop settlement uses the kernel's run-state and sta
 [[allow]]
 from = "frontend-core"
 to = "script-js"
-kinds = ["normal", "dev"]
-reason = "Operator script coordination consumes the JS catalog and library. S2 makes the normal edge optional."
+kinds = ["optional", "dev"]
+reason = "Optional: operator script coordination consumes the JS catalog and library only with js. Dev: JS-backed fixtures remain available to tests."
 
 [[allow]]
 from = "frontend-core"
@@ -566,15 +566,14 @@ owner = "T4"
 forbidden_features = []
 optional_dependencies = []
 
-# Native-only policy remains pending until S2 makes the JS surface optional.
-# Only an operator policy commit changes this status.
+# Native product graphs exclude JS; dev fixture edges are checked separately.
 [[configuration]]
 id = "native-only"
 packages = ["panel", "tui", "host-play"]
 features = []
 default_features = false
 dev = false
-status = "pending"
+status = "enforced"
 owner = "T2"
-forbidden_features = []
-optional_dependencies = []
+forbidden_features = ["host-play/js", "frontend-core/js", "panel/js", "tui/js"]
+optional_dependencies = ["host-play/script-js", "frontend-core/script-js"]

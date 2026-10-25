@@ -393,7 +393,7 @@ pub struct FleetView<'a> {
                     "pub struct SessionOwner {\n"
                     "    cancellation: native_settings::NativeCopyCancellation,\n"
                     "    writer: JoinHandle<()>,\n"
-                    "    catalog: script::CatalogDiff,\n"
+                    "    catalog: script_js::CatalogDiff,\n"
                     "    cancelled: AtomicBool,\n"
                     "    generation: AtomicU64,\n"
                     "    card: script::CompiledId,\n"
@@ -1338,7 +1338,7 @@ pub struct FleetView<'a> {
         # says otherwise.
         root = self.fixture(
             views=self.baseline_views()
-            + "pub type Diff = script::CatalogDiff;\npub type Compiled = script::CompiledId;\n",
+            + "pub type Diff = script_js::CatalogDiff;\npub type Compiled = script::CompiledId;\n",
             seam_types=(
                 ("FleetCounts", "scalar"),
                 ("FleetView", "borrowed"),
@@ -1347,11 +1347,14 @@ pub struct FleetView<'a> {
             ),
             script_files={
                 "crates/script/src/lib.rs": (
-                    "#[derive(Clone, Copy)]\npub struct CatalogDiff(u8);\n"
                     "pub struct CompiledId(pub &'static str);\n"
                 )
             },
-            workspace_files={},
+            workspace_files={
+                "crates/script-js/src/lib.rs": (
+                    "#[derive(Clone, Copy)]\npub struct CatalogDiff(u8);\n"
+                )
+            },
         )
         errors = inventories.check_tree(root)
         print(f"GOOD built-in precedence over workspace definitions: {errors}")
@@ -1843,7 +1846,7 @@ pub struct FleetView<'a> {
             + "use client::session::{Settlement, Token};\n"
             + "pub type SettledScalar = Settlement<Token, Token>;\n"
             + "pub type SettledBytes = Settlement<Vec<u8>, Token>;\n"
-            + "pub type SettledCatalog = Settlement<Token, script::CatalogDiff>;\n"
+            + "pub type SettledCatalog = Settlement<Token, script_js::CatalogDiff>;\n"
             + "pub type SettledView<'a> = Settlement<&'a str, Token>;\n"
             + "#[derive(Clone, Copy)]\n"
             + "pub struct SettledHolder {\n"
@@ -2039,8 +2042,8 @@ pub struct FleetView<'a> {
                 ".reason must be nonblank",
             ),
             "shadows built-in": (
-                _foreign_data(valid, _foreign("script::CatalogDiff", "scalar")),
-                "shadows built-in foreign type script::CatalogDiff",
+                _foreign_data(valid, _foreign("script_js::CatalogDiff", "scalar")),
+                "shadows built-in foreign type script_js::CatalogDiff",
             ),
             "duplicate path": (
                 _foreign_data(valid, _foreign("client::session::Token", "owning")),
