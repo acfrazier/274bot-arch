@@ -217,6 +217,16 @@
     [
       "edge",
       "frontend-core",
+      "script-js",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "frontend-core",
       "vault",
       "normal",
       "",
@@ -410,9 +420,29 @@
       "",
       "dependencies",
       true,
+      []
+    ],
+    [
+      "edge",
+      "host-play",
+      "script-js",
+      "dev",
+      "",
+      "dev-dependencies",
+      true,
       [
-        "load"
+        "test-hooks"
       ]
+    ],
+    [
+      "edge",
+      "host-play",
+      "script-js",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
     ],
     [
       "edge",
@@ -731,6 +761,82 @@
     ],
     [
       "edge",
+      "script-js",
+      "api",
+      "dev",
+      "",
+      "dev-dependencies",
+      true,
+      [
+        "test-support"
+      ]
+    ],
+    [
+      "edge",
+      "script-js",
+      "api",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "script-js",
+      "client",
+      "dev",
+      "",
+      "dev-dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "script-js",
+      "nav-planner",
+      "dev",
+      "",
+      "dev-dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
+      "script-js",
+      "script",
+      "dev",
+      "",
+      "dev-dependencies",
+      false,
+      [
+        "test-hooks"
+      ]
+    ],
+    [
+      "edge",
+      "script-js",
+      "script",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      [
+        "canvas-raster"
+      ]
+    ],
+    [
+      "edge",
+      "script-js",
+      "vault",
+      "normal",
+      "",
+      "dependencies",
+      true,
+      []
+    ],
+    [
+      "edge",
       "tui",
       "api",
       "dev",
@@ -845,39 +951,6 @@
       "host-play",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "host-play",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "host-play",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "host-play",
-      "dependency",
-      "script",
       "tiny-skia",
       "optional",
       "",
@@ -887,32 +960,10 @@
       "isolated-activation",
       "full-products",
       "host-play",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "host-play",
-      "dependency",
-      "script",
-      "v8",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "host-play",
       "feature-edge",
-      "host-play",
+      "script-js",
       "script",
-      "load"
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -986,62 +1037,7 @@
       "panel",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "panel",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "panel",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "panel",
-      "dependency",
-      "script",
       "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "panel",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "panel",
-      "dependency",
-      "script",
-      "v8",
       "optional",
       "",
       "dependencies"
@@ -1087,15 +1083,6 @@
       "full-products",
       "panel",
       "feature-edge",
-      "host-play",
-      "script",
-      "load"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "panel",
-      "feature-edge",
       "panel",
       "client",
       "audio"
@@ -1117,6 +1104,15 @@
       "panel",
       "frontend-core",
       "live-harness"
+    ],
+    [
+      "isolated-activation",
+      "full-products",
+      "panel",
+      "feature-edge",
+      "script-js",
+      "script",
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -1157,62 +1153,7 @@
       "tui",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "tui",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "tui",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "tui",
-      "dependency",
-      "script",
       "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "tui",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "full-products",
-      "tui",
-      "dependency",
-      "script",
-      "v8",
       "optional",
       "",
       "dependencies"
@@ -1240,9 +1181,9 @@
       "full-products",
       "tui",
       "feature-edge",
-      "host-play",
+      "script-js",
       "script",
-      "load"
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -1308,62 +1249,7 @@
       "host-play",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "host-play",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "host-play",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "host-play",
-      "dependency",
-      "script",
       "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "host-play",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "host-play",
-      "dependency",
-      "script",
-      "v8",
       "optional",
       "",
       "dependencies"
@@ -1383,17 +1269,17 @@
       "host-play",
       "feature-edge",
       "host-play",
-      "script",
-      "load"
+      "script-js",
+      "memory-profile"
     ],
     [
       "isolated-activation",
       "memory-profile",
       "host-play",
       "feature-edge",
-      "host-play",
+      "script-js",
       "script",
-      "memory-profile"
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -1467,62 +1353,7 @@
       "panel",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "panel",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "panel",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "panel",
-      "dependency",
-      "script",
       "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "panel",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "panel",
-      "dependency",
-      "script",
-      "v8",
       "optional",
       "",
       "dependencies"
@@ -1587,16 +1418,7 @@
       "panel",
       "feature-edge",
       "host-play",
-      "script",
-      "load"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "panel",
-      "feature-edge",
-      "host-play",
-      "script",
+      "script-js",
       "memory-profile"
     ],
     [
@@ -1638,6 +1460,15 @@
     [
       "isolated-activation",
       "memory-profile",
+      "panel",
+      "feature-edge",
+      "script-js",
+      "script",
+      "canvas-raster"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile",
       "tui",
       "dependency",
       "frontend-core",
@@ -1674,62 +1505,7 @@
       "tui",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "tui",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "tui",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "tui",
-      "dependency",
-      "script",
       "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "tui",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile",
-      "tui",
-      "dependency",
-      "script",
-      "v8",
       "optional",
       "",
       "dependencies"
@@ -1776,17 +1552,17 @@
       "tui",
       "feature-edge",
       "host-play",
-      "script",
-      "load"
+      "script-js",
+      "memory-profile"
     ],
     [
       "isolated-activation",
       "memory-profile",
       "tui",
       "feature-edge",
-      "host-play",
+      "script-js",
       "script",
-      "memory-profile"
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -1834,62 +1610,7 @@
       "host-play",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "host-play",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "host-play",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "host-play",
-      "dependency",
-      "script",
       "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "host-play",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "host-play",
-      "dependency",
-      "script",
-      "v8",
       "optional",
       "",
       "dependencies"
@@ -1909,17 +1630,17 @@
       "host-play",
       "feature-edge",
       "host-play",
-      "script",
-      "load"
+      "script-js",
+      "memory-profile"
     ],
     [
       "isolated-activation",
       "memory-profile-no-alloc",
       "host-play",
       "feature-edge",
-      "host-play",
+      "script-js",
       "script",
-      "memory-profile"
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -1993,62 +1714,7 @@
       "panel",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "dependency",
-      "script",
       "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "dependency",
-      "script",
-      "v8",
       "optional",
       "",
       "dependencies"
@@ -2122,16 +1788,7 @@
       "panel",
       "feature-edge",
       "host-play",
-      "script",
-      "load"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "panel",
-      "feature-edge",
-      "host-play",
-      "script",
+      "script-js",
       "memory-profile"
     ],
     [
@@ -2182,6 +1839,15 @@
     [
       "isolated-activation",
       "memory-profile-no-alloc",
+      "panel",
+      "feature-edge",
+      "script-js",
+      "script",
+      "canvas-raster"
+    ],
+    [
+      "isolated-activation",
+      "memory-profile-no-alloc",
       "tui",
       "dependency",
       "frontend-core",
@@ -2218,62 +1884,7 @@
       "tui",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "dependency",
-      "script",
       "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "memory-profile-no-alloc",
-      "tui",
-      "dependency",
-      "script",
-      "v8",
       "optional",
       "",
       "dependencies"
@@ -2329,17 +1940,17 @@
       "tui",
       "feature-edge",
       "host-play",
-      "script",
-      "load"
+      "script-js",
+      "memory-profile"
     ],
     [
       "isolated-activation",
       "memory-profile-no-alloc",
       "tui",
       "feature-edge",
-      "host-play",
+      "script-js",
       "script",
-      "memory-profile"
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -2385,39 +1996,6 @@
       "host-play",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "host-play",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "host-play",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "host-play",
-      "dependency",
-      "script",
       "tiny-skia",
       "optional",
       "",
@@ -2427,32 +2005,10 @@
       "isolated-activation",
       "native-only",
       "host-play",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "host-play",
-      "dependency",
-      "script",
-      "v8",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "host-play",
       "feature-edge",
-      "host-play",
+      "script-js",
       "script",
-      "load"
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -2526,62 +2082,7 @@
       "panel",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "panel",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "panel",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "panel",
-      "dependency",
-      "script",
       "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "panel",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "panel",
-      "dependency",
-      "script",
-      "v8",
       "optional",
       "",
       "dependencies"
@@ -2627,15 +2128,6 @@
       "native-only",
       "panel",
       "feature-edge",
-      "host-play",
-      "script",
-      "load"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "panel",
-      "feature-edge",
       "panel",
       "client",
       "audio"
@@ -2657,6 +2149,15 @@
       "panel",
       "frontend-core",
       "live-harness"
+    ],
+    [
+      "isolated-activation",
+      "native-only",
+      "panel",
+      "feature-edge",
+      "script-js",
+      "script",
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -2697,62 +2198,7 @@
       "tui",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "tui",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "tui",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "tui",
-      "dependency",
-      "script",
       "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "tui",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "native-only",
-      "tui",
-      "dependency",
-      "script",
-      "v8",
       "optional",
       "",
       "dependencies"
@@ -2780,9 +2226,9 @@
       "native-only",
       "tui",
       "feature-edge",
-      "host-play",
+      "script-js",
       "script",
-      "load"
+      "canvas-raster"
     ],
     [
       "isolated-activation",
@@ -2936,39 +2382,6 @@
       "e2e",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "e2e",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "e2e",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "e2e",
-      "dependency",
-      "script",
       "schemars",
       "optional",
       "",
@@ -2981,28 +2394,6 @@
       "dependency",
       "script",
       "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "e2e",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "e2e",
-      "dependency",
-      "script",
-      "v8",
       "optional",
       "",
       "dependencies"
@@ -3068,7 +2459,7 @@
       "feature-edge",
       "host-play",
       "script",
-      "load"
+      "test-hooks"
     ],
     [
       "isolated-activation",
@@ -3076,7 +2467,7 @@
       "e2e",
       "feature-edge",
       "host-play",
-      "script",
+      "script-js",
       "test-hooks"
     ],
     [
@@ -3140,6 +2531,42 @@
       "feature-edge",
       "script",
       "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "e2e",
+      "feature-edge",
+      "script-js",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "e2e",
+      "feature-edge",
+      "script-js",
+      "script",
+      "canvas-raster"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "e2e",
+      "feature-edge",
+      "script-js",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "e2e",
+      "feature-edge",
+      "script-js",
+      "script-js",
       "test-hooks"
     ],
     [
@@ -3214,39 +2641,6 @@
       "frontend-core",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "frontend-core",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "frontend-core",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "frontend-core",
-      "dependency",
-      "script",
       "schemars",
       "optional",
       "",
@@ -3259,28 +2653,6 @@
       "dependency",
       "script",
       "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "frontend-core",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "frontend-core",
-      "dependency",
-      "script",
-      "v8",
       "optional",
       "",
       "dependencies"
@@ -3373,7 +2745,7 @@
       "feature-edge",
       "host-play",
       "script",
-      "load"
+      "test-hooks"
     ],
     [
       "isolated-activation",
@@ -3381,7 +2753,7 @@
       "frontend-core",
       "feature-edge",
       "host-play",
-      "script",
+      "script-js",
       "test-hooks"
     ],
     [
@@ -3445,6 +2817,42 @@
       "feature-edge",
       "script",
       "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "frontend-core",
+      "feature-edge",
+      "script-js",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "frontend-core",
+      "feature-edge",
+      "script-js",
+      "script",
+      "canvas-raster"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "frontend-core",
+      "feature-edge",
+      "script-js",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "frontend-core",
+      "feature-edge",
+      "script-js",
+      "script-js",
       "test-hooks"
     ],
     [
@@ -3535,39 +2943,6 @@
       "host-play",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "host-play",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "host-play",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "host-play",
-      "dependency",
-      "script",
       "schemars",
       "optional",
       "",
@@ -3580,28 +2955,6 @@
       "dependency",
       "script",
       "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "host-play",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "host-play",
-      "dependency",
-      "script",
-      "v8",
       "optional",
       "",
       "dependencies"
@@ -3649,7 +3002,7 @@
       "feature-edge",
       "host-play",
       "script",
-      "load"
+      "test-hooks"
     ],
     [
       "isolated-activation",
@@ -3657,7 +3010,7 @@
       "host-play",
       "feature-edge",
       "host-play",
-      "script",
+      "script-js",
       "test-hooks"
     ],
     [
@@ -3721,6 +3074,42 @@
       "feature-edge",
       "script",
       "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "host-play",
+      "feature-edge",
+      "script-js",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "host-play",
+      "feature-edge",
+      "script-js",
+      "script",
+      "canvas-raster"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "host-play",
+      "feature-edge",
+      "script-js",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "host-play",
+      "feature-edge",
+      "script-js",
+      "script-js",
       "test-hooks"
     ],
     [
@@ -3939,39 +3328,6 @@
       "panel",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "panel",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "panel",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "panel",
-      "dependency",
-      "script",
       "schemars",
       "optional",
       "",
@@ -3984,28 +3340,6 @@
       "dependency",
       "script",
       "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "panel",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "panel",
-      "dependency",
-      "script",
-      "v8",
       "optional",
       "",
       "dependencies"
@@ -4125,7 +3459,7 @@
       "feature-edge",
       "host-play",
       "script",
-      "load"
+      "test-hooks"
     ],
     [
       "isolated-activation",
@@ -4133,7 +3467,7 @@
       "panel",
       "feature-edge",
       "host-play",
-      "script",
+      "script-js",
       "test-hooks"
     ],
     [
@@ -4247,6 +3581,42 @@
     [
       "isolated-activation",
       "package-defaults",
+      "panel",
+      "feature-edge",
+      "script-js",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "panel",
+      "feature-edge",
+      "script-js",
+      "script",
+      "canvas-raster"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "panel",
+      "feature-edge",
+      "script-js",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "panel",
+      "feature-edge",
+      "script-js",
+      "script-js",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
       "scenario",
       "dependency",
       "api",
@@ -4397,6 +3767,104 @@
       "isolated-activation",
       "package-defaults",
       "script",
+      "dependency",
+      "script",
+      "schemars",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "script",
+      "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "script",
+      "feature-edge",
+      "script",
+      "api",
+      "path-schema"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "script",
+      "feature-edge",
+      "script",
+      "api",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "script",
+      "feature-edge",
+      "script",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "script",
+      "feature-edge",
+      "script",
+      "script",
+      "path-schema"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "script",
+      "feature-edge",
+      "script",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "script-js",
+      "dependency",
+      "api",
+      "schemars",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "script-js",
+      "dependency",
+      "nav-planner",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "script-js",
+      "dependency",
+      "nav-planner",
+      "syn",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "script-js",
       "dependency",
       "script",
       "ab_glyph",
@@ -4407,40 +3875,7 @@
     [
       "isolated-activation",
       "package-defaults",
-      "script",
-      "dependency",
-      "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "script",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "script",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "script",
+      "script-js",
       "dependency",
       "script",
       "schemars",
@@ -4451,7 +3886,7 @@
     [
       "isolated-activation",
       "package-defaults",
-      "script",
+      "script-js",
       "dependency",
       "script",
       "tiny-skia",
@@ -4462,29 +3897,7 @@
     [
       "isolated-activation",
       "package-defaults",
-      "script",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "script",
-      "dependency",
-      "script",
-      "v8",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "script",
+      "script-js",
       "feature-edge",
       "api",
       "api",
@@ -4493,7 +3906,7 @@
     [
       "isolated-activation",
       "package-defaults",
-      "script",
+      "script-js",
       "feature-edge",
       "script",
       "api",
@@ -4502,7 +3915,7 @@
     [
       "isolated-activation",
       "package-defaults",
-      "script",
+      "script-js",
       "feature-edge",
       "script",
       "api",
@@ -4511,7 +3924,7 @@
     [
       "isolated-activation",
       "package-defaults",
-      "script",
+      "script-js",
       "feature-edge",
       "script",
       "api",
@@ -4520,7 +3933,7 @@
     [
       "isolated-activation",
       "package-defaults",
-      "script",
+      "script-js",
       "feature-edge",
       "script",
       "script",
@@ -4529,10 +3942,46 @@
     [
       "isolated-activation",
       "package-defaults",
-      "script",
+      "script-js",
       "feature-edge",
       "script",
       "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "script-js",
+      "feature-edge",
+      "script-js",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "script-js",
+      "feature-edge",
+      "script-js",
+      "script",
+      "canvas-raster"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "script-js",
+      "feature-edge",
+      "script-js",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "script-js",
+      "feature-edge",
+      "script-js",
+      "script-js",
       "test-hooks"
     ],
     [
@@ -4607,39 +4056,6 @@
       "tui",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "tui",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "tui",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "tui",
-      "dependency",
-      "script",
       "schemars",
       "optional",
       "",
@@ -4652,28 +4068,6 @@
       "dependency",
       "script",
       "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "tui",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "package-defaults",
-      "tui",
-      "dependency",
-      "script",
-      "v8",
       "optional",
       "",
       "dependencies"
@@ -4775,7 +4169,7 @@
       "feature-edge",
       "host-play",
       "script",
-      "load"
+      "test-hooks"
     ],
     [
       "isolated-activation",
@@ -4783,7 +4177,7 @@
       "tui",
       "feature-edge",
       "host-play",
-      "script",
+      "script-js",
       "test-hooks"
     ],
     [
@@ -4847,6 +4241,42 @@
       "feature-edge",
       "script",
       "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "tui",
+      "feature-edge",
+      "script-js",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "tui",
+      "feature-edge",
+      "script-js",
+      "script",
+      "canvas-raster"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "tui",
+      "feature-edge",
+      "script-js",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "package-defaults",
+      "tui",
+      "feature-edge",
+      "script-js",
+      "script-js",
       "test-hooks"
     ],
     [
@@ -5035,39 +4465,6 @@
       "panel",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "render-diagnostics",
-      "panel",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "render-diagnostics",
-      "panel",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "render-diagnostics",
-      "panel",
-      "dependency",
-      "script",
       "schemars",
       "optional",
       "",
@@ -5080,28 +4477,6 @@
       "dependency",
       "script",
       "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "render-diagnostics",
-      "panel",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "render-diagnostics",
-      "panel",
-      "dependency",
-      "script",
-      "v8",
       "optional",
       "",
       "dependencies"
@@ -5239,7 +4614,7 @@
       "feature-edge",
       "host-play",
       "script",
-      "load"
+      "test-hooks"
     ],
     [
       "isolated-activation",
@@ -5247,7 +4622,7 @@
       "panel",
       "feature-edge",
       "host-play",
-      "script",
+      "script-js",
       "test-hooks"
     ],
     [
@@ -5378,8 +4753,44 @@
     ],
     [
       "isolated-activation",
-      "script-load-tests",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "script-js",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "script-js",
       "script",
+      "canvas-raster"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "script-js",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "render-diagnostics",
+      "panel",
+      "feature-edge",
+      "script-js",
+      "script-js",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "script-js-tests",
+      "script-js",
       "dependency",
       "api",
       "schemars",
@@ -5389,8 +4800,8 @@
     ],
     [
       "isolated-activation",
-      "script-load-tests",
-      "script",
+      "script-js-tests",
+      "script-js",
       "dependency",
       "nav-planner",
       "proc-macro2",
@@ -5400,8 +4811,8 @@
     ],
     [
       "isolated-activation",
-      "script-load-tests",
-      "script",
+      "script-js-tests",
+      "script-js",
       "dependency",
       "nav-planner",
       "syn",
@@ -5411,8 +4822,8 @@
     ],
     [
       "isolated-activation",
-      "script-load-tests",
-      "script",
+      "script-js-tests",
+      "script-js",
       "dependency",
       "script",
       "ab_glyph",
@@ -5422,41 +4833,8 @@
     ],
     [
       "isolated-activation",
-      "script-load-tests",
-      "script",
-      "dependency",
-      "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "script-load-tests",
-      "script",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "script-load-tests",
-      "script",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "script-load-tests",
-      "script",
+      "script-js-tests",
+      "script-js",
       "dependency",
       "script",
       "schemars",
@@ -5466,8 +4844,8 @@
     ],
     [
       "isolated-activation",
-      "script-load-tests",
-      "script",
+      "script-js-tests",
+      "script-js",
       "dependency",
       "script",
       "tiny-skia",
@@ -5477,30 +4855,8 @@
     ],
     [
       "isolated-activation",
-      "script-load-tests",
-      "script",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "script-load-tests",
-      "script",
-      "dependency",
-      "script",
-      "v8",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "script-load-tests",
-      "script",
+      "script-js-tests",
+      "script-js",
       "feature-edge",
       "api",
       "api",
@@ -5508,8 +4864,8 @@
     ],
     [
       "isolated-activation",
-      "script-load-tests",
-      "script",
+      "script-js-tests",
+      "script-js",
       "feature-edge",
       "script",
       "api",
@@ -5517,8 +4873,8 @@
     ],
     [
       "isolated-activation",
-      "script-load-tests",
-      "script",
+      "script-js-tests",
+      "script-js",
       "feature-edge",
       "script",
       "api",
@@ -5526,8 +4882,8 @@
     ],
     [
       "isolated-activation",
-      "script-load-tests",
-      "script",
+      "script-js-tests",
+      "script-js",
       "feature-edge",
       "script",
       "api",
@@ -5535,8 +4891,8 @@
     ],
     [
       "isolated-activation",
-      "script-load-tests",
-      "script",
+      "script-js-tests",
+      "script-js",
       "feature-edge",
       "script",
       "script",
@@ -5544,11 +4900,47 @@
     ],
     [
       "isolated-activation",
-      "script-load-tests",
-      "script",
+      "script-js-tests",
+      "script-js",
       "feature-edge",
       "script",
       "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "script-js-tests",
+      "script-js",
+      "feature-edge",
+      "script-js",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "script-js-tests",
+      "script-js",
+      "feature-edge",
+      "script-js",
+      "script",
+      "canvas-raster"
+    ],
+    [
+      "isolated-activation",
+      "script-js-tests",
+      "script-js",
+      "feature-edge",
+      "script-js",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "script-js-tests",
+      "script-js",
+      "feature-edge",
+      "script-js",
+      "script-js",
       "test-hooks"
     ],
     [
@@ -5621,39 +5013,6 @@
       "e2e",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "e2e",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "e2e",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "e2e",
-      "dependency",
-      "script",
       "schemars",
       "optional",
       "",
@@ -5666,28 +5025,6 @@
       "dependency",
       "script",
       "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "e2e",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "e2e",
-      "dependency",
-      "script",
-      "v8",
       "optional",
       "",
       "dependencies"
@@ -5753,7 +5090,7 @@
       "feature-edge",
       "host-play",
       "script",
-      "load"
+      "test-hooks"
     ],
     [
       "isolated-activation",
@@ -5761,7 +5098,7 @@
       "e2e",
       "feature-edge",
       "host-play",
-      "script",
+      "script-js",
       "test-hooks"
     ],
     [
@@ -5825,6 +5162,42 @@
       "feature-edge",
       "script",
       "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "feature-edge",
+      "script-js",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "feature-edge",
+      "script-js",
+      "script",
+      "canvas-raster"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "feature-edge",
+      "script-js",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "e2e",
+      "feature-edge",
+      "script-js",
+      "script-js",
       "test-hooks"
     ],
     [
@@ -5899,39 +5272,6 @@
       "frontend-core",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "frontend-core",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "frontend-core",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "frontend-core",
-      "dependency",
-      "script",
       "schemars",
       "optional",
       "",
@@ -5944,28 +5284,6 @@
       "dependency",
       "script",
       "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "frontend-core",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "frontend-core",
-      "dependency",
-      "script",
-      "v8",
       "optional",
       "",
       "dependencies"
@@ -6058,7 +5376,7 @@
       "feature-edge",
       "host-play",
       "script",
-      "load"
+      "test-hooks"
     ],
     [
       "isolated-activation",
@@ -6066,7 +5384,7 @@
       "frontend-core",
       "feature-edge",
       "host-play",
-      "script",
+      "script-js",
       "test-hooks"
     ],
     [
@@ -6130,6 +5448,42 @@
       "feature-edge",
       "script",
       "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
+      "script-js",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
+      "script-js",
+      "script",
+      "canvas-raster"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
+      "script-js",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "frontend-core",
+      "feature-edge",
+      "script-js",
+      "script-js",
       "test-hooks"
     ],
     [
@@ -6220,39 +5574,6 @@
       "host-play",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "host-play",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "host-play",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "host-play",
-      "dependency",
-      "script",
       "schemars",
       "optional",
       "",
@@ -6265,28 +5586,6 @@
       "dependency",
       "script",
       "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "host-play",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "host-play",
-      "dependency",
-      "script",
-      "v8",
       "optional",
       "",
       "dependencies"
@@ -6334,7 +5633,7 @@
       "feature-edge",
       "host-play",
       "script",
-      "load"
+      "test-hooks"
     ],
     [
       "isolated-activation",
@@ -6342,7 +5641,7 @@
       "host-play",
       "feature-edge",
       "host-play",
-      "script",
+      "script-js",
       "test-hooks"
     ],
     [
@@ -6406,6 +5705,42 @@
       "feature-edge",
       "script",
       "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "feature-edge",
+      "script-js",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "feature-edge",
+      "script-js",
+      "script",
+      "canvas-raster"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "feature-edge",
+      "script-js",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "host-play",
+      "feature-edge",
+      "script-js",
+      "script-js",
       "test-hooks"
     ],
     [
@@ -6624,39 +5959,6 @@
       "panel",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "panel",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "panel",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "panel",
-      "dependency",
-      "script",
       "schemars",
       "optional",
       "",
@@ -6669,28 +5971,6 @@
       "dependency",
       "script",
       "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "panel",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "panel",
-      "dependency",
-      "script",
-      "v8",
       "optional",
       "",
       "dependencies"
@@ -6810,7 +6090,7 @@
       "feature-edge",
       "host-play",
       "script",
-      "load"
+      "test-hooks"
     ],
     [
       "isolated-activation",
@@ -6818,7 +6098,7 @@
       "panel",
       "feature-edge",
       "host-play",
-      "script",
+      "script-js",
       "test-hooks"
     ],
     [
@@ -6932,6 +6212,42 @@
     [
       "isolated-activation",
       "workspace-tests",
+      "panel",
+      "feature-edge",
+      "script-js",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "script-js",
+      "script",
+      "canvas-raster"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "script-js",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "panel",
+      "feature-edge",
+      "script-js",
+      "script-js",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
       "scenario",
       "dependency",
       "api",
@@ -7082,6 +6398,104 @@
       "isolated-activation",
       "workspace-tests",
       "script",
+      "dependency",
+      "script",
+      "schemars",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "feature-edge",
+      "api",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "feature-edge",
+      "script",
+      "api",
+      "path-schema"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "feature-edge",
+      "script",
+      "api",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "feature-edge",
+      "script",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "feature-edge",
+      "script",
+      "script",
+      "path-schema"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script",
+      "feature-edge",
+      "script",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script-js",
+      "dependency",
+      "api",
+      "schemars",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script-js",
+      "dependency",
+      "nav-planner",
+      "proc-macro2",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script-js",
+      "dependency",
+      "nav-planner",
+      "syn",
+      "optional",
+      "",
+      "dependencies"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script-js",
       "dependency",
       "script",
       "ab_glyph",
@@ -7092,40 +6506,7 @@
     [
       "isolated-activation",
       "workspace-tests",
-      "script",
-      "dependency",
-      "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "script",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "script",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "script",
+      "script-js",
       "dependency",
       "script",
       "schemars",
@@ -7136,7 +6517,7 @@
     [
       "isolated-activation",
       "workspace-tests",
-      "script",
+      "script-js",
       "dependency",
       "script",
       "tiny-skia",
@@ -7147,29 +6528,7 @@
     [
       "isolated-activation",
       "workspace-tests",
-      "script",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "script",
-      "dependency",
-      "script",
-      "v8",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "script",
+      "script-js",
       "feature-edge",
       "api",
       "api",
@@ -7178,7 +6537,7 @@
     [
       "isolated-activation",
       "workspace-tests",
-      "script",
+      "script-js",
       "feature-edge",
       "script",
       "api",
@@ -7187,7 +6546,7 @@
     [
       "isolated-activation",
       "workspace-tests",
-      "script",
+      "script-js",
       "feature-edge",
       "script",
       "api",
@@ -7196,7 +6555,7 @@
     [
       "isolated-activation",
       "workspace-tests",
-      "script",
+      "script-js",
       "feature-edge",
       "script",
       "api",
@@ -7205,7 +6564,7 @@
     [
       "isolated-activation",
       "workspace-tests",
-      "script",
+      "script-js",
       "feature-edge",
       "script",
       "script",
@@ -7214,10 +6573,46 @@
     [
       "isolated-activation",
       "workspace-tests",
-      "script",
+      "script-js",
       "feature-edge",
       "script",
       "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script-js",
+      "feature-edge",
+      "script-js",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script-js",
+      "feature-edge",
+      "script-js",
+      "script",
+      "canvas-raster"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script-js",
+      "feature-edge",
+      "script-js",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "script-js",
+      "feature-edge",
+      "script-js",
+      "script-js",
       "test-hooks"
     ],
     [
@@ -7292,39 +6687,6 @@
       "tui",
       "dependency",
       "script",
-      "deno_core",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "tui",
-      "dependency",
-      "script",
-      "flatbuffers",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "tui",
-      "dependency",
-      "script",
-      "rustyscript",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "tui",
-      "dependency",
-      "script",
       "schemars",
       "optional",
       "",
@@ -7337,28 +6699,6 @@
       "dependency",
       "script",
       "tiny-skia",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "tui",
-      "dependency",
-      "script",
-      "tokio",
-      "optional",
-      "",
-      "dependencies"
-    ],
-    [
-      "isolated-activation",
-      "workspace-tests",
-      "tui",
-      "dependency",
-      "script",
-      "v8",
       "optional",
       "",
       "dependencies"
@@ -7460,7 +6800,7 @@
       "feature-edge",
       "host-play",
       "script",
-      "load"
+      "test-hooks"
     ],
     [
       "isolated-activation",
@@ -7468,7 +6808,7 @@
       "tui",
       "feature-edge",
       "host-play",
-      "script",
+      "script-js",
       "test-hooks"
     ],
     [
@@ -7532,6 +6872,42 @@
       "feature-edge",
       "script",
       "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "script-js",
+      "api",
+      "test-support"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "script-js",
+      "script",
+      "canvas-raster"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "script-js",
+      "script",
+      "test-hooks"
+    ],
+    [
+      "isolated-activation",
+      "workspace-tests",
+      "tui",
+      "feature-edge",
+      "script-js",
+      "script-js",
       "test-hooks"
     ],
     [
