@@ -1,4 +1,4 @@
-"""Behavioral fixtures for syntax-aware seam and navigation inventories."""
+"""Behavioral fixtures for syntax-aware architecture checks."""
 
 from __future__ import annotations
 
@@ -119,42 +119,6 @@ def _foreign_data(*rows: dict[str, Any]) -> str:
     return json.dumps({"schema_version": 1, "foreign_types": list(rows)}, indent=2) + "\n"
 
 
-def _seam(
-    symbol: str, classification: str, path: str = VIEWS_PATH
-) -> dict[str, str]:
-    return {
-        "id": f"seam_type|{path}|{symbol}",
-        "path": path,
-        "symbol": symbol,
-        "classification": classification,
-        "owner": "T3",
-        "reason": "fixture seam classification",
-    }
-
-
-def _record(
-    category: str,
-    path: str,
-    symbol: str,
-    cfg_or_target: str,
-    classification: str,
-    *,
-    owner: str = "T5",
-) -> dict[str, str]:
-    endpoint = "T3.1" if owner == "T3" else "T5.1"
-    record_id = "|".join((category, path, cfg_or_target, symbol, classification))
-    return {
-        "id": record_id,
-        "category": category,
-        "path": path,
-        "symbol": symbol,
-        "cfg_or_target": cfg_or_target,
-        "owner": owner,
-        "reason": "fixture baseline debt",
-        "removal_endpoint": endpoint,
-        "classification": classification,
-    }
-
 
 def _write_fixture(
     root: Path,
@@ -163,10 +127,6 @@ def _write_fixture(
     frontend_lib: str = "pub mod views;\n",
     frontend_files: dict[str, str] | None = None,
     script_files: dict[str, str] | None = None,
-    seam_types: tuple[tuple[str, str], ...] = (),
-    additional_seam_types: tuple[dict[str, str], ...] = (),
-    violations: tuple[dict[str, str], ...] = (),
-    test_exceptions: tuple[dict[str, str], ...] = (),
     foreign_types: str | None = None,
     workspace_files: dict[str, str] | None = None,
     script_manifest: str | None = None,
@@ -204,19 +164,9 @@ def _write_fixture(
         path = root / relative
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("// generated fixture input\n", encoding="utf-8")
-    rule_dir = root / inventories.DATA_DIR_RELATIVE
-    rule_dir.mkdir(parents=True, exist_ok=True)
-    inventory = {
-        "schema_version": 1,
-        "seam_types": [
-            _seam(symbol, classification) for symbol, classification in seam_types
-        ] + list(additional_seam_types),
-        "violations": list(violations),
-        "test_exceptions": list(test_exceptions),
-    }
-    inventory_path = rule_dir / inventories.INVENTORY_RELATIVE
-    inventory_path.write_text(json.dumps(inventory, indent=2) + "\n", encoding="utf-8")
     if foreign_types is not None:
+        rule_dir = root / inventories.DATA_DIR_RELATIVE
+        rule_dir.mkdir(parents=True, exist_ok=True)
         foreign_path = rule_dir / inventories.FOREIGN_TYPES_RELATIVE
         foreign_path.write_text(foreign_types, encoding="utf-8")
     if workspace_files is not None:
@@ -251,9 +201,6 @@ class InventoryBehaviorTests(unittest.TestCase):
 
     def clean_fixture(self, **kwargs: Any) -> Path:
         kwargs.setdefault("views", self.baseline_views())
-        kwargs.setdefault(
-            "seam_types", (("FleetCounts", "scalar"), ("FleetView", "borrowed"))
-        )
         return self.fixture(**kwargs)
 
     @staticmethod
@@ -270,53 +217,147 @@ pub struct FleetView<'a> {
 """
 
     def test_clean_scalar_and_borrowed_seams_are_accepted(self) -> None:
-        root = self.fixture(
-            views=self.baseline_views(),
-            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
-        )
+        root = self.fixture(views=self.baseline_views(), )
         self.assertEqual(inventories.check_tree(root), [])
 
-    def test_candidate_rule_files_are_used(self) -> None:
-        root = self.fixture(
-            views=self.baseline_views(),
-            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
+    def test_candidate_inventory_cannot_self_admit_a_seam_or_import(self) -> None:
+        views = self.baseline_views() + (
+            "\npub struct NeverSelfAdmitted { pub name: String }\n"
         )
-        candidate_rules = root / inventories.DATA_DIR_RELATIVE
-        (candidate_rules / "inventories.json").write_text("not checker rules", encoding="utf-8")
-        (candidate_rules / "foreign_types.json").write_text("not checker rules", encoding="utf-8")
-        errors = inventories.check_tree(root)
-        self.assertTrue(any("inventory: cannot load tools/architecture/inventories.json" in error for error in errors), errors)
-        self.assertTrue(any("foreign types: cannot load tools/architecture/foreign_types.json" in error for error in errors), errors)
-
-    def test_value_reexports_and_module_self_import_are_not_seam_types(self) -> None:
-        log_file_path = "crates/frontend-core/src/log_file.rs"
         root = self.fixture(
-            views=self.baseline_views(),
-            frontend_lib=(
-                "pub mod views;\n"
-                "pub mod map_bake;\n"
-                "mod log_file;\n"
-                "pub use map_bake::{MAP_BAKE_TITLE, MAP_BAKE_WARNING, "
-                "MAP_BAKE_RENDER, bake};\n"
-                "pub use log_file::{self};\n"
-            ),
-            frontend_files={
-                "crates/frontend-core/src/map_bake.rs": (
-                    'pub const MAP_BAKE_TITLE: &str = "Map";\n'
-                    'pub static MAP_BAKE_WARNING: &str = "warning";\n'
-                    "pub fn MAP_BAKE_RENDER() {}\n"
-                    "pub fn bake() {}\n"
-                ),
-                log_file_path: (
-                    "use std::time::{self, Duration};\n"
-                    "#[derive(Clone, Copy)]\n"
-                    "pub struct LogClock { tick: time::Duration }\n"
-                    "pub const LOG_FILE_BUFFER_SIZE: usize = 0;\n"
-                ),
+            views=views,
+            script_files={
+                "crates/script/src/lib.rs": "use nav::world::WorldState;\n",
+                "crates/script/tests/probe.rs": "use nav::world::WorldState;\n",
             },
-            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
-            additional_seam_types=(_seam("LogClock", "scalar", log_file_path),),
         )
+        baseline_errors = inventories.check_tree(root)
+        candidate_rules = root / inventories.DATA_DIR_RELATIVE
+        candidate_rules.mkdir()
+        seam = {
+            "id": "owning_public_field|crates/frontend-core/src/views.rs|production|NeverSelfAdmitted::name|public_field_of_owning_view",
+            "category": "owning_public_field",
+            "path": "crates/frontend-core/src/views.rs",
+            "symbol": "NeverSelfAdmitted::name",
+            "cfg_or_target": "production",
+            "owner": "T3",
+            "reason": "candidate attempts to admit an owning public field",
+            "removal_endpoint": "T3.1",
+            "classification": "public_field_of_owning_view",
+        }
+        production_import = {
+            "id": "production_nav_implementation_import|crates/script/src/lib.rs|production|nav::world::WorldState|use_import",
+            "category": "production_nav_implementation_import",
+            "path": "crates/script/src/lib.rs",
+            "symbol": "nav::world::WorldState",
+            "cfg_or_target": "production",
+            "owner": "T5",
+            "reason": "candidate attempts to admit a production navigation import",
+            "removal_endpoint": "T5.1",
+            "classification": "use_import",
+        }
+        test_import = {
+            "id": "test_nav_implementation_import|crates/script/tests/probe.rs|integration-test|nav::world::WorldState|use_import",
+            "category": "test_nav_implementation_import",
+            "path": "crates/script/tests/probe.rs",
+            "symbol": "nav::world::WorldState",
+            "cfg_or_target": "integration-test",
+            "owner": "T5",
+            "reason": "candidate attempts to admit a test navigation import",
+            "removal_endpoint": "T5.1",
+            "classification": "use_import",
+        }
+        test_exception = {
+            "id": "test_import_exception|crates/script/tests/probe.rs|integration-test|nav::world::WorldState|exact_test_fixture_oracle_import",
+            "category": "test_import_exception",
+            "path": "crates/script/tests/probe.rs",
+            "symbol": "nav::world::WorldState",
+            "cfg_or_target": "integration-test",
+            "owner": "T5",
+            "reason": "candidate attempts to admit a test import",
+            "removal_endpoint": "T5.1",
+            "classification": "exact_test_fixture_oracle_import",
+        }
+        (candidate_rules / "inventories.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "seam_types": [],
+                    "violations": [seam, production_import, test_import],
+                    "test_exceptions": [test_exception],
+                }
+            ),
+            encoding="utf-8",
+        )
+        errors = inventories.check_tree(root)
+        self.assertEqual(errors, baseline_errors)
+        self.assertTrue(
+            any(
+                "owning seam exposes a public field" in error
+                and "NeverSelfAdmitted::name" in error
+                for error in errors
+            ),
+            errors,
+        )
+        self.assertTrue(
+            any(
+                "production imports nav implementation detail" in error
+                and "nav::world::WorldState" in error
+                for error in errors
+            ),
+            errors,
+        )
+        self.assertTrue(
+            any(
+                "test imports nav implementation detail" in error
+                and "crates/script/tests/probe.rs" in error
+                for error in errors
+            ),
+            errors,
+        )
+
+    def test_foreign_type_rules_are_still_loaded_from_the_candidate_tree(self) -> None:
+        root = self.fixture(views=self.baseline_views())
+        candidate_rules = root / inventories.DATA_DIR_RELATIVE
+        candidate_rules.mkdir()
+        (candidate_rules / "foreign_types.json").write_text(
+            "not checker rules", encoding="utf-8"
+        )
+        errors = inventories.check_tree(root)
+        self.assertTrue(
+            any(
+                "foreign types: cannot load tools/architecture/foreign_types.json"
+                in error
+                for error in errors
+            ),
+            errors,
+        )
+
+    def test_value_reexports_and_module_self_import_do_not_trigger_seam_rules(self) -> None:
+        log_file_path = "crates/frontend-core/src/log_file.rs"
+        root = self.fixture(views=self.baseline_views(),
+        frontend_lib=(
+            "pub mod views;\n"
+            "pub mod map_bake;\n"
+            "mod log_file;\n"
+            "pub use map_bake::{MAP_BAKE_TITLE, MAP_BAKE_WARNING, "
+            "MAP_BAKE_RENDER, bake};\n"
+            "pub use log_file::{self};\n"
+        ),
+        frontend_files={
+            "crates/frontend-core/src/map_bake.rs": (
+                'pub const MAP_BAKE_TITLE: &str = "Map";\n'
+                'pub static MAP_BAKE_WARNING: &str = "warning";\n'
+                "pub fn MAP_BAKE_RENDER() {}\n"
+                "pub fn bake() {}\n"
+            ),
+            log_file_path: (
+                "use std::time::{self, Duration};\n"
+                "#[derive(Clone, Copy)]\n"
+                "pub struct LogClock { tick: time::Duration }\n"
+                "pub const LOG_FILE_BUFFER_SIZE: usize = 0;\n"
+            ),
+        }, )
         errors = inventories.check_tree(root)
         print(f"GOOD value re-exports and module self-import: {errors}")
         self.assertEqual(errors, [])
@@ -327,37 +368,24 @@ pub struct FleetView<'a> {
             "log": "crates/frontend-core/src/log.rs",
             "walk_permissions": "crates/frontend-core/src/walk_permissions.rs",
         }
-        root = self.fixture(
-            views=self.baseline_views(),
-            frontend_lib=(
-                "pub mod views;\n"
-                "pub mod capacity;\n"
-                "pub mod log;\n"
-                "pub mod walk_permissions;\n"
+        root = self.fixture(views=self.baseline_views(),
+        frontend_lib=(
+            "pub mod views;\n"
+            "pub mod capacity;\n"
+            "pub mod log;\n"
+            "pub mod walk_permissions;\n"
+        ),
+        frontend_files={
+            frontend_paths["capacity"]: (
+                "pub use host::{CapacityWarning, RenderPolicyLabel};\n"
             ),
-            frontend_files={
-                frontend_paths["capacity"]: (
-                    "pub use host::{CapacityWarning, RenderPolicyLabel};\n"
-                ),
-                frontend_paths["log"]: (
-                    "pub use api::hostlog::{Level, Record, Source};\n"
-                ),
-                frontend_paths["walk_permissions"]: (
-                    "pub use host_play::DangerLevel;\n"
-                ),
-            },
-            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
-            additional_seam_types=(
-                _seam("CapacityWarning", "scalar", frontend_paths["capacity"]),
-                _seam("RenderPolicyLabel", "scalar", frontend_paths["capacity"]),
-                _seam("Level", "scalar", frontend_paths["log"]),
-                _seam("Record", "borrowed", frontend_paths["log"]),
-                _seam("Source", "scalar", frontend_paths["log"]),
-                _seam(
-                    "DangerLevel", "scalar", frontend_paths["walk_permissions"]
-                ),
+            frontend_paths["log"]: (
+                "pub use api::hostlog::{Level, Record, Source};\n"
             ),
-        )
+            frontend_paths["walk_permissions"]: (
+                "pub use host_play::DangerLevel;\n"
+            ),
+        }, )
         errors = inventories.check_tree(root)
         print(f"GOOD trusted foreign seam re-exports: {errors}")
         self.assertEqual(errors, [])
@@ -367,73 +395,56 @@ pub struct FleetView<'a> {
             "operations": "crates/frontend-core/src/operations.rs",
             "session": "crates/frontend-core/src/session.rs",
         }
-        root = self.fixture(
-            views=self.baseline_views(),
-            frontend_lib=(
-                "pub mod views;\n"
-                "pub mod operations;\n"
-                "pub mod session;\n"
+        root = self.fixture(views=self.baseline_views(),
+        frontend_lib=(
+            "pub mod views;\n"
+            "pub mod operations;\n"
+            "pub mod session;\n"
+        ),
+        frontend_files={
+            frontend_paths["operations"]: (
+                "#[derive(Clone, Copy)]\n"
+                "pub struct OperationId(u64);\n"
             ),
-            frontend_files={
-                frontend_paths["operations"]: (
-                    "#[derive(Clone, Copy)]\n"
-                    "pub struct OperationId(u64);\n"
-                ),
-                frontend_paths["session"]: (
-                    "use crate::operations::OperationId;\n"
-                    "use std::thread::JoinHandle;\n"
-                    "use std::sync::atomic::{AtomicBool, AtomicU64};\n"
-                    "mod native_settings {\n"
-                    "    use super::*;\n"
-                    "    pub(crate) struct NativeCopyCancellation {\n"
-                    "        operation: OperationId,\n"
-                    "        state: std::sync::Arc<()>,\n"
-                    "    }\n"
-                    "}\n"
-                    "pub struct SessionOwner {\n"
-                    "    cancellation: native_settings::NativeCopyCancellation,\n"
-                    "    writer: JoinHandle<()>,\n"
-                    "    catalog: script_js::CatalogDiff,\n"
-                    "    cancelled: AtomicBool,\n"
-                    "    generation: AtomicU64,\n"
-                    "    card: script::CompiledId,\n"
-                    "}\n"
-                ),
-            },
-            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
-            additional_seam_types=(
-                _seam("OperationId", "scalar", frontend_paths["operations"]),
-                _seam("SessionOwner", "owning", frontend_paths["session"]),
+            frontend_paths["session"]: (
+                "use crate::operations::OperationId;\n"
+                "use std::thread::JoinHandle;\n"
+                "use std::sync::atomic::{AtomicBool, AtomicU64};\n"
+                "mod native_settings {\n"
+                "    use super::*;\n"
+                "    pub(crate) struct NativeCopyCancellation {\n"
+                "        operation: OperationId,\n"
+                "        state: std::sync::Arc<()>,\n"
+                "    }\n"
+                "}\n"
+                "pub struct SessionOwner {\n"
+                "    cancellation: native_settings::NativeCopyCancellation,\n"
+                "    writer: JoinHandle<()>,\n"
+                "    catalog: script_js::CatalogDiff,\n"
+                "    cancelled: AtomicBool,\n"
+                "    generation: AtomicU64,\n"
+                "    card: script::CompiledId,\n"
+                "}\n"
             ),
-        )
+        }, )
         errors = inventories.check_tree(root)
         print(f"GOOD glob-import and foreign ownership closure: {errors}")
         self.assertEqual(errors, [])
 
     def test_cfg_import_alternatives_collapse_or_fail_closed(self) -> None:
-        seam_types = (
-            ("FleetCounts", "scalar"),
-            ("FleetView", "borrowed"),
-            ("CfgClock", "scalar"),
-        )
-        same_target = self.fixture(
-            views=self.baseline_views()
-            + (
-                "\n#[cfg(unix)]\nuse std::time::Duration as ClockValue;\n"
-                "#[cfg(windows)]\nuse std::time::Duration as ClockValue;\n"
-                "#[derive(Clone, Copy)]\npub struct CfgClock { delay: ClockValue }\n"
-            ),
-            seam_types=seam_types,
-        )
-        different_targets = self.fixture(
-            views=self.baseline_views()
-            + (
-                "\n#[cfg(unix)]\nuse std::time::Duration as ClockValue;\n"
-                "#[cfg(windows)]\nuse std::time::Instant as ClockValue;\n"
-                "#[derive(Clone, Copy)]\npub struct CfgClock { delay: ClockValue }\n"
-            ),
-            seam_types=seam_types,
-        )
+        
+        same_target = self.fixture(views=self.baseline_views()
+        + (
+            "\n#[cfg(unix)]\nuse std::time::Duration as ClockValue;\n"
+            "#[cfg(windows)]\nuse std::time::Duration as ClockValue;\n"
+            "#[derive(Clone, Copy)]\npub struct CfgClock { delay: ClockValue }\n"
+        ), )
+        different_targets = self.fixture(views=self.baseline_views()
+        + (
+            "\n#[cfg(unix)]\nuse std::time::Duration as ClockValue;\n"
+            "#[cfg(windows)]\nuse std::time::Instant as ClockValue;\n"
+            "#[derive(Clone, Copy)]\npub struct CfgClock { delay: ClockValue }\n"
+        ), )
         good_errors = inventories.check_tree(same_target)
         bad_errors = inventories.check_tree(different_targets)
         print(f"GOOD same-target cfg alternatives: {good_errors}")
@@ -443,43 +454,31 @@ pub struct FleetView<'a> {
             any("ambiguous cfg/alternative seam field type" in error for error in bad_errors)
         )
 
-    def test_unregistered_public_field_and_clone_debt_fails_closed(self) -> None:
+    def test_owning_public_field_and_clone_debt_fails_closed(self) -> None:
         root = self.fixture(
             views=self.baseline_views()
-            + "\n#[derive(Clone)]\npub struct FleetRow { pub name: String }\n",
-            seam_types=(
-                ("FleetCounts", "scalar"),
-                ("FleetView", "borrowed"),
-                ("FleetRow", "owning"),
-            ),
+            + "\n#[derive(Clone)]\npub struct FleetRow { pub name: String }\n"
         )
         errors = inventories.check_tree(root)
-        self.assertTrue(any("unregistered inventory violation" in error for error in errors))
+        self.assertTrue(
+            any(
+                "owning seam exposes a public field" in error
+                and "FleetRow::name" in error
+                for error in errors
+            ),
+            errors,
+        )
+        self.assertTrue(
+            any(
+                "owning seam derives Clone" in error and "FleetRow" in error
+                for error in errors
+            ),
+            errors,
+        )
 
     def test_external_test_module_and_cfg_all_keep_test_provenance(self) -> None:
         path = "crates/script/src/tests.rs"
-        external_import = _record(
-            "test_nav_implementation_import",
-            path,
-            "nav::world::WorldState",
-            "cfg(test)::module:tests",
-            "use_import",
-        )
         cfg_function = "cfg(test)::module:tests::function:feature_probe"
-        macro_area = _record(
-            "test_nav_implementation_import",
-            path,
-            "nav::arrival::ArrivalKind::Area",
-            cfg_function,
-            "macro_token_path",
-        )
-        macro_reach = _record(
-            "test_nav_implementation_import",
-            path,
-            "nav::arrival::ArrivalKind::Reach",
-            cfg_function,
-            "macro_token_path",
-        )
         root = self.fixture(
             views=self.baseline_views(),
             script_files={
@@ -491,42 +490,48 @@ pub struct FleetView<'a> {
                 "nav::arrival::ArrivalKind::Reach);\n"
                 "}\n",
             },
-            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
-            violations=(external_import, macro_area, macro_reach),
         )
-        self.assertEqual(inventories.check_tree(root), [])
+        errors = inventories.check_tree(root)
+        expected = (
+            (
+                f"test_nav_implementation_import|{path}|cfg(test)::module:tests|"
+                "nav::world::WorldState|use_import"
+            ),
+            (
+                f"test_nav_implementation_import|{path}|{cfg_function}|"
+                "nav::arrival::ArrivalKind::Area|macro_token_path"
+            ),
+            (
+                f"test_nav_implementation_import|{path}|{cfg_function}|"
+                "nav::arrival::ArrivalKind::Reach|macro_token_path"
+            ),
+        )
+        for record in expected:
+            with self.subTest(record=record):
+                self.assertIn(f"test imports nav implementation detail: {record}", errors)
 
     def test_macro_definitions_dynamic_includes_and_cfg_attr_provenance(self) -> None:
-        macro_root = self.fixture(
-            views=self.baseline_views(),
-            script_files={
-                "crates/script/src/lib.rs": "macro_rules! hidden { () => { nav::world::WorldState }; }\n",
-            },
-            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
-        )
+        macro_root = self.fixture(views=self.baseline_views(),
+        script_files={
+            "crates/script/src/lib.rs": "macro_rules! hidden { () => { nav::world::WorldState }; }\n",
+        }, )
         macro_errors = inventories.check_tree(macro_root)
         self.assertTrue(any("raw navigation path in macro definition" in error for error in macro_errors))
 
-        include_root = self.fixture(
-            views=self.baseline_views(),
-            script_files={
-                "crates/script/src/lib.rs": 'include!(concat!("hidden", ".rs"));\n',
-                "crates/script/src/hidden.rs": "pub fn hidden() {}\n",
-            },
-            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
-        )
+        include_root = self.fixture(views=self.baseline_views(),
+        script_files={
+            "crates/script/src/lib.rs": 'include!(concat!("hidden", ".rs"));\n',
+            "crates/script/src/hidden.rs": "pub fn hidden() {}\n",
+        }, )
         include_errors = inventories.check_tree(include_root)
         self.assertTrue(any("include!" in error for error in include_errors))
 
-        cfg_attr_root = self.fixture(
-            views=self.baseline_views(),
-            script_files={
-                "crates/script/src/lib.rs": "#[cfg_attr(feature = \"load\", cfg(test))]\n"
-                "mod tests;\n",
-                "crates/script/src/tests.rs": "",
-            },
-            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
-        )
+        cfg_attr_root = self.fixture(views=self.baseline_views(),
+        script_files={
+            "crates/script/src/lib.rs": "#[cfg_attr(feature = \"load\", cfg(test))]\n"
+            "mod tests;\n",
+            "crates/script/src/tests.rs": "",
+        }, )
         cfg_attr_errors = inventories.check_tree(cfg_attr_root)
         self.assertTrue(
             any("cfg_attr may not alter cfg" in error for error in cfg_attr_errors),
@@ -541,33 +546,17 @@ pub struct FleetView<'a> {
         )
         self.assertEqual(inventories.check_tree(harmless), [])
 
-    def test_trusted_seam_class_cannot_be_rewritten(self) -> None:
-        candidate = self.fixture(
-            views="#[derive(Clone, Copy)]\npub struct FleetView { pub value: u32 }\n",
-            seam_types=(("FleetView", "scalar"),),
-        )
-        errors = inventories.check_tree(candidate)
-        self.assertTrue(
-            any("trusted seam classification is borrowed" in error for error in errors),
-            errors,
-        )
 
     def test_raw_navigation_paths_and_aliases_fail_closed(self) -> None:
         path = "crates/script/src/lib.rs"
-        seam_types = (("FleetCounts", "scalar"), ("FleetView", "borrowed"))
-        qualified = self.fixture(
-            views=self.baseline_views(),
-            script_files={path: "pub fn leak() -> nav::world::WorldState { loop {} }\n"},
-            seam_types=seam_types,
-        )
-        alias = self.fixture(
-            views=self.baseline_views(),
-            script_files={
-                path: "pub type RawState = nav::world::WorldState;\n"
-                "pub fn leak() -> RawState { loop {} }\n"
-            },
-            seam_types=seam_types,
-        )
+        
+        qualified = self.fixture(views=self.baseline_views(),
+        script_files={path: "pub fn leak() -> nav::world::WorldState { loop {} }\n"}, )
+        alias = self.fixture(views=self.baseline_views(),
+        script_files={
+            path: "pub type RawState = nav::world::WorldState;\n"
+            "pub fn leak() -> RawState { loop {} }\n"
+        }, )
         qualified_errors = inventories.check_tree(qualified)
         alias_errors = inventories.check_tree(alias)
         self.assertTrue(any("qualified_path" in error for error in qualified_errors), qualified_errors)
@@ -600,14 +589,11 @@ pub struct FleetView<'a> {
 
     def test_script_js_crate_is_scanned_for_raw_navigation_imports(self) -> None:
         path = "crates/script-js/src/x.rs"
-        root = self.fixture(
-            views=self.baseline_views(),
-            script_files={
-                "crates/script-js/src/lib.rs": "mod x;\n",
-                path: "use nav::router::Route;\n",
-            },
-            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
-        )
+        root = self.fixture(views=self.baseline_views(),
+        script_files={
+            "crates/script-js/src/lib.rs": "mod x;\n",
+            path: "use nav::router::Route;\n",
+        }, )
         errors = inventories.check_tree(root)
         self.assertTrue(
             any("production_nav_implementation_import" in error and path in error for error in errors),
@@ -617,28 +603,20 @@ pub struct FleetView<'a> {
     def test_script_js_roots_are_optional_when_the_crate_is_absent(self) -> None:
         self.assertIn(Path("crates/script-js/src"), inventories.SCRIPT_SRC_RELATIVE)
         self.assertIn(Path("crates/script-js/tests"), inventories.SCRIPT_TESTS_RELATIVE)
-        root = self.fixture(
-            views=self.baseline_views(),
-            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
-        )
+        root = self.fixture(views=self.baseline_views(), )
         self.assertFalse((root / "crates/script-js").exists())
         self.assertEqual(inventories.check_tree(root), [])
 
     def test_script_aux_path_may_move_to_the_js_crate(self) -> None:
         moved = Path("crates/script-js/schema/generated/isolate_generated.rs")
         self.assertIn(moved, inventories.SCRIPT_AUX_RELATIVE)
-        root = self.fixture(
-            views=self.baseline_views(),
-            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
-            script_aux=(moved,),
-        )
+        root = self.fixture(views=self.baseline_views(), script_aux=(moved,),)
         self.assertFalse((root / inventories.SCRIPT_AUX_RELATIVE[0]).exists())
         self.assertTrue((root / moved).is_file())
         self.assertEqual(inventories.check_tree(root), [])
 
     def test_planner_roots_follow_manifest_and_keep_contract(self) -> None:
         path = "crates/script/src/lib.rs"
-        seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"))
         cases = (
             ("nav", "nav", "../nav", "nav"),
             ("nav-planner", "nav-planner", "../nav-planner", "nav_planner"),
@@ -790,7 +768,7 @@ pub struct FleetView<'a> {
                 )
                 self.assertTrue(any(expected in error for error in errors), errors)
 
-    def test_executor_imports_are_never_test_exceptions(self) -> None:
+    def test_executor_test_imports_are_forbidden(self) -> None:
         runner = "crates/script/src/gatherer/runner.rs"
         lib = '#[path = "gatherer/runner.rs"]\nmod runner;\nuse nav_executor::Traveller;\n'
         errors = inventories.check_tree(
@@ -805,44 +783,32 @@ pub struct FleetView<'a> {
         for path in (runner, "crates/script/tests/path_schema.rs"):
             self.assertTrue(
                 any(
-                    "test_nav_implementation_import" in error and path in error
+                    "test imports nav implementation detail" in error and path in error
                     for error in errors
                 ),
                 errors,
             )
         self.assertTrue(
             any(
-                "production_nav_implementation_import" in error
+                "production imports nav implementation detail" in error
                 and "crates/script/src/lib.rs" in error
                 for error in errors
             ),
             errors,
         )
-        self.assertFalse(any("unregistered test import exception" in error for error in errors))
 
-        registered = self.fixture(
-            views=self.baseline_views(),
-            script_files={
-                "crates/script/src/lib.rs": '#[path = "gatherer/runner.rs"]\nmod runner;\n',
-                runner: "#[cfg(test)] mod tests {}\n",
-            },
-            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
-            test_exceptions=(
-                _record(
-                    "test_import_exception",
-                    runner,
-                    "nav_executor::Traveller",
-                    "cfg(test)::tests",
-                    "exact_test_fixture_oracle_import",
-                ),
-            ),
+        whitelisted = inventories.check_tree(
+            self.clean_fixture(
+                script_files={
+                    "crates/script/src/lib.rs": '#[path = "gatherer/runner.rs"]\nmod runner;\n',
+                    runner: (
+                        "#[cfg(test)] mod tests { "
+                        "use nav::collision::WorldCollision; }\n"
+                    ),
+                }
+            )
         )
-        registered_errors = inventories.check_tree(registered)
-        self.assertTrue(
-            any("test exception may not name the executor crate" in error
-                for error in registered_errors),
-            registered_errors,
-        )
+        self.assertEqual(whitelisted, [])
 
     def test_executor_adapter_is_raw_and_not_a_planner_trusted_type(self) -> None:
         manifest = (
@@ -883,20 +849,12 @@ pub struct FleetView<'a> {
             "#[derive(Clone, Copy)]\n"
             "pub struct ExecutorView { pub state: nav_executor::WorldState }\n"
         )
-        executor_view = self.fixture(
-            views=views,
-            seam_types=(
-                ("FleetCounts", "scalar"),
-                ("FleetView", "borrowed"),
-                ("ExecutorView", "scalar"),
-            ),
-            workspace_files={
-                "crates/nav-executor/src/lib.rs": (
-                    "#[derive(Clone, Copy)]\npub struct WorldState(pub u64);\n"
-                )
-            },
-            script_manifest=manifest,
-        )
+        executor_view = self.fixture(views=views, workspace_files={
+            "crates/nav-executor/src/lib.rs": (
+                "#[derive(Clone, Copy)]\npub struct WorldState(pub u64);\n"
+            )
+        },
+        script_manifest=manifest,)
         self.assertEqual(inventories.check_tree(executor_view), [])
 
     def test_macro_root_aliases_fail_but_resolved_macro_paths_are_recorded(self) -> None:
@@ -935,34 +893,6 @@ pub struct FleetView<'a> {
         )
         self.assertTrue(any("macro_token_path" in error for error in resolved), resolved)
 
-    def test_stale_test_import_exception_is_rejected(self) -> None:
-        path = "crates/script/src/gatherer/runner.rs"
-        exception = _record(
-            "test_import_exception",
-            path,
-            "nav::collision::WorldCollision",
-            "cfg(test)::tests",
-            "exact_test_fixture_oracle_import",
-        )
-        root_module = '#[path = "gatherer/runner.rs"]\nmod runner;\n'
-        script_files = {
-            "crates/script/src/lib.rs": root_module,
-            path: "#[cfg(test)]\nmod tests {}\n",
-        }
-        good = self.fixture(
-            views=self.baseline_views(),
-            script_files=script_files,
-            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
-        )
-        bad = self.fixture(
-            views=self.baseline_views(),
-            script_files=script_files,
-            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
-            test_exceptions=(exception,),
-        )
-        self.assertEqual(inventories.check_tree(good), [])
-        errors = inventories.check_tree(bad)
-        self.assertTrue(any("stale test import exception" in error for error in errors), errors)
 
     def test_enum_payload_ownership_is_detected(self) -> None:
         enum_source = self.baseline_views() + (
@@ -978,16 +908,7 @@ pub struct FleetView<'a> {
             "}\n"
         )
         errors = inventories.check_tree(
-            self.fixture(
-                views=enum_source,
-                seam_types=(
-                    ("FleetCounts", "scalar"),
-                    ("FleetView", "borrowed"),
-                    ("ScalarUnit", "scalar"),
-                    ("ArrayClock", "scalar"),
-                    ("EnumPayloads", "owning"),
-                ),
-            )
+            self.fixture(views=enum_source, )
         )
         for symbol in (
             "EnumPayloads::Wrapped::0",
@@ -1005,96 +926,55 @@ pub struct FleetView<'a> {
         )
 
     def test_marked_walk_is_owning_by_foreign_type_closure(self) -> None:
-        fields = (
-            "prepared",
-            "destination",
-            "options",
-            "arms",
-        )
-        violations = tuple(
-            _record(
-                "owning_public_field",
-                VIEWS_PATH,
-                f"MarkedWalk::{field}",
-                "production",
-                "public_field_of_owning_view",
-                owner="T3",
-            )
-            for field in fields
-        )
         root = self.fixture(
             views=self.baseline_views()
             + "use host_play::walk_map::{ActionError, MapContext, MapWalkPlan};\n"
             + "use host_play::WalkArms;\n"
             + "use nav::router::FindOptions;\n"
             + "use nav::tile::Tile;\n"
-            + "pub struct MarkedWalk<'a> {\n"
-            + "    pub prepared: Result<(MapContext, MapWalkPlan), ActionError>,\n"
-            + "    pub destination: Option<Tile>,\n"
-            + "    pub options: FindOptions,\n"
-            + "    pub arms: &'a WalkArms,\n"
+            + "#[derive(Clone)]\npub struct MarkedWalk<'a> {\n"
+            + "    prepared: Result<(MapContext, MapWalkPlan), ActionError>,\n"
+            + "    destination: Option<Tile>,\n"
+            + "    options: FindOptions,\n"
+            + "    arms: &'a WalkArms,\n"
             + "}\n"
             + "pub struct BorrowedStatus<'a> {\n"
             + "    pub conditions: &'a api::process_condition::ProcessConditions,\n"
-            + "}\n",
-            seam_types=(
-                ("FleetCounts", "scalar"),
-                ("FleetView", "borrowed"),
-                ("MarkedWalk", "owning"),
-                ("BorrowedStatus", "borrowed"),
-            ),
-            violations=violations,
+            + "}\n"
         )
         errors = inventories.check_tree(root)
-        print(f"GOOD MarkedWalk closure-derived owning classification: {errors}")
-        self.assertEqual(errors, [])
+        self.assertTrue(
+            any("owning seam derives Clone" in error and "MarkedWalk" in error for error in errors),
+            errors,
+        )
 
 
-    def test_f0_api_workspace_types_are_classified_from_definitions(self) -> None:
+    def test_f0_api_workspace_types_resolve_from_definitions(self) -> None:
         aliases = "".join(
             f"pub type {alias} = {target};\n"
             for alias, target in F0_API_FOREIGN_ALIASES.items()
         )
         views = self.baseline_views() + F0_API_IMPORTS + aliases
-        base_seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"))
-        # Settlement is Clone but not Copy, so like any local non-Copy type it is owning.
-        expected = {
-            alias: "owning" if alias == "PinSettlement" else "scalar"
-            for alias in F0_API_FOREIGN_ALIASES
-        }
         std_row = _foreign("std::num::NonZeroU64")
 
-        def errors(classes: dict[str, str], data: str | None) -> list[str]:
+        def errors(data: str | None) -> list[str]:
             return inventories.check_tree(
                 self.fixture(
                     views=views,
-                    seam_types=base_seams + tuple(classes.items()),
                     foreign_types=data,
                     workspace_files=F0_API_CRATE,
                 )
             )
 
-        honest = errors(expected, _foreign_data(std_row))
-        all_scalar = errors(
-            {alias: "scalar" for alias in F0_API_FOREIGN_ALIASES}, _foreign_data(std_row)
-        )
-        without_std_row = errors(expected, None)
+        honest = errors(_foreign_data(std_row))
+        without_std_row = errors(None)
         with_api_rows = errors(
-            expected,
-            _foreign_data(std_row, *(_foreign(path) for path in F0_API_FOREIGN_TYPES)),
+            _foreign_data(std_row, *(_foreign(path) for path in F0_API_FOREIGN_TYPES))
         )
-        print(f"GOOD F0 API types classified from definitions: {honest}")
-        print(f"BAD Settlement registered scalar: {all_scalar}")
+        print(f"GOOD F0 API types resolved from definitions: {honest}")
         print(f"BAD std payload without a data row: {without_std_row}")
         print(f"BAD data rows naming F0 API types: {with_api_rows}")
         self.assertEqual(honest, [])
-        self.assertEqual(
-            all_scalar,
-            [
-                "seam classification disagrees with syntax: "
-                f"{VIEWS_PATH}::PinSettlement is owning, registry says scalar"
-            ],
-        )
         self.assertIn(
             "crates/api/src/identity.rs::RequestId: unresolved imported seam field type NonZeroU64",
             without_std_row,
@@ -1111,41 +991,36 @@ pub struct FleetView<'a> {
         )
 
     def test_workspace_definition_classification_is_checked_from_syntax(self) -> None:
-        seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"))
-        uses = "pub type UsesRequest = api::identity::RequestId;\n"
+        uses = (
+            "use api::identity::RequestId;\n"
+            "#[derive(Clone)]\npub struct UsesRequest { value: RequestId }\n"
+        )
         copy_id = "#[derive(Clone, Copy)]\npub struct RequestId(u64);\n"
 
-        def tree(identity: str, extra: tuple[tuple[str, str], ...]) -> Path:
+        def tree(identity: str) -> Path:
             return self.fixture(
                 views=self.baseline_views() + uses,
-                seam_types=seams + extra,
                 workspace_files={
                     "crates/api/src/lib.rs": "pub mod identity;\n",
                     "crates/api/src/identity.rs": identity,
                 },
             )
 
-        self.assertEqual(
-            inventories.check_tree(tree(copy_id, (("UsesRequest", "scalar"),))),
-            [],
-        )
+        self.assertEqual(inventories.check_tree(tree(copy_id)), [])
         drifts = {
             "owned field": "#[derive(Clone)]\npub struct RequestId(Vec<u8>);\n",
             "alias retarget": "pub type RequestId = Vec<u8>;\n",
         }
         for label, identity in drifts.items():
             with self.subTest(drift=label):
-                stale = tree(identity, (("UsesRequest", "scalar"),))
-                stale_errors = inventories.check_tree(stale)
+                errors = inventories.check_tree(tree(identity))
                 self.assertTrue(
                     any(
-                        "UsesRequest is owning, registry says scalar" in error
-                        for error in stale_errors
+                        "owning seam derives Clone" in error and "UsesRequest" in error
+                        for error in errors
                     ),
-                    stale_errors,
+                    errors,
                 )
-                updated = tree(identity, (("UsesRequest", "owning"),))
-                self.assertEqual(inventories.check_tree(updated), [])
 
     def test_workspace_paths_resolve_to_the_defining_item(self) -> None:
         api_lib = (
@@ -1170,18 +1045,6 @@ pub struct FleetView<'a> {
             "    }\n"
             "}\n"
         )
-        views = self.baseline_views() + (
-            "use api::identity::RequestId as Renamed;\n"
-            "pub type ViaRenamed = Renamed;\n"
-            "pub type ViaReexport = api::RequestId;\n"
-            "pub type ViaPrelude = api::prelude::Rid;\n"
-            "pub type ViaAlias = api::AliasId;\n"
-            "pub type ViaChain = api::Hop;\n"
-            "pub type ViaPathModule = api::generated::GeneratedId;\n"
-            "pub use api::identity::RequestId as ExportedId;\n"
-            "pub type ViaPhase = api::identity::Phase;\n"
-            "pub struct Holder {\n    inner: String,\n}\n"
-        )
         symbols = (
             "ExportedId",
             "ViaAlias",
@@ -1190,12 +1053,25 @@ pub struct FleetView<'a> {
             "ViaPrelude",
             "ViaReexport",
             "ViaRenamed",
+            "ViaPhase",
         )
-        fixed = (
-            ("FleetCounts", "scalar"),
-            ("FleetView", "borrowed"),
-            ("ViaPhase", "owning"),
-            ("Holder", "owning"),
+        holders = "".join(
+            f"#[derive(Clone)]\npub struct {symbol}Holder {{ value: {symbol} }}\n"
+            for symbol in symbols
+        )
+        views = (
+            self.baseline_views()
+            + "use api::identity::RequestId as Renamed;\n"
+            + "pub type ViaRenamed = Renamed;\n"
+            + "pub type ViaReexport = api::RequestId;\n"
+            + "pub type ViaPrelude = api::prelude::Rid;\n"
+            + "pub type ViaAlias = api::AliasId;\n"
+            + "pub type ViaChain = api::Hop;\n"
+            + "pub type ViaPathModule = api::generated::GeneratedId;\n"
+            + "pub use api::identity::RequestId as ExportedId;\n"
+            + "pub type ViaPhase = api::identity::Phase;\n"
+            + "pub struct Holder {\n    inner: String,\n}\n"
+            + holders
         )
         definitions = {
             "scalar": "#[derive(Clone, Copy)]\npub struct RequestId(u64);\n",
@@ -1203,36 +1079,33 @@ pub struct FleetView<'a> {
         }
         for classification, identity in definitions.items():
             with self.subTest(definition=classification):
-                other = "owning" if classification == "scalar" else "scalar"
-                results = {}
-                for registered in (classification, other):
-                    results[registered] = inventories.check_tree(
-                        self.fixture(
-                            views=views,
-                            seam_types=fixed + tuple((symbol, registered) for symbol in symbols),
-                            workspace_files={
-                                "crates/api/src/lib.rs": api_lib,
-                                "crates/api/src/identity.rs": identity + api_extra,
-                                "crates/api/generated/ids.rs": (
-                                    "pub use crate::identity::RequestId as GeneratedId;\n"
-                                ),
-                            },
-                        )
+                errors = inventories.check_tree(
+                    self.fixture(
+                        views=views,
+                        workspace_files={
+                            "crates/api/src/lib.rs": api_lib,
+                            "crates/api/src/identity.rs": identity + api_extra,
+                            "crates/api/generated/ids.rs": (
+                                "pub use crate::identity::RequestId as GeneratedId;\n"
+                            ),
+                        },
                     )
-                print(f"GOOD workspace paths, {classification} definition: {results[classification]}")
-                print(f"BAD workspace paths registered {other}: {results[other]}")
-                self.assertEqual(results[classification], [])
-                self.assertEqual(
-                    results[other],
-                    [
-                        "seam classification disagrees with syntax: "
-                        f"{VIEWS_PATH}::{symbol} is {classification}, registry says {other}"
-                        for symbol in symbols
-                    ],
                 )
+                expected = {"ViaPhaseHolder"}
+                if classification == "owning":
+                    expected.update(f"{symbol}Holder" for symbol in symbols[:-1])
+                self.assertEqual(len(errors), len(expected), errors)
+                for symbol in expected:
+                    with self.subTest(symbol=symbol):
+                        self.assertTrue(
+                            any(
+                                "owning seam derives Clone" in error and symbol in error
+                                for error in errors
+                            ),
+                            errors,
+                        )
 
     def test_workspace_resolution_fails_closed(self) -> None:
-        seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"), ("Uses", "scalar"))
         api_manifest = '[package]\nname = "api"\nversion = "0.0.0"\nedition = "2024"\n'
         cases: dict[str, tuple[dict[str, str], str, str]] = {
             "use cycle": (
@@ -1323,39 +1196,25 @@ pub struct FleetView<'a> {
         for label, (files, target, expected) in cases.items():
             with self.subTest(case=label):
                 errors = inventories.check_tree(
-                    self.fixture(
-                        views=self.baseline_views() + f"pub type Uses = {target};\n",
-                        seam_types=seams,
-                        workspace_files=files,
-                    )
+                    self.fixture(views=self.baseline_views() + f"pub type Uses = {target};\n", workspace_files=files,)
                 )
                 print(f"BAD workspace resolution ({label}): {errors}")
                 self.assertTrue(any(expected in error for error in errors), errors)
-                self.assertIn(f"stale seam type classification: {VIEWS_PATH}::Uses", errors)
 
     def test_builtin_entry_keeps_precedence_over_workspace_definition(self) -> None:
         # A built-in path keeps precedence even when the workspace definition
         # says otherwise.
-        root = self.fixture(
-            views=self.baseline_views()
-            + "pub type Diff = script_js::CatalogDiff;\npub type Compiled = script::CompiledId;\n",
-            seam_types=(
-                ("FleetCounts", "scalar"),
-                ("FleetView", "borrowed"),
-                ("Diff", "owning"),
-                ("Compiled", "scalar"),
-            ),
-            script_files={
-                "crates/script/src/lib.rs": (
-                    "pub struct CompiledId(pub &'static str);\n"
-                )
-            },
-            workspace_files={
-                "crates/script-js/src/lib.rs": (
-                    "#[derive(Clone, Copy)]\npub struct CatalogDiff(u8);\n"
-                )
-            },
-        )
+        root = self.fixture(views=self.baseline_views()
+        + "pub type Diff = script_js::CatalogDiff;\npub type Compiled = script::CompiledId;\n", script_files={
+            "crates/script/src/lib.rs": (
+                "pub struct CompiledId(pub &'static str);\n"
+            )
+        },
+        workspace_files={
+            "crates/script-js/src/lib.rs": (
+                "#[derive(Clone, Copy)]\npub struct CatalogDiff(u8);\n"
+            )
+        },)
         errors = inventories.check_tree(root)
         print(f"GOOD built-in precedence over workspace definitions: {errors}")
         self.assertEqual(errors, [])
@@ -1373,10 +1232,7 @@ pub struct FleetView<'a> {
         }
         for label, (manifest, expected) in cases.items():
             with self.subTest(case=label):
-                root = self.fixture(
-                    views=self.baseline_views(),
-                    seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
-                )
+                root = self.fixture(views=self.baseline_views(), )
                 (root / "Cargo.toml").write_text(manifest, encoding="utf-8")
                 errors = inventories.check_tree(root)
                 print(f"BAD workspace manifest ({label}): {errors}")
@@ -1386,23 +1242,15 @@ pub struct FleetView<'a> {
                 )
 
     def test_std_leaf_names_defined_in_the_workspace_are_classified_from_definitions(self) -> None:
-        # Wonder eprime-r3 F1: a workspace type named like a std scalar or
-        # transparent container is classified from its definition.  Its name
-        # alone never skips the payload.
         names = sorted(
             set(inventories.STD_TRANSPARENT_TYPE_MODULES) | inventories.KNOWN_SCALAR_TYPES
         )
         self.assertEqual(len(names), 24)
-        seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"), ("AttackView", "borrowed"))
-        disagrees = (
-            f"seam classification disagrees with syntax: {VIEWS_PATH}::AttackView "
-            "is owning, registry says borrowed"
-        )
 
         def holder(payload: str) -> str:
             return (
                 "#[derive(Clone)]\npub struct AttackView {\n"
-                f"    pub label: &'static str,\n    pub payload: {payload},\n}}\n"
+                f"    label: &'static str,\n    payload: {payload},\n}}\n"
             )
 
         for name in names:
@@ -1415,7 +1263,6 @@ pub struct FleetView<'a> {
                     errors = inventories.check_tree(
                         self.fixture(
                             views=imports + self.baseline_views() + holder(payload),
-                            seam_types=seams,
                             workspace_files={
                                 "crates/api/src/lib.rs": (
                                     f"#[derive(Clone)]\npub struct {name}(pub Vec<u8>);\n"
@@ -1423,30 +1270,46 @@ pub struct FleetView<'a> {
                             },
                         )
                     )
-                    self.assertIn(disagrees, errors)
+                    self.assertTrue(
+                        any(
+                            "owning seam derives Clone" in error and "AttackView" in error
+                            for error in errors
+                        ),
+                        errors,
+                    )
         wrapper = "#[derive(Clone)]\npub struct Wrapping(pub Vec<u8>);\n"
         shapes: dict[str, tuple[str, str, str, str]] = {
             "enum": (
                 "#[derive(Clone)]\npub enum Option {\n    Some(Vec<u8>),\n    None,\n}\n",
                 "",
                 "api::Option",
-                disagrees,
+                "owning seam derives Clone",
             ),
-            "type alias": ("pub type Wrapping = Vec<u8>;\n", "", "api::Wrapping", disagrees),
+            "type alias": (
+                "pub type Wrapping = Vec<u8>;\n",
+                "",
+                "api::Wrapping",
+                "owning seam derives Clone",
+            ),
             "renamed import": (
                 "#[derive(Clone)]\npub struct Payload(pub Vec<u8>);\n",
                 "use api::Payload as Wrapping;\n",
                 "Wrapping",
-                disagrees,
+                "owning seam derives Clone",
             ),
-            "glob import": (wrapper, "use api::*;\n", "Wrapping", disagrees),
+            "glob import": (wrapper, "use api::*;\n", "Wrapping", "owning seam derives Clone"),
             "local definition": (
                 wrapper,
                 "#[derive(Clone)]\npub struct Option(pub Vec<u8>);\n",
                 "Option",
-                disagrees,
+                "owning seam derives Clone",
             ),
-            "generic argument": (wrapper, "", "Option<api::Wrapping>", disagrees),
+            "generic argument": (
+                wrapper,
+                "",
+                "Option<api::Wrapping>",
+                "owning seam derives Clone",
+            ),
             "union": (
                 "pub union Wrapping {\n    pub bytes: std::mem::ManuallyDrop<Vec<u8>>,\n}\n",
                 "",
@@ -1459,27 +1322,33 @@ pub struct FleetView<'a> {
                 errors = inventories.check_tree(
                     self.fixture(
                         views=imports + self.baseline_views() + holder(payload),
-                        seam_types=seams,
                         workspace_files={"crates/api/src/lib.rs": api},
                     )
                 )
-                print(f"BAD std-named workspace payload ({label}): {errors}")
-                self.assertIn(expected, errors)
+                self.assertTrue(
+                    any(
+                        expected in error
+                        and (label == "union" or "AttackView" in error)
+                        for error in errors
+                    ),
+                    errors,
+                )
         # A generic parameter is a one-segment path: `api::T` is the workspace
         # type even inside an item with a parameter named `T`.
         generic = inventories.check_tree(
             self.fixture(
                 views=self.baseline_views()
                 + "#[derive(Clone)]\npub struct AttackView<T> {\n"
-                "    pub label: &'static str,\n    pub payload: api::T,\n    pub extra: Option<T>,\n}\n",
-                seam_types=seams,
+                "    label: &'static str,\n    payload: api::T,\n    extra: Option<T>,\n}\n",
                 workspace_files={
                     "crates/api/src/lib.rs": "#[derive(Clone)]\npub struct T(pub Vec<u8>);\n"
                 },
             )
         )
-        print(f"BAD workspace path ending in a generic parameter name: {generic}")
-        self.assertIn(disagrees, generic)
+        self.assertTrue(
+            any("owning seam derives Clone" in error and "AttackView" in error for error in generic),
+            generic,
+        )
 
     def test_std_leaf_items_keep_the_shortcut_and_their_generic_arguments(self) -> None:
         views = (
@@ -1504,28 +1373,14 @@ pub struct FleetView<'a> {
             "    bytes: std::num::Wrapping<Vec<u8>>,\n"
             "}\n"
         )
-        root = self.fixture(
-            views=views,
-            seam_types=(
-                ("FleetCounts", "scalar"),
-                ("FleetView", "borrowed"),
-                ("StdLeaves", "scalar"),
-                ("StdOwning", "owning"),
-            ),
-            workspace_files={
-                "crates/api/src/lib.rs": "#[derive(Clone)]\npub struct Wrapper(pub Vec<u8>);\n"
-            },
-        )
+        root = self.fixture(views=views, workspace_files={
+            "crates/api/src/lib.rs": "#[derive(Clone)]\npub struct Wrapper(pub Vec<u8>);\n"
+        },)
         errors = inventories.check_tree(root)
         print(f"GOOD std leaf items: {errors}")
         self.assertEqual(errors, [])
 
     def test_phantom_data_accepts_function_pointer_marker(self) -> None:
-        marker_types = (
-            ("FleetCounts", "scalar"),
-            ("FleetView", "borrowed"),
-            ("MarkerView", "scalar"),
-        )
         cases = {
             "std marker": (
                 self.baseline_views()
@@ -1546,33 +1401,36 @@ pub struct FleetView<'a> {
         }
         for label, views in cases.items():
             with self.subTest(marker=label):
-                errors = inventories.check_tree(
-                    self.fixture(views=views, seam_types=marker_types)
-                )
+                errors = inventories.check_tree(self.fixture(views=views))
                 self.assertEqual(errors, [])
 
     def test_function_pointer_markers_inside_containers_and_references(self) -> None:
         cases = (
-            ("Vec<Marker<fn() -> u64>>", "owning"),
-            ("&'static Marker<fn() -> u64>", "borrowed"),
+            ("Vec<Marker<fn() -> u64>>", True),
+            ("&'static Marker<fn() -> u64>", False),
         )
-        for field_type, classification in cases:
+        for field_type, is_owning in cases:
             with self.subTest(field_type=field_type):
                 errors = inventories.check_tree(
                     self.fixture(
                         views=(
                             "use std::marker::PhantomData as Marker;\n"
                             + self.baseline_views()
+                            + "#[derive(Clone)]\n"
                             + f"pub struct MarkerView {{ marker: {field_type} }}\n"
-                        ),
-                        seam_types=(
-                            ("FleetCounts", "scalar"),
-                            ("FleetView", "borrowed"),
-                            ("MarkerView", classification),
-                        ),
+                        )
                     )
                 )
-                self.assertEqual(errors, [])
+                if is_owning:
+                    self.assertTrue(
+                        any(
+                            "owning seam derives Clone" in error and "MarkerView" in error
+                            for error in errors
+                        ),
+                        errors,
+                    )
+                else:
+                    self.assertEqual(errors, [])
 
     def test_workspace_phantom_data_name_is_not_a_marker(self) -> None:
         for field_type in (
@@ -1582,21 +1440,13 @@ pub struct FleetView<'a> {
         ):
             with self.subTest(field_type=field_type):
                 errors = inventories.check_tree(
-                    self.fixture(
-                        views=(
-                            "use api::PhantomData;\n"
-                            + self.baseline_views()
-                            + f"pub struct MarkerView {{ marker: {field_type} }}\n"
-                        ),
-                        seam_types=(
-                            ("FleetCounts", "scalar"),
-                            ("FleetView", "borrowed"),
-                            ("MarkerView", "scalar"),
-                        ),
-                        workspace_files={
-                            "crates/api/src/lib.rs": "pub struct PhantomData<T>(T);\n"
-                        },
-                    )
+                    self.fixture(views=(
+                        "use api::PhantomData;\n"
+                        + self.baseline_views()
+                        + f"pub struct MarkerView {{ marker: {field_type} }}\n"
+                    ), workspace_files={
+                        "crates/api/src/lib.rs": "pub struct PhantomData<T>(T);\n"
+                    },)
                 )
                 self.assertTrue(
                     any("unsupported field type syntax (FN_PTR_TYPE)" in error for error in errors),
@@ -1604,7 +1454,6 @@ pub struct FleetView<'a> {
                 )
 
     def test_leaf_names_that_are_not_the_std_item_fail_closed(self) -> None:
-        seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"), ("Uses", "scalar"))
         cases = {
             "non-workspace crate": (
                 "",
@@ -1635,20 +1484,13 @@ pub struct FleetView<'a> {
         for label, (imports, target, expected) in cases.items():
             with self.subTest(case=label):
                 errors = inventories.check_tree(
-                    self.fixture(
-                        views=imports + self.baseline_views() + f"pub type Uses = {target};\n",
-                        seam_types=seams,
-                    )
+                    self.fixture(views=imports + self.baseline_views() + f"pub type Uses = {target};\n", )
                 )
                 print(f"BAD non-std leaf path ({label}): {errors}")
                 self.assertIn(expected, errors)
-                self.assertIn(f"stale seam type classification: {VIEWS_PATH}::Uses", errors)
         generic = inventories.check_tree(
-            self.fixture(
-                views=self.baseline_views()
-                + "#[derive(Clone, Copy)]\npub struct Held<Wrapping = Vec<u8>>(Wrapping);\n",
-                seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed"), ("Held", "scalar")),
-            )
+            self.fixture(views=self.baseline_views()
+            + "#[derive(Clone, Copy)]\npub struct Held<Wrapping = Vec<u8>>(Wrapping);\n", )
         )
         print(f"BAD generic parameter named like a std leaf: {generic}")
         self.assertIn(f"{VIEWS_PATH}::Held: generic type defaults are unsupported (Wrapping)", generic)
@@ -1659,26 +1501,18 @@ pub struct FleetView<'a> {
             "#[derive(Clone)]\npub struct Wrapping(pub Vec<u8>);\n"
         )
 
-        def tree(payload: str, registered: str) -> Path:
-            temporary = tempfile.TemporaryDirectory(prefix="f0-std-leaf-")
-            self.addCleanup(temporary.cleanup)
-            return _write_fixture(
-                Path(temporary.name),
+        def tree(payload: str) -> Path:
+            return self.fixture(
                 views=self.baseline_views()
                 + "#[derive(Clone)]\npub struct AttackView {\n"
-                f"    pub label: &'static str,\n    pub payload: api::{payload},\n}}\n",
-                seam_types=(
-                    ("FleetCounts", "scalar"),
-                    ("FleetView", "borrowed"),
-                    ("AttackView", registered),
-                ),
+                f"    label: &'static str,\n    payload: api::{payload},\n}}\n",
                 workspace_files={"crates/api/src/lib.rs": api},
             )
 
-        self.assertEqual(inventories.check_tree(tree("Plain", "borrowed")), [])
-        errors = inventories.check_tree(tree("Wrapping", "borrowed"))
+        self.assertEqual(inventories.check_tree(tree("Plain")), [])
+        errors = inventories.check_tree(tree("Wrapping"))
         self.assertTrue(
-            any("AttackView is owning, registry says borrowed" in error for error in errors),
+            any("owning seam derives Clone" in error and "AttackView" in error for error in errors),
             errors,
         )
 
@@ -1687,15 +1521,10 @@ pub struct FleetView<'a> {
         # the workspace crate of that name.  A member may not take a sysroot or
         # keyword name, and no manifest may declare another crate under a
         # member's name (the vendored `client` path dependency, for example).
-        seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"))
         for name in ("std", "core", "alloc", "proc_macro", "test", "crate", "self", "super", "Self"):
             with self.subTest(member=name):
                 errors = inventories.check_tree(
-                    self.fixture(
-                        views=self.baseline_views(),
-                        seam_types=seams,
-                        workspace_files={f"crates/{name}/src/lib.rs": ""},
-                    )
+                    self.fixture(views=self.baseline_views(), workspace_files={f"crates/{name}/src/lib.rs": ""},)
                 )
                 print(f"BAD reserved workspace crate name {name}: {errors}")
                 self.assertIn(
@@ -1750,11 +1579,7 @@ pub struct FleetView<'a> {
         }
         for label, (workspace_extra, manifests, expected) in cases.items():
             with self.subTest(case=label):
-                root = self.fixture(
-                    views=self.baseline_views() + uses,
-                    seam_types=seams + (("Uses", "scalar"),),
-                    workspace_files={"crates/api/src/lib.rs": api, "crates/client/src/lib.rs": ""},
-                )
+                root = self.fixture(views=self.baseline_views() + uses, workspace_files={"crates/api/src/lib.rs": api, "crates/client/src/lib.rs": ""},)
                 manifest = root / "Cargo.toml"
                 manifest.write_text(
                     manifest.read_text(encoding="utf-8") + workspace_extra, encoding="utf-8"
@@ -1774,19 +1599,14 @@ pub struct FleetView<'a> {
                         errors,
                     )
 
-    def test_inventory_reads_never_traverse_a_symlink(self) -> None:
-        # Wonder eprime-r3 F2: no path component below the tree root may be a
-        # symlink, for crate directories as for the foreign-type data file.
-        seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"), ("Uses", "scalar"))
+    def test_workspace_reads_never_traverse_a_symlink(self) -> None:
+        # No path component below the tree root may be a symlink.
+
 
         def tree() -> Path:
-            return self.fixture(
-                views=self.baseline_views() + "pub type Uses = api::T;\n",
-                seam_types=seams,
-                workspace_files={
-                    "crates/api/src/lib.rs": "#[derive(Clone, Copy)]\npub struct T(pub u64);\n"
-                },
-            )
+            return self.fixture(views=self.baseline_views() + "pub type Uses = api::T;\n", workspace_files={
+                "crates/api/src/lib.rs": "#[derive(Clone, Copy)]\npub struct T(pub u64);\n"
+            },)
 
         self.assertEqual(inventories.check_tree(tree()), [])
         cases = {
@@ -1797,7 +1617,6 @@ pub struct FleetView<'a> {
                 "crates/frontend-core/src: symlinked Rust input is unsupported"
             ),
             "crates/script": "crates/script/src: symlinked Rust input is unsupported",
-            "tools": "inventory: tools/architecture/inventories.json must not traverse a symlink",
         }
         for linked, expected in cases.items():
             with self.subTest(linked=linked):
@@ -1815,18 +1634,10 @@ pub struct FleetView<'a> {
         views = self.baseline_views() + "pub type UsesHandle = client::session::Handle;\n"
         for workspace_path in ("api::identity::RequestId", "frontend_core::views::FleetCounts"):
             with self.subTest(row=workspace_path):
-                root = self.fixture(
-                    views=views,
-                    seam_types=(
-                        ("FleetCounts", "scalar"),
-                        ("FleetView", "borrowed"),
-                        ("UsesHandle", "scalar"),
-                    ),
-                    foreign_types=_foreign_data(
-                        _foreign("client::session::Handle"), _foreign(workspace_path)
-                    ),
-                    workspace_files={"crates/api/src/lib.rs": ""},
-                )
+                root = self.fixture(views=views, foreign_types=_foreign_data(
+                    _foreign("client::session::Handle"), _foreign(workspace_path)
+                ),
+                workspace_files={"crates/api/src/lib.rs": ""},)
                 errors = inventories.check_tree(root)
                 print(f"BAD data row naming workspace type {workspace_path}: {errors}")
                 self.assertIn(
@@ -1848,7 +1659,11 @@ pub struct FleetView<'a> {
             + "pub type SettledBytes = Settlement<Vec<u8>, Token>;\n"
             + "pub type SettledCatalog = Settlement<Token, script_js::CatalogDiff>;\n"
             + "pub type SettledView<'a> = Settlement<&'a str, Token>;\n"
-            + "#[derive(Clone, Copy)]\n"
+            + "#[derive(Clone)]\npub struct SettledScalarHolder { settled: SettledScalar }\n"
+            + "#[derive(Clone)]\npub struct SettledBytesHolder { settled: SettledBytes }\n"
+            + "#[derive(Clone)]\npub struct SettledCatalogHolder { settled: SettledCatalog }\n"
+            + "#[derive(Clone)]\npub struct SettledViewHolder<'a> { settled: SettledView<'a> }\n"
+            + "#[derive(Clone)]\n"
             + "pub struct SettledHolder {\n"
             + "    settled: Settlement<Token, std::sync::mpsc::Sender<u8>>,\n"
             + "}\n"
@@ -1856,63 +1671,18 @@ pub struct FleetView<'a> {
         data = _foreign_data(
             _foreign("client::session::Settlement"), _foreign("client::session::Token")
         )
-        base_seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"))
-        clone_violation = (
-            _record(
-                "owning_derived_clone",
-                VIEWS_PATH,
-                "SettledHolder",
-                "production",
-                "derived_Clone_on_owning_view",
-                owner="T3",
-            ),
-        )
-        honest_errors = inventories.check_tree(
-            self.fixture(
-                views=views,
-                seam_types=base_seams
-                + (
-                    ("SettledScalar", "scalar"),
-                    ("SettledBytes", "owning"),
-                    ("SettledCatalog", "owning"),
-                    ("SettledView", "borrowed"),
-                    ("SettledHolder", "owning"),
-                ),
-                violations=clone_violation,
-                foreign_types=data,
-            )
-        )
-        exempt_errors = inventories.check_tree(
-            self.fixture(
-                views=views,
-                seam_types=base_seams
-                + (
-                    ("SettledScalar", "scalar"),
-                    ("SettledBytes", "scalar"),
-                    ("SettledCatalog", "scalar"),
-                    ("SettledView", "scalar"),
-                    ("SettledHolder", "scalar"),
-                ),
-                violations=clone_violation,
-                foreign_types=data,
-            )
-        )
-        print(f"GOOD data-row generic argument ownership: {honest_errors}")
-        print(f"BAD data row as blanket scalar: {exempt_errors}")
-        self.assertEqual(honest_errors, [])
-        self.assertEqual(
-            exempt_errors,
-            [
-                "seam classification disagrees with syntax: "
-                f"{VIEWS_PATH}::SettledBytes is owning, registry says scalar",
-                "seam classification disagrees with syntax: "
-                f"{VIEWS_PATH}::SettledCatalog is owning, registry says scalar",
-                "seam classification disagrees with syntax: "
-                f"{VIEWS_PATH}::SettledHolder is owning, registry says scalar",
-                "seam classification disagrees with syntax: "
-                f"{VIEWS_PATH}::SettledView is borrowed, registry says scalar",
-            ],
-        )
+        errors = inventories.check_tree(self.fixture(views=views, foreign_types=data))
+        expected = {"SettledBytesHolder", "SettledCatalogHolder", "SettledHolder"}
+        self.assertEqual(len(errors), len(expected), errors)
+        for symbol in expected:
+            with self.subTest(symbol=symbol):
+                self.assertTrue(
+                    any(
+                        "owning seam derives Clone" in error and symbol in error
+                        for error in errors
+                    ),
+                    errors,
+                )
 
     def test_unlisted_foreign_types_still_fail_resolution(self) -> None:
         settlement = _foreign_data(_foreign("client::session::Settlement"))
@@ -1952,15 +1722,7 @@ pub struct FleetView<'a> {
         }
         for symbol, (source, data, expected) in cases.items():
             with self.subTest(symbol=symbol):
-                root = self.fixture(
-                    views=self.baseline_views() + source,
-                    seam_types=(
-                        ("FleetCounts", "scalar"),
-                        ("FleetView", "borrowed"),
-                        (symbol, "scalar"),
-                    ),
-                    foreign_types=data,
-                )
+                root = self.fixture(views=self.baseline_views() + source, foreign_types=data,)
                 errors = inventories.check_tree(root)
                 print(f"BAD unlisted foreign seam type {symbol}: {errors}")
                 self.assertIn(f"{VIEWS_PATH}::{symbol}: {expected}", errors)
@@ -2051,11 +1813,10 @@ pub struct FleetView<'a> {
             ),
             "directory": (None, "must be a regular file"),
         }
-        seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"), ("UsesToken", "scalar"))
         unresolved = f"{VIEWS_PATH}::UsesToken: unresolved public seam field type client::session::Token"
         for label, (content, expected) in cases.items():
             with self.subTest(case=label):
-                root = self.fixture(views=views, seam_types=seams, foreign_types=content)
+                root = self.fixture(views=views, foreign_types=content)
                 if content is None:
                     (root / inventories.DATA_DIR_RELATIVE / inventories.FOREIGN_TYPES_RELATIVE).mkdir()
                 errors = inventories.check_tree(root)
@@ -2076,7 +1837,7 @@ pub struct FleetView<'a> {
         }
         for label, linked in symlinks.items():
             with self.subTest(case=label):
-                root = self.fixture(views=views, seam_types=seams)
+                root = self.fixture(views=views)
                 outside = root / "outside"
                 outside.mkdir()
                 (outside / inventories.FOREIGN_TYPES_RELATIVE.name).write_text(
@@ -2097,40 +1858,15 @@ pub struct FleetView<'a> {
                 )
                 self.assertIn(unresolved, errors)
 
-    def test_deeply_nested_inventory_fails_closed(self) -> None:
-        root = self.fixture(
-            views=self.baseline_views(),
-            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
-        )
-        depth = 100_000
-        (root / inventories.DATA_DIR_RELATIVE / inventories.INVENTORY_RELATIVE).write_text("[" * depth + "]" * depth, encoding="utf-8")
-        errors = inventories.check_tree(root)
-        print(f"BAD deeply nested inventory: {[error[:200] for error in errors]}")
-        self.assertTrue(
-            any(
-                error.startswith("inventory: cannot load tools/architecture/inventories.json")
-                or error
-                == (
-                    "inventory schema: top-level fields must be exactly "
-                    "schema_version, seam_types, violations, test_exceptions"
-                )
-                for error in errors
-            ),
-            errors,
-        )
 
     def test_stale_foreign_type_rows_fail(self) -> None:
         views = (
             self.baseline_views()
             + "pub struct TokenView<'a> { pub id: &'a client::session::Token }\n"
         )
-        root = self.fixture(
-            views=views,
-            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed"), ("TokenView", "borrowed")),
-            foreign_types=_foreign_data(
-                _foreign("client::session::Token"), _foreign("client::session::Mode")
-            ),
-        )
+        root = self.fixture(views=views, foreign_types=_foreign_data(
+            _foreign("client::session::Token"), _foreign("client::session::Mode")
+        ),)
         errors = inventories.check_tree(root)
         print(f"BAD stale foreign type rows: {errors}")
         self.assertEqual(
@@ -2142,27 +1878,21 @@ pub struct FleetView<'a> {
         )
 
     def test_slot_surface_trait_is_not_a_value_seam_but_unions_fail_closed(self) -> None:
-        seam_types = (("FleetCounts", "scalar"), ("FleetView", "borrowed"))
-        trait_root = self.fixture(
-            views=self.baseline_views()
-            + (
-                "pub trait SlotSurface { type Io; fn released(&mut self); }\n"
-                "struct HeadlessSurface;\n"
-                "impl SlotSurface for HeadlessSurface {\n"
-                "    type Io = ();\n"
-                "    fn released(&mut self) {}\n"
-                "}\n"
-            ),
-            frontend_lib="pub mod views;\npub use views::SlotSurface;\n",
-            seam_types=seam_types,
-        )
+        
+        trait_root = self.fixture(views=self.baseline_views()
+        + (
+            "pub trait SlotSurface { type Io; fn released(&mut self); }\n"
+            "struct HeadlessSurface;\n"
+            "impl SlotSurface for HeadlessSurface {\n"
+            "    type Io = ();\n"
+            "    fn released(&mut self) {}\n"
+            "}\n"
+        ),
+        frontend_lib="pub mod views;\npub use views::SlotSurface;\n", )
         trait_errors = inventories.check_tree(trait_root)
-        union_root = self.fixture(
-            views=self.baseline_views()
-            + "pub union UnsupportedUnion { integer: u32, floating: f32 }\n",
-            frontend_lib="pub mod views;\npub use views::UnsupportedUnion;\n",
-            seam_types=seam_types,
-        )
+        union_root = self.fixture(views=self.baseline_views()
+        + "pub union UnsupportedUnion { integer: u32, floating: f32 }\n",
+        frontend_lib="pub mod views;\npub use views::UnsupportedUnion;\n", )
         union_errors = inventories.check_tree(union_root)
         print(f"GOOD non-value SlotSurface trait: {trait_errors}")
         print(f"BAD unsupported value union: {union_errors}")
@@ -2171,48 +1901,34 @@ pub struct FleetView<'a> {
             any("unsupported public seam type syntax (UNION)" in error for error in union_errors)
         )
 
-    def test_candidate_cannot_select_parser_or_change_supported_edition(self) -> None:
-        root = self.fixture(
-            views=self.baseline_views(),
-            seam_types=(("FleetCounts", "scalar"), ("FleetView", "borrowed")),
-        )
-        inventory_path = root / inventories.DATA_DIR_RELATIVE / inventories.INVENTORY_RELATIVE
-        raw = json.loads(inventory_path.read_text(encoding="utf-8"))
-        raw["parser_version"] = "attacker-selected"
-        inventory_path.write_text(json.dumps(raw), encoding="utf-8")
-        schema_errors = inventories.check_tree(root)
-        self.assertTrue(any("top-level fields must be exactly" in error for error in schema_errors))
-
-        raw.pop("parser_version")
-        inventory_path.write_text(json.dumps(raw), encoding="utf-8")
+    def test_script_edition_must_match_parser_adapter(self) -> None:
+        root = self.fixture(views=self.baseline_views())
         manifest = root / "crates" / "script" / "Cargo.toml"
-        manifest.write_text(manifest.read_text(encoding="utf-8").replace("2021", "2024"), encoding="utf-8")
-        edition_errors = inventories.check_tree(root)
-        self.assertTrue(any("parser adapter requires edition 2021" in error for error in edition_errors))
+        manifest.write_text(
+            manifest.read_text(encoding="utf-8").replace("2021", "2024"),
+            encoding="utf-8",
+        )
+        errors = inventories.check_tree(root)
+        self.assertTrue(
+            any("parser adapter requires edition 2021" in error for error in errors),
+            errors,
+        )
 
 
 
     def test_nested_use_trees_resolve_each_type_import(self) -> None:
-        root = self.fixture(
-            views=self.baseline_views()
-            + "use api::{first::Count, second::{Width, Depth as D}};\n"
-            + "#[derive(Clone, Copy)]\n"
-            + "pub struct UsesNested { count: Count, width: Width, depth: D }\n",
-            seam_types=(
-                ("FleetCounts", "scalar"),
-                ("FleetView", "borrowed"),
-                ("UsesNested", "scalar"),
-            ),
-            workspace_files={
-                "crates/api/src/lib.rs": (
-                    "pub mod first { #[derive(Clone, Copy)] pub struct Count(u64); }\n"
-                    "pub mod second {\n"
-                    "    #[derive(Clone, Copy)] pub struct Width(u64);\n"
-                    "    #[derive(Clone, Copy)] pub struct Depth(u64);\n"
-                    "}\n"
-                )
-            },
-        )
+        root = self.fixture(views=self.baseline_views()
+        + "use api::{first::Count, second::{Width, Depth as D}};\n"
+        + "#[derive(Clone, Copy)]\n"
+        + "pub struct UsesNested { count: Count, width: Width, depth: D }\n", workspace_files={
+            "crates/api/src/lib.rs": (
+                "pub mod first { #[derive(Clone, Copy)] pub struct Count(u64); }\n"
+                "pub mod second {\n"
+                "    #[derive(Clone, Copy)] pub struct Width(u64);\n"
+                "    #[derive(Clone, Copy)] pub struct Depth(u64);\n"
+                "}\n"
+            )
+        },)
         self.assertEqual(inventories.check_tree(root), [])
 
     def test_super_path_cannot_escape_workspace_crate_root(self) -> None:
@@ -2221,15 +1937,7 @@ pub struct FleetView<'a> {
             views=self.baseline_views(),
             workspace_files={"crates/api/src/lib.rs": api_lib},
         )
-        candidate = self.fixture(
-            views=self.baseline_views() + "pub type EscapesRoot = super::super::api::Id;\n",
-            seam_types=(
-                ("FleetCounts", "scalar"),
-                ("FleetView", "borrowed"),
-                ("EscapesRoot", "scalar"),
-            ),
-            workspace_files={"crates/api/src/lib.rs": api_lib},
-        )
+        candidate = self.fixture(views=self.baseline_views() + "pub type EscapesRoot = super::super::api::Id;\n", workspace_files={"crates/api/src/lib.rs": api_lib},)
         self.assertEqual(inventories.check_tree(base), [])
         errors = inventories.check_tree(candidate)
         self.assertTrue(
@@ -2251,45 +1959,32 @@ pub struct FleetView<'a> {
         )
 
     def test_binding_multiplicity_distinguishes_convergence_and_conflicts(self) -> None:
-        base_seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"), ("Uses", "scalar"))
         api_types = (
             "pub mod values { #[derive(Clone, Copy)] pub struct Scalar(u64); }\n"
             "pub mod owned { #[derive(Clone)] pub struct Payload(pub Vec<u8>); }\n"
             "pub mod plain { #[derive(Clone, Copy)] pub struct Payload(u64); }\n"
         )
-        base = self.fixture(
-            views=self.baseline_views() + "#[derive(Clone, Copy)]\npub struct Uses { value: u64 }\n",
-            seam_types=base_seams,
-            workspace_files={
-                "crates/api/src/lib.rs": api_types
-                + "#[derive(Clone, Copy)]\npub struct State { value: values::Scalar }\n"
-            },
-        )
-        same_target = self.fixture(
-            views=self.baseline_views() + "#[derive(Clone, Copy)]\npub struct Uses { value: api::State }\n",
-            seam_types=base_seams,
-            workspace_files={
-                "crates/api/src/lib.rs": api_types
-                + "#[cfg(feature = \"left\")]\n"
-                "use crate::values::Scalar as Value;\n"
-                "#[cfg(not(feature = \"left\"))]\n"
-                "use crate::values::Scalar as Value;\n"
-                "#[derive(Clone, Copy)]\npub struct State { value: Value }\n"
-            },
-        )
+        base = self.fixture(views=self.baseline_views() + "#[derive(Clone, Copy)]\npub struct Uses { value: u64 }\n", workspace_files={
+            "crates/api/src/lib.rs": api_types
+            + "#[derive(Clone, Copy)]\npub struct State { value: values::Scalar }\n"
+        },)
+        same_target = self.fixture(views=self.baseline_views() + "#[derive(Clone, Copy)]\npub struct Uses { value: api::State }\n", workspace_files={
+            "crates/api/src/lib.rs": api_types
+            + "#[cfg(feature = \"left\")]\n"
+            "use crate::values::Scalar as Value;\n"
+            "#[cfg(not(feature = \"left\"))]\n"
+            "use crate::values::Scalar as Value;\n"
+            "#[derive(Clone, Copy)]\npub struct State { value: Value }\n"
+        },)
         self.assertEqual(inventories.check_tree(base), [])
         self.assertEqual(inventories.check_tree(same_target), [])
 
-        conflict = self.fixture(
-            views=self.baseline_views()
-            + "#[cfg(feature = \"owned\")]\n"
-            "use api::owned::Payload as Payload;\n"
-            "#[cfg(not(feature = \"owned\"))]\n"
-            "use api::plain::Payload as Payload;\n"
-            "#[derive(Clone, Copy)]\npub struct Uses { value: Payload }\n",
-            seam_types=base_seams,
-            workspace_files={"crates/api/src/lib.rs": api_types},
-        )
+        conflict = self.fixture(views=self.baseline_views()
+        + "#[cfg(feature = \"owned\")]\n"
+        "use api::owned::Payload as Payload;\n"
+        "#[cfg(not(feature = \"owned\"))]\n"
+        "use api::plain::Payload as Payload;\n"
+        "#[derive(Clone, Copy)]\npub struct Uses { value: Payload }\n", workspace_files={"crates/api/src/lib.rs": api_types},)
         conflict_errors = inventories.check_tree(conflict)
         self.assertTrue(
             any("ambiguous" in error and "Payload" in error for error in conflict_errors),
@@ -2297,11 +1992,7 @@ pub struct FleetView<'a> {
         )
 
     def test_cfg_disjoint_local_import_collisions_refuse_d5b_and_d6(self) -> None:
-        seam_types = (
-            ("FleetCounts", "scalar"),
-            ("FleetView", "borrowed"),
-            ("AttackView", "borrowed"),
-        )
+        
         attack_prefix = (
             self.baseline_views()
             + "#[derive(Clone)]\npub struct AttackView {\n"
@@ -2334,16 +2025,8 @@ pub struct FleetView<'a> {
         }
         for row, (base_api, candidate_api, collision) in cases.items():
             with self.subTest(row=row):
-                base = self.fixture(
-                    views=attack_prefix.replace("api::State", "u64"),
-                    seam_types=seam_types,
-                    workspace_files={"crates/api/src/lib.rs": base_api},
-                )
-                candidate = self.fixture(
-                    views=attack_prefix,
-                    seam_types=seam_types,
-                    workspace_files={"crates/api/src/lib.rs": candidate_api},
-                )
+                base = self.fixture(views=attack_prefix.replace("api::State", "u64"), workspace_files={"crates/api/src/lib.rs": base_api},)
+                candidate = self.fixture(views=attack_prefix, workspace_files={"crates/api/src/lib.rs": candidate_api},)
                 self.assertEqual(inventories.check_tree(base), [])
                 errors = inventories.check_tree(candidate)
                 self.assertTrue(
@@ -2352,11 +2035,7 @@ pub struct FleetView<'a> {
                 )
 
     def test_extern_crate_std_core_rebindings_refuse_k1_k3_k4_k5(self) -> None:
-        seam_types = (
-            ("FleetCounts", "scalar"),
-            ("FleetView", "borrowed"),
-            ("AttackView", "borrowed"),
-        )
+        
         std_view = (
             self.baseline_views()
             + "#[derive(Clone)]\npub struct AttackView {\n"
@@ -2376,11 +2055,7 @@ pub struct FleetView<'a> {
             + "#[derive(Clone)]\npub struct AttackView {\n"
             "    pub label: &'static str,\n    pub payload: api::State,\n}\n"
         )
-        base = self.fixture(
-            views=std_view,
-            seam_types=seam_types,
-            workspace_files={"crates/api/src/lib.rs": wrapping_api + k4_base_api},
-        )
+        base = self.fixture(views=std_view, workspace_files={"crates/api/src/lib.rs": wrapping_api + k4_base_api},)
         self.assertEqual(inventories.check_tree(base), [])
 
         cases = {
@@ -2419,17 +2094,12 @@ pub struct FleetView<'a> {
         }
         for row, (views, frontend_lib, api_lib, expected) in cases.items():
             with self.subTest(row=row):
-                candidate = self.fixture(
-                    views=views,
-                    frontend_lib=frontend_lib,
-                    seam_types=seam_types,
-                    workspace_files={"crates/api/src/lib.rs": api_lib},
-                )
+                candidate = self.fixture(views=views,
+                frontend_lib=frontend_lib, workspace_files={"crates/api/src/lib.rs": api_lib},)
                 errors = inventories.check_tree(candidate)
                 self.assertTrue(any(expected in error for error in errors), errors)
 
     def test_extern_crate_nonreserved_bindings_fail_closed(self) -> None:
-        base_seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"))
         base = self.clean_fixture(views=self.baseline_views())
         cases = {
             "plain root binding": (
@@ -2437,7 +2107,6 @@ pub struct FleetView<'a> {
                 "extern crate api;\npub mod views;\n",
                 "#[derive(Clone, Copy)]\npub struct Id(u64);\n",
                 "extern crate binding api is unsupported",
-                base_seams,
             ),
             "consulted private renamed binding": (
                 "mod nested { extern crate api as helper; pub struct State { value: u64 } }\n"
@@ -2446,106 +2115,94 @@ pub struct FleetView<'a> {
                 "pub mod views;\n",
                 "",
                 "extern crate binding helper is unsupported",
-                base_seams + (("Uses", "scalar"),),
             ),
             "workspace self alias": (
                 self.baseline_views() + "pub type Uses = api::Id;\n",
                 "pub mod views;\n",
                 "extern crate self as helper;\n#[derive(Clone, Copy)]\npub struct Id(u64);\n",
                 "extern crate binding helper is unsupported",
-                base_seams + (("Uses", "scalar"),),
             ),
         }
         self.assertEqual(inventories.check_tree(base), [])
-        for row, (views, frontend_lib, api_lib, expected, seams) in cases.items():
+        for row, (views, frontend_lib, api_lib, expected) in cases.items():
             with self.subTest(row=row):
                 candidate = self.fixture(
                     views=views,
                     frontend_lib=frontend_lib,
-                    seam_types=seams,
                     workspace_files={"crates/api/src/lib.rs": api_lib},
                 )
                 errors = inventories.check_tree(candidate)
                 self.assertTrue(any(expected in error for error in errors), errors)
         unconsulted = self.fixture(
-            views="mod nested { extern crate api as helper; }\n" + self.baseline_views(),
-            seam_types=base_seams,
+            views="mod nested { extern crate api as helper; }\n" + self.baseline_views()
         )
         self.assertEqual(inventories.check_tree(unconsulted), [])
 
     def test_type_namespace_nonvalues_generic_aliases_and_unnamed_items_fail_closed(self) -> None:
-        base_seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"))
         base = self.clean_fixture(views=self.baseline_views())
         cases = {
             "generic alias": (
                 self.baseline_views() + "pub type Alias<T> = Vec<T>;\n",
-                base_seams + (("Alias", "scalar"),),
                 "generic public type aliases are unsupported",
             ),
             "trait used as a field type": (
                 self.baseline_views()
                 + "pub trait Surface {}\n"
                 "#[derive(Clone, Copy)]\npub struct Uses { value: Surface }\n",
-                base_seams + (("Uses", "scalar"),),
                 "public seam field path is a trait, not a value (Surface)",
             ),
             "const used as a field type": (
                 self.baseline_views()
                 + "pub const Surface: u8 = 0;\n"
                 "#[derive(Clone, Copy)]\npub struct Uses { value: Surface }\n",
-                base_seams + (("Uses", "scalar"),),
                 "public seam field path is a value, not a type (Surface)",
             ),
             "static used as a field type": (
                 self.baseline_views()
                 + "pub static Surface: u8 = 0;\n"
                 "#[derive(Clone, Copy)]\npub struct Uses { value: Surface }\n",
-                base_seams + (("Uses", "scalar"),),
                 "public seam field path is a value, not a type (Surface)",
             ),
             "function used as a field type": (
                 self.baseline_views()
                 + "pub fn Surface() {}\n"
                 "#[derive(Clone, Copy)]\npub struct Uses { value: Surface }\n",
-                base_seams + (("Uses", "scalar"),),
                 "public seam field path is a value, not a type (Surface)",
             ),
             "module used as a field type": (
                 self.baseline_views()
                 + "pub mod Surface {}\n"
                 "#[derive(Clone, Copy)]\npub struct Uses { value: Surface }\n",
-                base_seams + (("Uses", "scalar"),),
                 "field path resolves to module, not a type (Surface)",
             ),
             "unnamed public struct": (
                 self.baseline_views() + "pub struct { value: u8 }\n",
-                base_seams,
                 "public struct has no supported name",
             ),
             "unnamed public enum": (
                 self.baseline_views() + "pub enum { Value }\n",
-                base_seams,
                 "public enum has no supported name",
             ),
         }
         self.assertEqual(inventories.check_tree(base), [])
-        for row, (views, seams, expected) in cases.items():
+        for row, (views, expected) in cases.items():
             with self.subTest(row=row):
-                candidate = self.fixture(views=views, seam_types=seams)
+                candidate = self.fixture(views=views)
                 errors = inventories.check_tree(candidate)
                 self.assertTrue(any(expected in error for error in errors), errors)
 
         opaque = self.fixture(
             views=self.baseline_views()
             + "#[derive(Clone, Copy)]\npub struct Uses { value: api::Opaque }\n",
-            seam_types=base_seams + (("Uses", "scalar"),),
             workspace_files={"crates/api/src/lib.rs": "extern type Opaque;\n"},
         )
         opaque_errors = inventories.check_tree(opaque)
         self.assertTrue(
-            any("Opaque" in error and ("unresolved" in error or "unsupported" in error) for error in opaque_errors),
+            any("Opaque" in error and ("unresolved" in error or "unsupported" in error)
+                for error in opaque_errors),
             opaque_errors,
         )
+
 
     def test_cfg_attr_binding_changes_are_refused_on_module_use_extern_and_macros(self) -> None:
         base = self.clean_fixture(views=self.baseline_views())
@@ -2614,9 +2271,8 @@ pub struct FleetView<'a> {
                 self.assertTrue(any(expected in error for error in errors), errors)
 
     def test_opaque_nonpath_attribute_effects_are_not_blanket_refused(self) -> None:
-        seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"), ("Opaque", "scalar"))
         declaration = "#[derive(Clone, Copy)]\npub struct Opaque(u64);\n"
-        base = self.fixture(views=self.baseline_views() + declaration, seam_types=seams)
+        base = self.fixture(views=self.baseline_views() + declaration)
         cases = {
             "opaque item attribute": "#[opaque]\n" + declaration,
             "opaque cfg_attr effect": '#[cfg_attr(feature="x", opaque)]\n' + declaration,
@@ -2624,10 +2280,7 @@ pub struct FleetView<'a> {
         self.assertEqual(inventories.check_tree(base), [])
         for row, source in cases.items():
             with self.subTest(row=row):
-                candidate = self.fixture(
-                    views=self.baseline_views() + source,
-                    seam_types=seams,
-                )
+                candidate = self.fixture(views=self.baseline_views() + source)
                 self.assertEqual(inventories.check_tree(candidate), [])
 
     def test_path_module_attributes_are_validated_and_confined(self) -> None:
@@ -2660,25 +2313,18 @@ pub struct FleetView<'a> {
                 self.assertTrue(any(expected in error for error in errors), errors)
 
     def test_absolute_std_field_and_import_paths_resolve(self) -> None:
-        base_seams = (
-            ("FleetCounts", "scalar"),
-            ("FleetView", "borrowed"),
-            ("UsesAbsolute", "scalar"),
-        )
         base = self.fixture(
-            views=self.baseline_views() + "#[derive(Clone, Copy)]\npub struct UsesAbsolute { value: u64 }\n",
-            seam_types=base_seams,
+            views=self.baseline_views()
+            + "#[derive(Clone, Copy)]\npub struct UsesAbsolute { value: u64 }\n"
         )
         absolute_field = self.fixture(
             views=self.baseline_views()
-            + "#[derive(Clone, Copy)]\npub struct UsesAbsolute { value: ::std::num::Wrapping<u64> }\n",
-            seam_types=base_seams,
+            + "#[derive(Clone, Copy)]\npub struct UsesAbsolute { value: ::std::num::Wrapping<u64> }\n"
         )
         absolute_import = self.fixture(
             views=self.baseline_views()
             + "use ::std::num::Wrapping;\n"
-            "#[derive(Clone, Copy)]\npub struct UsesAbsolute { value: Wrapping<u64> }\n",
-            seam_types=base_seams,
+            "#[derive(Clone, Copy)]\npub struct UsesAbsolute { value: Wrapping<u64> }\n"
         )
         self.assertEqual(inventories.check_tree(base), [])
         for row, candidate in {
@@ -2689,41 +2335,54 @@ pub struct FleetView<'a> {
                 self.assertEqual(inventories.check_tree(candidate), [])
 
     def test_absolute_paths_ignore_local_shadow_bindings(self) -> None:
-        seams = (
-            ("FleetCounts", "scalar"),
-            ("FleetView", "borrowed"),
-            ("AbsoluteView", "borrowed"),
-        )
         api = "#[derive(Clone)] pub struct Payload(pub Vec<u8>);\n"
         shadow = "mod api { pub struct Payload(pub u64); }\n"
         for spelling in ("::api::Payload", "ExternalPayload"):
             with self.subTest(spelling=spelling):
-                use = "use ::api::Payload as ExternalPayload;\n" if spelling == "ExternalPayload" else ""
+                use = (
+                    "use ::api::Payload as ExternalPayload;\n"
+                    if spelling == "ExternalPayload"
+                    else ""
+                )
                 candidate = self.fixture(
-                    views=self.baseline_views() + shadow + use
-                    + f"#[derive(Clone)] pub struct AbsoluteView {{ pub label: &'static str, pub payload: {spelling} }}\n",
-                    seam_types=seams,
+                    views=self.baseline_views()
+                    + shadow
+                    + use
+                    + "#[derive(Clone)] pub struct AbsoluteView { "
+                    f"label: &'static str, payload: {spelling} }}\n",
                     workspace_files={"crates/api/src/lib.rs": api},
                 )
                 errors = inventories.check_tree(candidate)
-                self.assertTrue(any("seam classification disagrees" in error for error in errors), errors)
+                self.assertTrue(
+                    any(
+                        "owning seam derives Clone" in error and "AbsoluteView" in error
+                        for error in errors
+                    ),
+                    errors,
+                )
 
         local_std = (
             "mod std { pub mod num { #[derive(Clone)] pub struct Wrapping<T>(pub Vec<T>); } }\n"
         )
         absolute_std = self.fixture(
-            views=self.baseline_views() + local_std
-            + "#[derive(Clone, Copy)] pub struct UsesStd { pub value: ::std::num::Wrapping<u64> }\n",
-            seam_types=seams[:2] + (("UsesStd", "scalar"),),
+            views=self.baseline_views()
+            + local_std
+            + "#[derive(Clone, Copy)] pub struct UsesStd { value: ::std::num::Wrapping<u64> }\n"
         )
         self.assertEqual(inventories.check_tree(absolute_std), [])
         relative_std = self.fixture(
-            views=self.baseline_views() + local_std
-            + "#[derive(Clone)] pub struct UsesStd { pub value: std::num::Wrapping<u64> }\n",
-            seam_types=seams[:2] + (("UsesStd", "scalar"),),
+            views=self.baseline_views()
+            + local_std
+            + "#[derive(Clone)] pub struct UsesStd { value: std::num::Wrapping<u64> }\n"
         )
-        self.assertTrue(any("seam classification disagrees" in error
-                            for error in inventories.check_tree(relative_std)))
+        relative_errors = inventories.check_tree(relative_std)
+        self.assertTrue(
+            any(
+                "owning seam derives Clone" in error and "UsesStd" in error
+                for error in relative_errors
+            ),
+            relative_errors,
+        )
 
     def test_consulted_generic_type_defaults_fail_closed(self) -> None:
         api_lib = (
@@ -2743,16 +2402,8 @@ pub struct FleetView<'a> {
         for label, payload in cases.items():
             with self.subTest(case=label):
                 errors = inventories.check_tree(
-                    self.fixture(
-                        views=self.baseline_views()
-                        + f"#[derive(Clone)] pub struct AttackView {{ pub label: &'static str, pub payload: {payload} }}\n",
-                        seam_types=(
-                            ("FleetCounts", "scalar"),
-                            ("FleetView", "borrowed"),
-                            ("AttackView", "borrowed"),
-                        ),
-                        workspace_files={"crates/api/src/lib.rs": api_lib},
-                    )
+                    self.fixture(views=self.baseline_views()
+                    + f"#[derive(Clone)] pub struct AttackView {{ pub label: &'static str, pub payload: {payload} }}\n", workspace_files={"crates/api/src/lib.rs": api_lib},)
                 )
                 self.assertTrue(
                     any("generic type defaults are unsupported" in error for error in errors),
@@ -2760,25 +2411,15 @@ pub struct FleetView<'a> {
                 )
 
         frontend_errors = inventories.check_tree(
-            self.fixture(
-                views=self.baseline_views(),
-                frontend_lib=(
-                    "pub mod views;\n"
-                    "#[derive(Clone)] pub struct FrontDefault<T = Vec<u8>> { pub x: T }\n"
-                ),
-                frontend_files={
-                    VIEWS_PATH: self.baseline_views()
-                    + "#[derive(Clone)] pub struct AttackView { pub label: &'static str, pub payload: crate::FrontDefault }\n"
-                },
-                seam_types=(
-                    ("FleetCounts", "scalar"),
-                    ("FleetView", "borrowed"),
-                    ("AttackView", "borrowed"),
-                ),
-                additional_seam_types=(
-                    _seam("FrontDefault", "borrowed", "crates/frontend-core/src/lib.rs"),
-                ),
-            )
+            self.fixture(views=self.baseline_views(),
+            frontend_lib=(
+                "pub mod views;\n"
+                "#[derive(Clone)] pub struct FrontDefault<T = Vec<u8>> { pub x: T }\n"
+            ),
+            frontend_files={
+                VIEWS_PATH: self.baseline_views()
+                + "#[derive(Clone)] pub struct AttackView { pub label: &'static str, pub payload: crate::FrontDefault }\n"
+            }, )
         )
         self.assertTrue(
             any("generic type defaults are unsupported" in error for error in frontend_errors),
@@ -2786,43 +2427,20 @@ pub struct FleetView<'a> {
         )
 
         direct_frontend = inventories.check_tree(
-            self.fixture(
-                views=self.baseline_views()
-                + "#[derive(Clone)] pub struct AttackView<T = Vec<u8>> { pub label: &'static str, pub x: T }\n",
-                seam_types=(
-                    ("FleetCounts", "scalar"),
-                    ("FleetView", "borrowed"),
-                    ("AttackView", "borrowed"),
-                ),
-            )
+            self.fixture(views=self.baseline_views()
+            + "#[derive(Clone)] pub struct AttackView<T = Vec<u8>> { pub label: &'static str, pub x: T }\n", )
         )
         self.assertTrue(
             any("generic type defaults are unsupported" in error for error in direct_frontend),
             direct_frontend,
         )
 
-        base = self.fixture(
-            views=self.baseline_views()
-            + "#[derive(Clone)] pub struct AttackView { pub label: &'static str, pub payload: api::Wrap }\n",
-            seam_types=(
-                ("FleetCounts", "scalar"),
-                ("FleetView", "borrowed"),
-                ("AttackView", "borrowed"),
-            ),
-            workspace_files={
-                "crates/api/src/lib.rs": "#[derive(Clone)] pub struct Wrap<T = u64> { pub x: T }\n"
-            },
-        )
-        candidate = self.fixture(
-            views=self.baseline_views()
-            + "#[derive(Clone)] pub struct AttackView { pub label: &'static str, pub payload: api::Wrap }\n",
-            seam_types=(
-                ("FleetCounts", "scalar"),
-                ("FleetView", "borrowed"),
-                ("AttackView", "borrowed"),
-            ),
-            workspace_files={"crates/api/src/lib.rs": api_lib},
-        )
+        base = self.fixture(views=self.baseline_views()
+        + "#[derive(Clone)] pub struct AttackView { pub label: &'static str, pub payload: api::Wrap }\n", workspace_files={
+            "crates/api/src/lib.rs": "#[derive(Clone)] pub struct Wrap<T = u64> { pub x: T }\n"
+        },)
+        candidate = self.fixture(views=self.baseline_views()
+        + "#[derive(Clone)] pub struct AttackView { pub label: &'static str, pub payload: api::Wrap }\n", workspace_files={"crates/api/src/lib.rs": api_lib},)
         candidate_errors = inventories.check_tree(candidate)
         self.assertTrue(
             any("generic type defaults are unsupported" in error for error in candidate_errors),
@@ -2830,32 +2448,15 @@ pub struct FleetView<'a> {
         )
 
         unrelated = inventories.check_tree(
-            self.fixture(
-                views=self.baseline_views()
-                + "#[derive(Clone, Copy)] pub struct Unrelated { value: u64 }\n",
-                seam_types=(
-                    ("FleetCounts", "scalar"),
-                    ("FleetView", "borrowed"),
-                    ("Unrelated", "scalar"),
-                ),
-                workspace_files={"crates/api/src/lib.rs": api_lib},
-            )
+            self.fixture(views=self.baseline_views()
+            + "#[derive(Clone, Copy)] pub struct Unrelated { value: u64 }\n", workspace_files={"crates/api/src/lib.rs": api_lib},)
         )
         self.assertEqual(unrelated, [])
 
         alias_errors = inventories.check_tree(
-            self.fixture(
-                views=self.baseline_views()
-                + "pub type BareAlias = api::Wrap;\n"
-                "#[derive(Clone)] pub struct AttackView { pub label: &'static str, pub payload: BareAlias }\n",
-                seam_types=(
-                    ("FleetCounts", "scalar"),
-                    ("FleetView", "borrowed"),
-                    ("BareAlias", "owning"),
-                    ("AttackView", "borrowed"),
-                ),
-                workspace_files={"crates/api/src/lib.rs": api_lib},
-            )
+            self.fixture(views=self.baseline_views()
+            + "pub type BareAlias = api::Wrap;\n"
+            "#[derive(Clone)] pub struct AttackView { pub label: &'static str, pub payload: BareAlias }\n", workspace_files={"crates/api/src/lib.rs": api_lib},)
         )
         self.assertTrue(
             any("generic type defaults are unsupported" in error for error in alias_errors),
@@ -2863,20 +2464,12 @@ pub struct FleetView<'a> {
         )
 
         explicit = inventories.check_tree(
-            self.fixture(
-                views=self.baseline_views()
-                + "#[derive(Clone, Copy)] pub struct AttackView { pub payload: api::Wrap<u64> }\n",
-                seam_types=(
-                    ("FleetCounts", "scalar"),
-                    ("FleetView", "borrowed"),
-                    ("AttackView", "borrowed"),
-                ),
-                workspace_files={
-                    "crates/api/src/lib.rs": (
-                        "#[derive(Clone, Copy)] pub struct Wrap<T: 'static> { pub x: &'static T }\n"
-                    )
-                },
-            )
+            self.fixture(views=self.baseline_views()
+            + "#[derive(Clone, Copy)] pub struct AttackView { pub payload: api::Wrap<u64> }\n", workspace_files={
+                "crates/api/src/lib.rs": (
+                    "#[derive(Clone, Copy)] pub struct Wrap<T: 'static> { pub x: &'static T }\n"
+                )
+            },)
         )
         self.assertEqual(explicit, [])
 
@@ -2885,35 +2478,33 @@ pub struct FleetView<'a> {
             "pub mod evil { #[derive(Clone)] pub struct Wrapping(pub Vec<u8>); }\n"
             "pub mod noise { #[derive(Clone, Copy)] pub struct Other(pub u64); }\n"
         )
-        seam_types = (
-            ("FleetCounts", "scalar"),
-            ("FleetView", "borrowed"),
-            ("AttackView", "borrowed"),
-        )
-        root_seam = (_seam("Wrapping", "borrowed", "crates/frontend-core/src/lib.rs"),)
         shadowed = self.fixture(
-            views="use api::evil::*;\n" + self.baseline_views()
-            + "#[derive(Clone)] pub struct AttackView { pub label: &'static str, pub payload: Wrapping }\n",
+            views="use api::evil::*;\n"
+            + self.baseline_views()
+            + "#[derive(Clone)] pub struct AttackView { "
+            "label: &'static str, payload: Wrapping }\n",
             frontend_lib=(
                 "pub mod views;\n"
                 "#[derive(Clone)] pub struct Wrapping { pub label: &'static str }\n"
             ),
-            seam_types=seam_types,
-            additional_seam_types=root_seam,
             workspace_files={"crates/api/src/lib.rs": api},
         )
         errors = inventories.check_tree(shadowed)
-        self.assertTrue(any("seam classification disagrees" in error for error in errors), errors)
+        self.assertTrue(
+            any("owning seam derives Clone" in error and "AttackView" in error
+                for error in errors),
+            errors,
+        )
 
         unrelated_glob = self.fixture(
-            views="use api::noise::*;\n" + self.baseline_views()
-            + "#[derive(Clone)] pub struct AttackView { pub label: &'static str, pub payload: Wrapping }\n",
+            views="use api::noise::*;\n"
+            + self.baseline_views()
+            + "#[derive(Clone)] pub struct AttackView { "
+            "label: &'static str, payload: Wrapping }\n",
             frontend_lib=(
                 "pub mod views;\n"
                 "#[derive(Clone)] pub struct Wrapping { pub label: &'static str }\n"
             ),
-            seam_types=seam_types,
-            additional_seam_types=root_seam,
             workspace_files={"crates/api/src/lib.rs": api},
         )
         self.assertEqual(inventories.check_tree(unrelated_glob), [])
@@ -2921,18 +2512,11 @@ pub struct FleetView<'a> {
         multi_segment = self.fixture(
             views="use api::evil::*;\n"
             + self.baseline_views()
-            + "#[derive(Clone)] pub struct AttackView { pub label: &'static str, pub payload: num::Wrapping }\n",
+            + "#[derive(Clone)] pub struct AttackView { "
+            "label: &'static str, payload: num::Wrapping }\n",
             frontend_lib=(
                 "pub mod views;\n"
                 "pub mod num { #[derive(Clone, Copy)] pub struct Wrapping { pub value: u64 } }\n"
-            ),
-            seam_types=(
-                ("FleetCounts", "scalar"),
-                ("FleetView", "borrowed"),
-                ("AttackView", "borrowed"),
-            ),
-            additional_seam_types=(
-                _seam("num::Wrapping", "borrowed", "crates/frontend-core/src/lib.rs"),
             ),
             workspace_files={
                 "crates/api/src/lib.rs": (
@@ -2943,7 +2527,10 @@ pub struct FleetView<'a> {
         )
         multi_errors = inventories.check_tree(multi_segment)
         self.assertTrue(
-            any("seam classification disagrees" in error for error in multi_errors),
+            any(
+                "owning seam derives Clone" in error and "AttackView" in error
+                for error in multi_errors
+            ),
             multi_errors,
         )
 
@@ -2960,16 +2547,8 @@ pub struct FleetView<'a> {
         for import_stmt in imports:
             with self.subTest(imports=import_stmt):
                 errors = inventories.check_tree(
-                    self.fixture(
-                        views=import_stmt + self.baseline_views()
-                        + "#[derive(Clone)] pub struct AttackView { pub label: &'static str, pub payload: std::num::Wrapping }\n",
-                        seam_types=(
-                            ("FleetCounts", "scalar"),
-                            ("FleetView", "borrowed"),
-                            ("AttackView", "borrowed"),
-                        ),
-                        workspace_files={"crates/api/src/lib.rs": api},
-                    )
+                    self.fixture(views=import_stmt + self.baseline_views()
+                    + "#[derive(Clone)] pub struct AttackView { pub label: &'static str, pub payload: std::num::Wrapping }\n", workspace_files={"crates/api/src/lib.rs": api},)
                 )
                 self.assertTrue(
                     any("seam field type std::num::Wrapping" in error for error in errors),
@@ -2978,64 +2557,50 @@ pub struct FleetView<'a> {
 
 
         standard = inventories.check_tree(
-            self.fixture(
-                views=self.baseline_views()
-                + "#[derive(Clone)] pub struct AttackView { pub label: &'static str, pub payload: std::num::Wrapping<u64> }\n",
-                seam_types=(
-                    ("FleetCounts", "scalar"),
-                    ("FleetView", "borrowed"),
-                    ("AttackView", "borrowed"),
-                ),
-            )
+            self.fixture(views=self.baseline_views()
+            + "#[derive(Clone)] pub struct AttackView { pub label: &'static str, pub payload: std::num::Wrapping<u64> }\n", )
         )
         self.assertEqual(standard, [])
 
     def test_glob_import_shadows_multisegment_std_path_or_refuses_unknown(self) -> None:
-        seams = (
-            ("FleetCounts", "scalar"),
-            ("FleetView", "borrowed"),
-            ("GlobView", "borrowed"),
-        )
         body = self.baseline_views() + (
             "pub mod evil { pub mod std { pub mod num {\n"
             "    #[derive(Clone)] pub struct Wrapping(pub Vec<u8>);\n"
             "} } }\n"
             "use self::evil::*;\n"
-            "#[derive(Clone)] pub struct GlobView { pub label: &'static str,"
-            " pub payload: std::num::Wrapping }\n"
+            "#[derive(Clone)] pub struct GlobView { label: &'static str,"
+            " payload: std::num::Wrapping }\n"
         )
-        candidate = self.fixture(
-            views=body,
-            seam_types=seams + (("views::evil::std::num::Wrapping", "owning"),),
-        )
+        candidate = self.fixture(views=body)
         errors = inventories.check_tree(candidate)
-        self.assertTrue(any("seam classification disagrees" in error for error in errors), errors)
+        self.assertTrue(
+            any(
+                "owning seam derives Clone" in error and "GlobView" in error
+                for error in errors
+            ),
+            errors,
+        )
         unknown = self.fixture(
             views=self.baseline_views()
             + "use absent::*;\n"
-            "#[derive(Clone)] pub struct GlobView { pub label: &'static str, pub payload: Option<u64> }\n",
-            seam_types=seams,
+            "#[derive(Clone)] pub struct GlobView { label: &'static str, payload: Option<u64> }\n"
         )
-        self.assertTrue(any("ambiguous cfg/alternative seam field type" in error
-                            for error in inventories.check_tree(unknown)))
+        self.assertTrue(
+            any(
+                "ambiguous cfg/alternative seam field type" in error
+                for error in inventories.check_tree(unknown)
+            )
+        )
 
     def test_macro_generated_workspace_items_fail_closed(self) -> None:
-        seam_types = (
-            ("FleetCounts", "scalar"),
-            ("FleetView", "borrowed"),
-            ("AttackView", "borrowed"),
-        )
+        
         base_api = "#[derive(Clone, Copy)]\npub struct State { payload: u64 }\n"
         base_views = (
             self.baseline_views()
             + "#[derive(Clone)]\npub struct AttackView {\n"
             "    pub label: &'static str,\n    pub payload: u64,\n}\n"
         )
-        base = self.fixture(
-            views=base_views,
-            seam_types=seam_types,
-            workspace_files={"crates/api/src/lib.rs": base_api},
-        )
+        base = self.fixture(views=base_views, workspace_files={"crates/api/src/lib.rs": base_api},)
         cases = {
             "macro definition": (
                 "macro_rules! make_type {\n"
@@ -3052,16 +2617,13 @@ pub struct FleetView<'a> {
         self.assertEqual(inventories.check_tree(base), [])
         for row, (api_lib, expected) in cases.items():
             with self.subTest(row=row):
-                candidate = self.fixture(
-                    views=base_views.replace("payload: u64", "payload: api::State"),
-                    seam_types=seam_types,
-                    workspace_files={"crates/api/src/lib.rs": api_lib},
-                )
+                candidate = self.fixture(views=base_views.replace("payload: u64", "payload: api::State"), workspace_files={"crates/api/src/lib.rs": api_lib},)
                 errors = inventories.check_tree(candidate)
                 self.assertTrue(
                     any(expected in error and "consulted for a seam field type" in error for error in errors),
                     errors,
                 )
+
 
     def test_direct_macro_binding_attributes_refuse(self) -> None:
         base = self.clean_fixture(views=self.baseline_views())
@@ -3086,7 +2648,6 @@ pub struct FleetView<'a> {
         self.assertEqual(inventories.check_tree(unrelated), [])
 
     def test_unsupported_field_type_syntax_refuses_macro_and_pointer_forms(self) -> None:
-        base_seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"), ("Uses", "scalar"))
         base = self.clean_fixture(views=self.baseline_views())
         cases = {
             "type macro": ("pub struct Uses { value: type_macro!() }\n", "MACRO_TYPE"),
@@ -3124,10 +2685,7 @@ pub struct FleetView<'a> {
         self.assertEqual(inventories.check_tree(base), [])
         for row, (source, syntax) in cases.items():
             with self.subTest(row=row):
-                candidate = self.fixture(
-                    views=self.baseline_views() + source,
-                    seam_types=base_seams,
-                )
+                candidate = self.fixture(views=self.baseline_views() + source, )
                 errors = inventories.check_tree(candidate)
                 self.assertTrue(
                     any(f"unsupported field type syntax ({syntax})" in error for error in errors),
@@ -3178,141 +2736,85 @@ pub struct FleetView<'a> {
         self.assertEqual(inventories.check_tree(unrelated_predicate), [])
 
     def test_generic_const_self_and_associated_type_bindings(self) -> None:
-        base_seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"))
         base = self.clean_fixture(views=self.baseline_views())
         cases = {
             "bare generic parameter": (
                 "#[derive(Clone, Copy)]\npub struct Uses<T> { value: T }\n",
                 "unresolved generic field ownership (T)",
-                (("Uses", "scalar"),),
             ),
             "generic associated path": (
                 "pub trait HasItem { type Item; }\n"
                 "#[derive(Clone)]\npub struct Uses<T: HasItem> { value: T::Item }\n",
                 "unresolved generic field ownership (T)",
-                (("Uses", "scalar"),),
             ),
             "generic inside Option": (
                 "#[derive(Clone, Copy)]\npub struct Uses<T> { value: Option<T> }\n",
                 "unresolved generic field ownership (T)",
-                (("Uses", "scalar"),),
             ),
             "Self field": (
                 "pub struct UsesSelf { value: Self }\n",
                 "unsupported Self/associated seam field type",
-                (("UsesSelf", "scalar"),),
             ),
             "Self inside generic argument": (
                 "pub struct UsesSelf { value: Option<Self> }\n",
                 "unsupported Self/associated seam field type",
-                (("UsesSelf", "scalar"),),
             ),
             "Self associated path": (
                 "pub struct UsesSelf { value: Self::Item }\n",
                 "unsupported Self/associated seam field type",
-                (("UsesSelf", "scalar"),),
             ),
             "qualified associated projection": (
                 "pub trait HasItem { type Item; }\n"
                 "#[derive(Clone)]\n"
                 "pub struct Uses<T: HasItem> { value: <T as HasItem>::Item }\n",
                 "unsupported qualified associated field type",
-                (("Uses", "scalar"),),
             ),
         }
         self.assertEqual(inventories.check_tree(base), [])
-        for row, (source, expected, extra_seams) in cases.items():
+        for row, (source, expected) in cases.items():
             with self.subTest(row=row):
-                candidate = self.fixture(
-                    views=self.baseline_views() + source,
-                    seam_types=base_seams + extra_seams,
-                )
+                candidate = self.fixture(views=self.baseline_views() + source)
                 errors = inventories.check_tree(candidate)
                 self.assertTrue(any(expected in error for error in errors), errors)
 
-        fixed_seams = base_seams + (("Fixed", "scalar"), ("UsesConst", "scalar"))
         fixed_head = (
             self.baseline_views()
             + "#[derive(Clone, Copy)]\npub struct Fixed<const N: usize> { bytes: [u8; N] }\n"
         )
         fixed_base = self.fixture(
-            views=fixed_head + "#[derive(Clone, Copy)]\npub struct UsesConst { fixed: Fixed<4> }\n",
-            seam_types=fixed_seams,
+            views=fixed_head
+            + "#[derive(Clone, Copy)]\npub struct UsesConst { fixed: Fixed<4> }\n"
         )
         fixed_braced = self.fixture(
-            views=fixed_head + "#[derive(Clone, Copy)]\npub struct UsesConst { fixed: Fixed<{4}> }\n",
-            seam_types=fixed_seams,
+            views=fixed_head
+            + "#[derive(Clone, Copy)]\npub struct UsesConst { fixed: Fixed<{4}> }\n"
         )
         self.assertEqual(inventories.check_tree(fixed_base), [])
         self.assertEqual(inventories.check_tree(fixed_braced), [])
 
-    def test_restricted_visibility_does_not_create_an_exported_seam(self) -> None:
-        base_seams = (("FleetCounts", "scalar"), ("FleetView", "borrowed"))
-        public = self.fixture(
-            views=self.baseline_views() + "#[derive(Clone, Copy)]\npub struct Visible(u64);\n",
-            seam_types=base_seams + (("Visible", "scalar"),),
-        )
-        self.assertEqual(inventories.check_tree(public), [])
-        for visibility in ("pub(crate)", "pub(super)", "pub(in crate::views)"):
-            with self.subTest(visibility=visibility):
-                restricted = self.fixture(
-                    views=self.baseline_views()
-                    + f"#[derive(Clone, Copy)]\n{visibility} struct Restricted(u64);\n",
-                    seam_types=base_seams + (("Restricted", "scalar"),),
-                )
-                errors = inventories.check_tree(restricted)
-                self.assertTrue(
-                    any(f"stale seam type classification: {VIEWS_PATH}::Restricted" in error for error in errors),
-                    errors,
-                )
-
     def test_raw_identifier_type_and_import_names_normalize_consistently(self) -> None:
-        root = self.fixture(
-            views=self.baseline_views()
-            + "#[derive(Clone, Copy)]\npub struct r#widget(u64);\n"
-            "use self::r#widget as r#renamed_widget;\n"
-            "pub type UsesRawAlias = r#renamed_widget;\n",
-            seam_types=(
-                ("FleetCounts", "scalar"),
-                ("FleetView", "borrowed"),
-                ("widget", "scalar"),
-                ("UsesRawAlias", "scalar"),
-            ),
-        )
+        root = self.fixture(views=self.baseline_views()
+        + "#[derive(Clone, Copy)]\npub struct r#widget(u64);\n"
+        "use self::r#widget as r#renamed_widget;\n"
+        "pub type UsesRawAlias = r#renamed_widget;\n", )
         self.assertEqual(inventories.check_tree(root), [])
 
     def test_local_std_module_and_import_alias_paths_resolve(self) -> None:
-        base_seams = (
-            ("FleetCounts", "scalar"),
-            ("FleetView", "borrowed"),
-            ("UsesStd", "scalar"),
-        )
         api_lib = "pub mod num { #[derive(Clone, Copy)] pub struct Wrapping(u64); }\n"
-        base = self.fixture(
-            views=self.baseline_views() + "#[derive(Clone, Copy)]\npub struct UsesStd { value: u64 }\n",
-            seam_types=base_seams,
-            workspace_files={"crates/api/src/lib.rs": api_lib},
-        )
-        import_alias = self.fixture(
-            views=self.baseline_views()
-            + "use api as api_alias;\n"
-            "#[derive(Clone, Copy)]\npub struct UsesStd { value: api_alias::num::Wrapping }\n",
-            seam_types=base_seams,
-            workspace_files={"crates/api/src/lib.rs": api_lib},
-        )
+        base = self.fixture(views=self.baseline_views() + "#[derive(Clone, Copy)]\npub struct UsesStd { value: u64 }\n", workspace_files={"crates/api/src/lib.rs": api_lib},)
+        import_alias = self.fixture(views=self.baseline_views()
+        + "use api as api_alias;\n"
+        "#[derive(Clone, Copy)]\npub struct UsesStd { value: api_alias::num::Wrapping }\n", workspace_files={"crates/api/src/lib.rs": api_lib},)
         self.assertEqual(inventories.check_tree(base), [])
         self.assertEqual(inventories.check_tree(import_alias), [])
 
-        local_module = self.fixture(
-            views=self.baseline_views()
-            + "pub mod std {\n"
-            "    pub mod num {\n"
-            "        #[derive(Clone, Copy)] pub struct Wrapping(u64);\n"
-            "    }\n"
-            "}\n"
-            "#[derive(Clone, Copy)]\npub struct UsesStd { value: std::num::Wrapping }\n",
-            seam_types=base_seams + (("views::std::num::Wrapping", "scalar"),),
-        )
+        local_module = self.fixture(views=self.baseline_views()
+        + "pub mod std {\n"
+        "    pub mod num {\n"
+        "        #[derive(Clone, Copy)] pub struct Wrapping(u64);\n"
+        "    }\n"
+        "}\n"
+        "#[derive(Clone, Copy)]\npub struct UsesStd { value: std::num::Wrapping }\n", )
         self.assertEqual(inventories.check_tree(local_module), [])
 
     def test_reserved_crate_name_import_aliases_refuse(self) -> None:

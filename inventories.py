@@ -1,7 +1,8 @@
-"""Syntax-aware seam and navigation inventories for the architecture check.
+"""Syntax-aware seam and navigation checks for the architecture boundary.
 
-Rust source comes from the checked tree. Product-owned registries are loaded
-from that tree; syntax errors and source disagreement fail closed.
+Rust source comes from the checked tree. External foreign-type classifications
+come from that tree; protected seam exceptions ship with the checker. Syntax
+errors and source disagreement fail closed.
 """
 
 from __future__ import annotations
@@ -25,12 +26,12 @@ RUST_EDITION = "2021"
 PARSER_VERSION = "rust-analyzer 0.3.3081-standalone"
 PARSER_SHA256 = "fd89304c85f6c1996b036ea8f2c9ad9d3e25a197dbd713661c7fe51ec9dc8e49"
 DATA_DIR_RELATIVE = Path("tools/architecture")
-INVENTORY_RELATIVE = Path("inventories.json")
 FOREIGN_TYPES_RELATIVE = Path("foreign_types.json")
 FOREIGN_TOP_FIELDS = frozenset({"schema_version", "foreign_types"})
 FOREIGN_ROW_FIELDS = frozenset({"path", "classification", "reason"})
 FOREIGN_PATH_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(?:::[A-Za-z_][A-Za-z0-9_]*)+")
 FOREIGN_PATH_RESERVED_ROOTS = frozenset({"crate", "self", "super", "Self"})
+SEAM_EXCEPTIONS_PATH = Path(__file__).with_name("seam-exceptions.json")
 VIEWS_RELATIVE = Path("crates/frontend-core/src/views.rs")
 FRONTEND_SRC_RELATIVE = Path("crates/frontend-core/src")
 # Each tuple covers the native core and the JS surface. A missing root is
@@ -44,37 +45,24 @@ SCRIPT_AUX_RELATIVE = (
 SCRIPT_SRC_PREFIXES = tuple(f"{relative.as_posix()}/" for relative in SCRIPT_SRC_RELATIVE)
 SCRIPT_TESTS_PREFIXES = tuple(f"{relative.as_posix()}/" for relative in SCRIPT_TESTS_RELATIVE)
 
-OWNERS = frozenset({"T3", "T5"})
-ENDPOINTS = frozenset({"T3.1", "T5.1"})
 TYPE_CLASSIFICATIONS = frozenset({"owning", "borrowed", "scalar"})
-VIOLATION_CATEGORIES = frozenset(
-    {
-        "owning_public_field",
-        "owning_derived_clone",
-        "owning_explicit_clone",
-        "production_nav_implementation_import",
-        "test_nav_implementation_import",
-        "transitive_raw_representation_exposure",
-    }
+SEAM_EXCEPTION_FIELDS = frozenset(
+    {"category", "path", "symbol", "cfg_or_target", "classification", "reason"}
 )
-EXCEPTION_CATEGORIES = frozenset({"test_import_exception"})
-TYPE_FIELDS = frozenset(
-    {"id", "path", "symbol", "classification", "owner", "reason"}
-)
-RECORD_FIELDS = frozenset(
-    {
-        "id",
-        "category",
-        "path",
-        "symbol",
-        "cfg_or_target",
-        "owner",
-        "reason",
-        "removal_endpoint",
-        "classification",
-    }
-)
-TOP_FIELDS = frozenset({"schema_version", "seam_types", "violations", "test_exceptions"})
+PROTECTED_SEAM_EXCEPTION_COUNT = 27
+PROTECTED_SEAM_EXCEPTION_CLASSIFICATIONS = {
+    "owning_public_field": frozenset({"public_field_of_owning_view"}),
+    "owning_derived_clone": frozenset({"derived_Clone_on_owning_view"}),
+    "test_nav_implementation_import": frozenset({"qualified_path", "macro_token_path"}),
+}
+VIOLATION_RULE_NAMES = {
+    "owning_public_field": "owning seam exposes a public field",
+    "owning_derived_clone": "owning seam derives Clone",
+    "owning_explicit_clone": "owning seam implements Clone",
+    "production_nav_implementation_import": "production imports nav implementation detail",
+    "test_nav_implementation_import": "test imports nav implementation detail",
+    "transitive_raw_representation_exposure": "public API exposes raw navigation representation",
+}
 
 # §21 §5.3 grants test implementation access only to these precise modules or
 # integration-test targets. The path and scope must match the checked source.
@@ -112,112 +100,6 @@ RAW_NAV_MODULES = frozenset(
     }
 )
 RAW_NAV_ROOT_SYMBOLS = frozenset({"WorldState"})
-BASELINE_SEAM_CLASSIFICATIONS = {
-    "FleetCounts": "scalar",
-    "FleetRow": "owning",
-    "FleetView": "borrowed",
-    "Light": "scalar",
-    "OpBrief": "owning",
-    "Phase": "scalar",
-    "QueuePlace": "scalar",
-    "ScriptPhase": "borrowed",
-    "SlotDetail": "owning",
-}
-TRUSTED_SEAM_TYPE_CLASSES = {
-    ("crates/frontend-core/src/bulk.rs", "BulkOutcome"): "owning",
-    ("crates/frontend-core/src/bulk.rs", "BulkRow"): "owning",
-    ("crates/frontend-core/src/bulk.rs", "BulkReport"): "owning",
-    ("crates/frontend-core/src/capacity.rs", "CapacityNotice"): "owning",
-    ("crates/frontend-core/src/fleet.rs", "Fleet"): "owning",
-    ("crates/frontend-core/src/group_walk.rs", "WalkInputs"): "owning",
-    ("crates/frontend-core/src/group_walk.rs", "MarkedWalk"): "owning",
-    ("crates/frontend-core/src/log.rs", "Clock"): "scalar",
-    ("crates/frontend-core/src/log.rs", "LogEntry"): "owning",
-    ("crates/frontend-core/src/log.rs", "LogScope"): "owning",
-    ("crates/frontend-core/src/log.rs", "LogFilter"): "owning",
-    ("crates/frontend-core/src/log.rs", "LogView"): "owning",
-    ("crates/frontend-core/src/log.rs", "LogStore"): "owning",
-    ("crates/frontend-core/src/log.rs", "SaveTicket"): "owning",
-    ("crates/frontend-core/src/log_file.rs", "Rotation"): "scalar",
-    ("crates/frontend-core/src/log_file.rs", "SessionLogFile"): "owning",
-    ("crates/frontend-core/src/map_bake.rs", "MapBakeChoice"): "scalar",
-    ("crates/frontend-core/src/map_bake.rs", "MapBakePrompt"): "scalar",
-    ("crates/frontend-core/src/map_bake.rs", "MapBakeGate"): "owning",
-    ("crates/frontend-core/src/marked.rs", "MarkedCommandReport"): "owning",
-    ("crates/frontend-core/src/marked.rs", "RestartScope"): "owning",
-    ("crates/frontend-core/src/nav_prefs.rs", "NavPreference"): "scalar",
-    ("crates/frontend-core/src/operations.rs", "OperationId"): "scalar",
-    ("crates/frontend-core/src/operations.rs", "ActionKind"): "scalar",
-    ("crates/frontend-core/src/operations.rs", "Outcome"): "owning",
-    ("crates/frontend-core/src/operations.rs", "MemberOutcome"): "owning",
-    ("crates/frontend-core/src/operations.rs", "OperationReport"): "owning",
-    ("crates/frontend-core/src/profile_form.rs", "FormNotice"): "owning",
-    ("crates/frontend-core/src/profile_form.rs", "SavedProfile"): "owning",
-    ("crates/frontend-core/src/profile_form.rs", "FailedSave"): "owning",
-    ("crates/frontend-core/src/profile_form.rs", "FormSettled"): "owning",
-    ("crates/frontend-core/src/profile_form.rs", "ProfileFormSave"): "owning",
-    ("crates/frontend-core/src/profile_saves.rs", "WriteFailure"): "owning",
-    ("crates/frontend-core/src/profile_saves.rs", "SaveRecord"): "owning",
-    ("crates/frontend-core/src/profile_saves.rs", "SaveResult"): "owning",
-    ("crates/frontend-core/src/profile_saves.rs", "SaveSettled"): "owning",
-    ("crates/frontend-core/src/quester_paths.rs", "QuesterPathsView"): "owning",
-    ("crates/frontend-core/src/quester_paths.rs", "QuesterPathsController"): "owning",
-    ("crates/frontend-core/src/resources.rs", "Metric"): "owning",
-    ("crates/frontend-core/src/resources.rs", "ResourceView"): "owning",
-    ("crates/frontend-core/src/resources.rs", "ProcessProbe"): "scalar",
-    ("crates/frontend-core/src/scripts/mod.rs", "LiveSettings"): "owning",
-    ("crates/frontend-core/src/scripts/mod.rs", "LiveDelivery"): "owning",
-    ("crates/frontend-core/src/scripts/mod.rs", "SettingsResult"): "owning",
-    ("crates/frontend-core/src/scripts/mod.rs", "SettingsWrite"): "owning",
-    ("crates/frontend-core/src/scripts/mod.rs", "Notice"): "owning",
-    ("crates/frontend-core/src/scripts/mod.rs", "BrowseCard"): "borrowed",
-    ("crates/frontend-core/src/scripts/mod.rs", "Scripts"): "owning",
-    ("crates/frontend-core/src/scripts/native.rs", "SchemaView"): "borrowed",
-    ("crates/frontend-core/src/scripts/native.rs", "NativeCommand"): "scalar",
-    ("crates/frontend-core/src/scripts/native.rs", "NativeTarget"): "owning",
-    ("crates/frontend-core/src/scripts/native.rs", "NativeDetail"): "owning",
-    ("crates/frontend-core/src/scripts/parameter_edit.rs", "ParameterOptions"): "owning",
-    ("crates/frontend-core/src/scripts/parameter_edit.rs", "ParameterEditKey"): "owning",
-    ("crates/frontend-core/src/scripts/parameter_edit.rs", "ParameterCommit"): "scalar",
-    ("crates/frontend-core/src/scripts/reload.rs", "ReloadWarning"): "owning",
-    ("crates/frontend-core/src/scripts/reload.rs", "PendingReloadKind"): "owning",
-    ("crates/frontend-core/src/scripts/reload.rs", "PendingReload"): "owning",
-    ("crates/frontend-core/src/scripts/reload.rs", "ReloadOutcome"): "owning",
-    ("crates/frontend-core/src/scripts/sync.rs", "RestartPrompt"): "owning",
-    ("crates/frontend-core/src/scripts/sync.rs", "SyncScope"): "owning",
-    ("crates/frontend-core/src/scripts/sync.rs", "SyncReport"): "owning",
-    ("crates/frontend-core/src/selection.rs", "ProfileIdentity"): "scalar",
-    ("crates/frontend-core/src/selection.rs", "MarkedSelection"): "owning",
-    ("crates/frontend-core/src/selection.rs", "BulkSkip"): "owning",
-    ("crates/frontend-core/src/selection.rs", "StopReport"): "owning",
-    ("crates/frontend-core/src/session.rs", "Transition"): "owning",
-    ("crates/frontend-core/src/session.rs", "SlotTransition"): "owning",
-    ("crates/frontend-core/src/session.rs", "Selection"): "owning",
-    ("crates/frontend-core/src/session.rs", "Removal"): "owning",
-    ("crates/frontend-core/src/session.rs", "ScriptStart"): "owning",
-    ("crates/frontend-core/src/session.rs", "StartSettled"): "owning",
-    ("crates/frontend-core/src/session.rs", "ArmMirror"): "owning",
-    ("crates/frontend-core/src/session.rs", "MemoryNotice"): "scalar",
-    ("crates/frontend-core/src/session.rs", "OperatorSession"): "owning",
-    ("crates/frontend-core/src/surface.rs", "SlotAttach"): "owning",
-    ("crates/frontend-core/src/surface.rs", "HeadlessSurface"): "owning",
-    ("crates/frontend-core/src/views.rs", "Phase"): "scalar",
-    ("crates/frontend-core/src/views.rs", "QueuePlace"): "scalar",
-    ("crates/frontend-core/src/views.rs", "Light"): "scalar",
-    ("crates/frontend-core/src/views.rs", "OpBrief"): "owning",
-    ("crates/frontend-core/src/views.rs", "FleetRow"): "owning",
-    ("crates/frontend-core/src/views.rs", "FleetCounts"): "scalar",
-    ("crates/frontend-core/src/views.rs", "SlotDetail"): "owning",
-    ("crates/frontend-core/src/views.rs", "ScriptPhase"): "borrowed",
-    ("crates/frontend-core/src/views.rs", "FleetView"): "borrowed",
-    ("crates/frontend-core/src/walk_permissions.rs", "WalkGlobalsView"): "scalar",
-    ("crates/frontend-core/src/capacity.rs", "CapacityWarning"): "scalar",
-    ("crates/frontend-core/src/capacity.rs", "RenderPolicyLabel"): "scalar",
-    ("crates/frontend-core/src/log.rs", "Level"): "scalar",
-    ("crates/frontend-core/src/log.rs", "Record"): "borrowed",
-    ("crates/frontend-core/src/log.rs", "Source"): "scalar",
-    ("crates/frontend-core/src/walk_permissions.rs", "DangerLevel"): "scalar",
-}
 
 # Built-in foreign classifications are checker rules. New external seam types
 # must be classified in the checked tree's tools/architecture/foreign_types.json.
@@ -1459,7 +1341,8 @@ def _walk_ast(
     kind = node.get("kind")
     next_scope = scope
     next_stack = module_stack
-    if kind in {"MODULE", "FN", "STRUCT", "ENUM", "TYPE_ALIAS", "CONST", "STATIC", "USE"}:
+    # A test-only item macro does not bind production seam field types.
+    if kind in {"MODULE", "FN", "STRUCT", "ENUM", "TYPE_ALIAS", "CONST", "STATIC", "USE", "MACRO_CALL"}:
         next_scope = _scope_for_node(node, scope, module_stack)
     if kind == "MODULE":
         name = _module_name(node)
@@ -1891,7 +1774,6 @@ def _type_definitions(
     strict: bool = False,
     include_private: bool = False,
     field_ownership: Any = None,
-    baseline_names: bool = True,
 ) -> dict[_TypeKey, dict[str, Any]]:
     definitions: dict[_TypeKey, dict[str, Any]] = {}
     for item, scope, module_stack, parent_kind, _ in _walk_ast(tree, "production", ()):
@@ -2010,15 +1892,6 @@ def _type_definitions(
             if borrowed_field
             else "scalar"
         )
-        trusted_class = TRUSTED_SEAM_TYPE_CLASSES.get(
-            (path, symbol),
-            BASELINE_SEAM_CLASSIFICATIONS.get(name) if baseline_names else None,
-        )
-        if trusted_class is not None and trusted_class != classification:
-            raise _InventoryError(
-                f"{path}::{symbol}: trusted seam classification is {trusted_class}, "
-                f"syntax implies {classification}"
-            )
         definitions[key] = {
             "name": name,
             "fields": fields,
@@ -2065,19 +1938,19 @@ def _seam_records(
     consulted_foreign: set[str],
     workspace_crates: dict[str, _WorkspaceCrate],
     planner_roots: frozenset[str],
-) -> tuple[dict[_TypeKey, str], set[_RecordKey], list[str]]:
+) -> tuple[set[_RecordKey], list[str]]:
     try:
         executable = _parser_executable()
     except _InventoryError as error:
-        return {}, set(), [f"parser: {error}"]
+        return set(), [f"parser: {error}"]
     parsed, parse_errors = _read_frontend_files(root, executable)
     if parse_errors:
-        return {}, set(), parse_errors
+        return set(), parse_errors
     modules, module_children, module_errors, module_cfgs = _crate_module_sources(
         parsed, FRONTEND_SRC_RELATIVE / "lib.rs", "frontend-core"
     )
     if module_errors:
-        return {}, set(), module_errors
+        return set(), module_errors
     frontend_modules = tuple(modules)
 
     type_items: dict[tuple[tuple[str, ...], str], dict[str, Any]] = {}
@@ -2714,7 +2587,6 @@ def _seam_records(
                     symbol_prefix=symbol_prefix,
                     include_private=True,
                     field_ownership=field_ownership,
-                    baseline_names=not crate_root(module_path),
                 )
                 if len(found) != 1:
                     raise _InventoryError(
@@ -2726,21 +2598,6 @@ def _seam_records(
             resolving_types.remove(origin)
             raise
         resolving_types.remove(origin)
-        expected = TRUSTED_SEAM_TYPE_CLASSES.get(
-            (
-                file_key,
-                (
-                    f"{'::'.join(module_path)}::{name}"
-                    if modules[module_path][2]
-                    else name
-                ),
-            )
-        )
-        if expected is not None and expected != classification:
-            raise _InventoryError(
-                f"{file_key}::{name}: trusted seam classification is {expected}, "
-                f"syntax implies {classification}"
-            )
         type_classes[origin] = classification
         type_definitions[origin] = definition
         return classification
@@ -2938,16 +2795,6 @@ def _seam_records(
             "derived_clone": False,
         }
 
-    classifications = {
-        key: definition["classification"] for key, definition in definitions.items()
-    }
-    for key, classification in classifications.items():
-        expected = TRUSTED_SEAM_TYPE_CLASSES.get((key.path, key.symbol))
-        if expected is not None and expected != classification:
-            errors.add(
-                f"{key.path}::{key.symbol}: trusted seam classification is {expected}, "
-                f"syntax implies {classification}"
-            )
 
     def provenance(*parts: tuple[str, ...]) -> str:
         return _cfg_label(tuple(dict.fromkeys(predicate for part in parts for predicate in part)))
@@ -2989,7 +2836,7 @@ def _seam_records(
                     "explicit_Clone_on_owning_view",
                 )
             )
-    return classifications, violations, sorted(errors)
+    return violations, sorted(errors)
 
 
 def _cfg_for_scope(path: str, node_scope: str) -> str:
@@ -3164,20 +3011,19 @@ def _script_records(
     root: Path,
     planner_roots: frozenset[str],
     executor_roots: frozenset[str],
-) -> tuple[set[_RecordKey], set[_RecordKey], list[str]]:
+) -> tuple[set[_RecordKey], list[str]]:
     errors: list[str] = []
     try:
         executable = _parser_executable()
     except _InventoryError as error:
-        return set(), set(), [f"parser: {error}"]
+        return set(), [f"parser: {error}"]
     parsed, parse_errors = _read_rust_files(root, executable)
     errors.extend(parse_errors)
     if errors:
-        return set(), set(), errors
+        return set(), errors
     root_scopes, scope_errors = _root_test_scopes(parsed)
     errors.extend(scope_errors)
     imports: set[_RecordKey] = set()
-    exceptions: set[_RecordKey] = set()
     nav_roots = planner_roots | executor_roots
 
     for path, entry in sorted(parsed.items()):
@@ -3205,19 +3051,10 @@ def _script_records(
                 )
                 return
             if _is_exception_scope(path, actual_scope):
-                exceptions.add(
-                    _RecordKey(
-                        "test_import_exception",
-                        path,
-                        symbol,
-                        actual_scope,
-                        "exact_test_fixture_oracle_import",
-                    )
-                )
-            else:
-                imports.add(
-                    _RecordKey(category, path, symbol, actual_scope, classification)
-                )
+                return
+            imports.add(
+                _RecordKey(category, path, symbol, actual_scope, classification)
+            )
 
         for node, scope, _, parent_kind, in_use in _walk_ast(tree, root_scope, ()):
             kind = node.get("kind")
@@ -3281,14 +3118,7 @@ def _script_records(
             )
         )
 
-    # Imports in modules outside the contract's exact test targets remain
-    # ordinary migration debt; there is no file-wide test exemption.
-    for key in exceptions:
-        if key.path not in TEST_EXCEPTION_TARGETS or key.cfg_or_target not in TEST_EXCEPTION_TARGETS[key.path]:
-            errors.append(
-                f"{key.path}: test exception is outside the exact §21 §5.3 target list"
-            )
-    return imports, exceptions, errors
+    return imports, errors
 
 
 def _expected_id(key: _RecordKey) -> str:
@@ -3297,12 +3127,16 @@ def _expected_id(key: _RecordKey) -> str:
     )
 
 
-def _expected_type_id(key: _TypeKey) -> str:
-    return f"seam_type|{key.path}|{key.symbol}"
 
 
 def _relative_source_path(value: Any) -> bool:
-    if not isinstance(value, str) or not value or "\\" in value:
+    if (
+        not isinstance(value, str)
+        or not value
+        or "\\" in value
+        or "\n" in value
+        or "\r" in value
+    ):
         return False
     path = Path(value)
     return (
@@ -3313,127 +3147,95 @@ def _relative_source_path(value: Any) -> bool:
     )
 
 
-def _validate_inventory_shape(
-    raw: Any, executor_roots: frozenset[str]
-) -> tuple[dict[str, Any] | None, list[str]]:
-    errors: list[str] = []
-    if not isinstance(raw, dict) or set(raw) != TOP_FIELDS:
-        return None, ["inventory schema: top-level fields must be exactly schema_version, seam_types, violations, test_exceptions"]
-    if type(raw["schema_version"]) is not int or raw["schema_version"] != 1:
-        errors.append("inventory schema: schema_version must be integer 1")
-    for name in ("seam_types", "violations", "test_exceptions"):
-        if not isinstance(raw[name], list):
-            errors.append(f"inventory schema: {name} must be an array")
-    if errors:
-        return None, errors
-
-    seen_ids: set[str] = set()
-    seen_keys: set[tuple[Any, ...]] = set()
-    for index, row in enumerate(raw["seam_types"]):
-        where = f"seam_types[{index}]"
-        if not isinstance(row, dict) or set(row) != TYPE_FIELDS:
-            errors.append(f"inventory schema: {where} has unknown or missing fields")
-            continue
-        record_id = row.get("id")
-        if not isinstance(record_id, str) or not record_id.strip():
-            errors.append(f"inventory schema: {where}.id must be nonblank")
-            continue
-        if record_id in seen_ids:
-            errors.append(f"inventory schema: duplicate id {record_id}")
-        seen_ids.add(record_id)
-        path, symbol = row.get("path"), row.get("symbol")
-        if not _relative_source_path(path) or not isinstance(symbol, str) or not symbol.strip():
-            errors.append(f"inventory schema: {where} needs exact path and symbol")
-        classification = row.get("classification")
-        if classification not in TYPE_CLASSIFICATIONS:
-            errors.append(f"inventory schema: {where} has unknown seam classification")
-        if row.get("owner") != "T3":
-            errors.append(f"inventory schema: {where} owner must be T3")
-        if not isinstance(row.get("reason"), str) or not row["reason"].strip():
-            errors.append(f"inventory schema: {where} reason must be nonblank")
-        key = (path, symbol)
-        if key in seen_keys:
-            errors.append(f"inventory schema: duplicate matching seam type {path}::{symbol}")
-        seen_keys.add(key)
-        if record_id != _expected_type_id(_TypeKey(path or "", symbol or "")):
-            errors.append(f"inventory schema: {where}.id is not the stable path/symbol id")
-
-    for list_name in ("violations", "test_exceptions"):
-        allowed_categories = VIOLATION_CATEGORIES if list_name == "violations" else EXCEPTION_CATEGORIES
-        for index, row in enumerate(raw[list_name]):
-            where = f"{list_name}[{index}]"
-            if not isinstance(row, dict) or set(row) != RECORD_FIELDS:
-                errors.append(f"inventory schema: {where} has unknown or missing fields")
-                continue
-            record_id = row.get("id")
-            if not isinstance(record_id, str) or not record_id.strip():
-                errors.append(f"inventory schema: {where}.id must be nonblank")
-                continue
-            if record_id in seen_ids:
-                errors.append(f"inventory schema: duplicate id {record_id}")
-            seen_ids.add(record_id)
-            category = row.get("category")
-            if category not in allowed_categories:
-                errors.append(f"inventory schema: {where} has unknown category")
-            path, symbol = row.get("path"), row.get("symbol")
-            if not _relative_source_path(path) or not isinstance(symbol, str) or not symbol.strip():
-                errors.append(f"inventory schema: {where} needs exact path and symbol")
-            cfg = row.get("cfg_or_target")
-            if not isinstance(cfg, str) or not cfg.strip() or "*" in cfg:
-                errors.append(f"inventory schema: {where}.cfg_or_target must be exact and nonblank")
-            if row.get("owner") != ("T3" if category in {"owning_public_field", "owning_derived_clone", "owning_explicit_clone"} else "T5"):
-                errors.append(f"inventory schema: {where} has unknown or incorrect owner")
-            if not isinstance(row.get("reason"), str) or not row["reason"].strip():
-                errors.append(f"inventory schema: {where}.reason must be nonblank")
-            endpoint = row.get("removal_endpoint")
-            expected_endpoint = "T3.1" if row.get("owner") == "T3" else "T5.1"
-            if endpoint not in ENDPOINTS or endpoint != expected_endpoint:
-                errors.append(f"inventory schema: {where} has unknown or incorrect removal endpoint")
-            classification = row.get("classification")
-            if not isinstance(classification, str) or not classification.strip():
-                errors.append(f"inventory schema: {where}.classification must be nonblank")
-            key = (category, path, symbol, cfg, classification)
-            if key in seen_keys:
-                errors.append(f"inventory schema: duplicate matching record {key}")
-            seen_keys.add(key)
-            if record_id != _expected_id(
-                _RecordKey(
-                    str(category or ""),
-                    str(path or ""),
-                    str(symbol or ""),
-                    str(cfg or ""),
-                    str(classification or ""),
-                )
-            ):
-                errors.append(f"inventory schema: {where}.id is not the stable path/symbol id")
-            if list_name == "test_exceptions":
-                if isinstance(symbol, str) and any(
-                    segment in executor_roots for segment in symbol.split("::")
-                ):
-                    errors.append(
-                        "inventory schema: test exception may not name the executor crate"
-                    )
-                allowed_scopes = TEST_EXCEPTION_TARGETS.get(str(path), frozenset())
-                if category != "test_import_exception" or cfg not in allowed_scopes:
-                    errors.append(f"inventory schema: {where} is not an exact §21 §5.3 test exception")
-    return raw, errors
-
-
-def _load_inventory(
-    root: Path, executor_roots: frozenset[str]
-) -> tuple[dict[str, Any] | None, list[str]]:
-    relative = DATA_DIR_RELATIVE / INVENTORY_RELATIVE
-    path = root / relative
-    if _traverses_symlink(root, relative):
-        return None, [f"inventory: {relative.as_posix()} must not traverse a symlink"]
+def _load_seam_exceptions() -> tuple[dict[_RecordKey, str], list[str]]:
     try:
         raw = json.loads(
-            path.read_text(encoding="utf-8"),
+            SEAM_EXCEPTIONS_PATH.read_text(encoding="utf-8"),
             object_pairs_hook=_object_without_duplicate_keys,
         )
     except (OSError, UnicodeError, RecursionError, json.JSONDecodeError, _InventoryError) as error:
-        return None, [f"inventory: cannot load {relative.as_posix()}: {error}"]
-    return _validate_inventory_shape(raw, executor_roots)
+        return {}, [f"protected seam exceptions: cannot load {SEAM_EXCEPTIONS_PATH.name}: {error}"]
+    if not isinstance(raw, list):
+        return {}, [f"protected seam exceptions: {SEAM_EXCEPTIONS_PATH.name} must contain an array"]
+
+    errors: list[str] = []
+    if len(raw) != PROTECTED_SEAM_EXCEPTION_COUNT:
+        errors.append(
+            "protected seam exceptions: expected exactly "
+            f"{PROTECTED_SEAM_EXCEPTION_COUNT} entries, found {len(raw)}"
+        )
+    exceptions: dict[_RecordKey, str] = {}
+    for index, row in enumerate(raw):
+        where = f"protected seam exceptions[{index}]"
+        if not isinstance(row, dict) or set(row) != SEAM_EXCEPTION_FIELDS:
+            errors.append(f"{where} has unknown or missing fields")
+            continue
+        category = row.get("category")
+        path = row.get("path")
+        symbol = row.get("symbol")
+        cfg = row.get("cfg_or_target")
+        classification = row.get("classification")
+        reason = row.get("reason")
+        valid = True
+        if (
+            not isinstance(category, str)
+            or category not in PROTECTED_SEAM_EXCEPTION_CLASSIFICATIONS
+        ):
+            errors.append(f"{where}.category is not an allowed protected rule")
+            valid = False
+        if not _relative_source_path(path):
+            errors.append(f"{where}.path must be an exact relative Rust source path")
+            valid = False
+        if (
+            not isinstance(symbol, str)
+            or not symbol.strip()
+            or "*" in symbol
+            or "\n" in symbol
+            or "\r" in symbol
+        ):
+            errors.append(f"{where}.symbol must be exact and nonblank")
+            valid = False
+        if (
+            not isinstance(cfg, str)
+            or not cfg.strip()
+            or "*" in cfg
+            or "\n" in cfg
+            or "\r" in cfg
+        ):
+            errors.append(f"{where}.cfg_or_target must be exact and nonblank")
+            valid = False
+        allowed_classifications = (
+            PROTECTED_SEAM_EXCEPTION_CLASSIFICATIONS.get(category, frozenset())
+            if isinstance(category, str)
+            else frozenset()
+        )
+        if not isinstance(classification, str) or classification not in allowed_classifications:
+            errors.append(f"{where}.classification is not valid for its protected rule")
+            valid = False
+        if (
+            not isinstance(reason, str)
+            or not reason.strip()
+            or "\n" in reason
+            or "\r" in reason
+        ):
+            errors.append(f"{where}.reason must be a nonblank single line")
+            valid = False
+        if not valid:
+            continue
+        key = _RecordKey(category, path, symbol, cfg, classification)
+        if key in exceptions:
+            errors.append(f"{where} duplicates protected exception {_expected_id(key)}")
+        else:
+            exceptions[key] = reason
+
+    if errors:
+        return {}, errors
+    if len(exceptions) != PROTECTED_SEAM_EXCEPTION_COUNT:
+        return {}, [
+            "protected seam exceptions: expected exactly "
+            f"{PROTECTED_SEAM_EXCEPTION_COUNT} unique entries, found {len(exceptions)}"
+        ]
+    return exceptions, []
 
 
 
@@ -3445,14 +3247,12 @@ def _analyze_tree(root: Path) -> list[str]:
         errors.append(f"navigation crate roots: {error}")
         planner_roots = frozenset({"nav_planner"})
         executor_roots = frozenset({"nav_executor"})
-    inventory, shape_errors = _load_inventory(root, executor_roots)
-    errors.extend(shape_errors)
     workspace_crates, workspace_errors = _workspace_crates(root)
     errors.extend(workspace_errors)
     foreign_rows, foreign_errors = _load_foreign_types(root, frozenset(workspace_crates))
     errors.extend(foreign_errors)
     consulted_foreign: set[str] = set()
-    classifications, seam_violations, seam_errors = _seam_records(
+    seam_violations, seam_errors = _seam_records(
         root,
         {**TRUSTED_FOREIGN_TYPE_CLASSES, **foreign_rows},
         consulted_foreign,
@@ -3460,74 +3260,21 @@ def _analyze_tree(root: Path) -> list[str]:
         planner_roots,
     )
     errors.extend(seam_errors)
-    nav_violations, nav_exceptions, nav_errors = _script_records(
-        root, planner_roots, executor_roots
-    )
+    nav_violations, nav_errors = _script_records(root, planner_roots, executor_roots)
     errors.extend(nav_errors)
+    protected_exceptions, exception_errors = _load_seam_exceptions()
+    errors.extend(exception_errors)
     actual_violations = set(seam_violations) | set(nav_violations)
     for type_path in sorted(set(foreign_rows) - consulted_foreign):
         errors.append(f"stale foreign type classification: {type_path}")
-    if inventory is not None:
-        registered_types: dict[_TypeKey, str] = {}
-        for row in inventory["seam_types"]:
-            if isinstance(row, dict) and isinstance(row.get("path"), str) and isinstance(row.get("symbol"), str):
-                registered_types[_TypeKey(row["path"], row["symbol"])] = str(row.get("classification"))
-        for key in sorted(set(classifications) - set(registered_types)):
-            errors.append(f"seam type missing from registry: {key.path}::{key.symbol}")
-        for key in sorted(set(registered_types) - set(classifications)):
-            errors.append(f"stale seam type classification: {key.path}::{key.symbol}")
-        for key, actual_class in sorted(classifications.items()):
-            registered = registered_types.get(key)
-            if registered is not None and registered != actual_class:
-                errors.append(
-                    f"seam classification disagrees with syntax: {key.path}::{key.symbol} "
-                    f"is {actual_class}, registry says {registered}"
-                )
-        registered_violations: set[_RecordKey] = set()
-        for row in inventory["violations"]:
-            if not isinstance(row, dict):
-                continue
-            try:
-                registered_violations.add(
-                    _RecordKey(
-                        str(row["category"]),
-                        str(row["path"]),
-                        str(row["symbol"]),
-                        str(row["cfg_or_target"]),
-                        str(row["classification"]),
-                    )
-                )
-            except KeyError:
-                continue
-        registered_exceptions: set[_RecordKey] = set()
-        for row in inventory["test_exceptions"]:
-            if not isinstance(row, dict):
-                continue
-            try:
-                registered_exceptions.add(
-                    _RecordKey(
-                        str(row["category"]),
-                        str(row["path"]),
-                        str(row["symbol"]),
-                        str(row["cfg_or_target"]),
-                        str(row["classification"]),
-                    )
-                )
-            except KeyError:
-                continue
-        for key in sorted(actual_violations - registered_violations):
-            errors.append(f"unregistered inventory violation: {_expected_id(key)}")
-        for key in sorted(registered_violations - actual_violations):
-            errors.append(f"stale inventory exemption: {_expected_id(key)}")
-        for key in sorted(nav_exceptions - registered_exceptions):
-            errors.append(f"unregistered test import exception: {_expected_id(key)}")
-        for key in sorted(registered_exceptions - nav_exceptions):
-            errors.append(f"stale test import exception: {_expected_id(key)}")
+    for key in sorted(actual_violations - set(protected_exceptions)):
+        rule = VIOLATION_RULE_NAMES.get(key.category, "architecture boundary violation")
+        errors.append(f"{rule}: {_expected_id(key)}")
     return sorted(set(errors))
 
 
 def check_tree(root: Path) -> list[str]:
-    """Validate a single tree's strict registry and exact source coverage."""
+    """Check public seams and script navigation imports against protected rules."""
     return _analyze_tree(Path(root))
 
 

@@ -3,7 +3,6 @@
 All target cfgs are included. This is a cross-platform permission union, not a
 host-only Cargo resolution. No candidate build scripts or binaries are run.
 """
-import json
 from collections import defaultdict
 from pathlib import Path
 
@@ -132,15 +131,10 @@ def feature_activation(manifests, records, config):
     return result
 
 
-PROVENANCE_BASELINE_FILENAME = "graph-provenance.json"
-PROVENANCE_SCHEMA_VERSION = 1
-PROVENANCE_TABLES = frozenset({"dependencies", "dev-dependencies", "build-dependencies"})
-
-
 def graph_state(checker, root):
-    """Protect cross-crate edges and optional activation, not local features."""
+    """Load protected graph policy and validate supported feature configurations."""
     policy = checker.load_policy(checker.RULES_DIR / "policy.toml")
-    for filename in ("policy.toml", PROVENANCE_BASELINE_FILENAME, "vendor-manifests.json"):
+    for filename in ("policy.toml", "vendor-manifests.json"):
         candidate = root / "tools" / "architecture" / filename
         if candidate.exists() or candidate.is_symlink():
             raise ValueError(
@@ -166,17 +160,17 @@ def graph_state(checker, root):
                 )
     checker.trusted_helper("vendor_manifests").check_pin(root, checker.RULES_DIR / "vendor-manifests.json")
     manifests, records = dependency_records(checker, root, policy)
-    provenance = {
-        (
-            "edge", row["from"], row["to"], row["kind"], row["cfg"],
-            row["table"], row["default_features"], tuple(row["features"]),
-        )
-        for row in records if row["local"] and row["from"] != row["to"]
-    }
-    optional = {
-        ("dependency", row["from"], row["to"], row["kind"], row["cfg"], row["table"])
-        for row in records if row["optional"]
-    }
+    for row in records:
+        allowance = policy.allowed.get((row["from"], row["to"]))
+        limits = None if allowance is None else allowance.features.get(row["kind"])
+        if limits is None:
+            continue
+        edge = f'{row["from"]} -> {row["to"]} ({row["kind"]})'
+        if row["default_features"] is not False:
+            raise ValueError(f"dependency default features refused: {edge}")
+        extra = set(row["features"]) - limits
+        if extra:
+            raise ValueError(f"disallowed dependency features: {edge}: {sorted(extra)}")
     # Every protected package needs default/dev activation coverage, even when
     # no named product configuration selects or reaches it.
     configurations = [{
@@ -190,30 +184,7 @@ def graph_state(checker, root):
         "optional_dependencies": [],
     }, *policy.configurations]
     for config in configurations:
-        isolated_union = set()
-        for selected in config["packages"]:
-            isolated = dict(
-                config,
-                packages=[selected],
-                features=[
-                    feature for feature in config["features"]
-                    if feature.startswith(selected + "/")
-                ],
-            )
-            relevant = {
-                item for item in feature_activation(manifests, records, isolated)
-                if item in optional or item[0] == "feature-edge"
-            }
-            isolated_union.update(relevant)
-            for item in relevant:
-                provenance.add(("isolated-activation", config["id"], selected, *item))
-
         activation = feature_activation(manifests, records, config)
-        # Feature unification can activate a weak dependency feature only when
-        # selected packages are combined. Keep only these additional effects.
-        for item in activation - isolated_union:
-            if item in optional or item[0] == "feature-edge":
-                provenance.add(("activation", config["id"], *item))
         if config["status"] == "enforced":
             for forbidden in config["forbidden_features"]:
                 package, feature = forbidden.split("/", 1)
@@ -226,136 +197,12 @@ def graph_state(checker, root):
                            and (row["kind"] != "dev" or config["dev"])]
                 if not matched or any(not row["optional"] for row in matched):
                     raise ValueError(f"required optional dependency: {config['id']}: {requirement}")
-    return policy, provenance
-
-
-def _jsonable(value):
-    if isinstance(value, tuple):
-        return [_jsonable(item) for item in value]
-    if type(value) in (str, bool):
-        return value
-    raise ValueError("graph provenance contains an unsupported value")
-
-
-def _provenance_record(checker, raw):
-    if type(raw) is not list or not raw or not isinstance(raw[0], str):
-        raise ValueError("graph provenance record must be a tagged array")
-    tag = raw[0]
-
-    def text(index, *, allow_empty=False):
-        if (index >= len(raw) or not isinstance(raw[index], str)
-                or (not allow_empty and not raw[index].strip())):
-            raise ValueError(f"graph provenance {tag!r} has invalid text field")
-        return raw[index]
-
-    def edge_fields(kind_index, cfg_index, table_index):
-        if text(kind_index) not in checker.KINDS:
-            raise ValueError(f"graph provenance {tag!r} has invalid edge kind")
-        text(cfg_index, allow_empty=True)
-        if text(table_index) not in PROVENANCE_TABLES:
-            raise ValueError(f"graph provenance {tag!r} has invalid dependency table")
-
-    if tag == "edge" and len(raw) == 8:
-        text(1)
-        text(2)
-        edge_fields(3, 4, 5)
-        if type(raw[6]) is not bool:
-            raise ValueError("graph provenance edge has invalid default_features")
-        features = raw[7]
-        if (type(features) is not list
-                or any(not isinstance(item, str) or not item.strip() for item in features)
-                or len(features) != len(set(features))):
-            raise ValueError("graph provenance edge has invalid features")
-        return (tag, raw[1], raw[2], raw[3], raw[4], raw[5], raw[6], tuple(features))
-    if tag in {"isolated-activation", "activation"}:
-        offset = 3 if tag == "isolated-activation" else 2
-        for index in range(1, offset):
-            text(index)
-        effect = text(offset)
-        if effect == "dependency" and len(raw) == offset + 6:
-            text(offset + 1)
-            text(offset + 2)
-            edge_fields(offset + 3, offset + 4, offset + 5)
-            return tuple(raw)
-        if effect == "feature-edge" and len(raw) == offset + 4:
-            for index in range(offset + 1, offset + 4):
-                text(index)
-            return tuple(raw)
-    raise ValueError(f"graph provenance has unknown or malformed record: {tag!r}")
-
-
-def _no_duplicate_object(pairs):
-    result = {}
-    for key, value in pairs:
-        if key in result:
-            raise ValueError(f"duplicate JSON key: {key}")
-        result[key] = value
-    return result
-
-
-def provenance_baseline_json(provenance):
-    records = [_jsonable(record) for record in provenance]
-    records.sort(key=lambda record: json.dumps(
-        record, ensure_ascii=False, separators=(",", ":")
-    ))
-    return json.dumps(
-        {"schema_version": PROVENANCE_SCHEMA_VERSION, "records": records},
-        ensure_ascii=False,
-        indent=2,
-        sort_keys=True,
-    ) + "\n"
-
-
-def load_provenance_baseline(checker):
-    path = checker.RULES_DIR / PROVENANCE_BASELINE_FILENAME
-    if path.is_symlink():
-        raise ValueError("protected 274bot-arch/graph-provenance.json must not be a symlink")
-    try:
-        raw = json.loads(
-            path.read_text(encoding="utf-8"),
-            object_pairs_hook=_no_duplicate_object,
-        )
-    except (OSError, UnicodeError, RecursionError, ValueError) as error:
-        raise ValueError(
-            "cannot load protected graph provenance baseline "
-            f"274bot-arch/graph-provenance.json ({type(error).__name__})"
-        ) from error
-    if type(raw) is not dict or set(raw) != {"schema_version", "records"}:
-        raise ValueError("graph provenance baseline fields must be exactly schema_version, records")
-    if type(raw["schema_version"]) is not int or raw["schema_version"] != PROVENANCE_SCHEMA_VERSION:
-        raise ValueError(f"graph provenance baseline schema_version must be {PROVENANCE_SCHEMA_VERSION}")
-    if type(raw["records"]) is not list:
-        raise ValueError("graph provenance baseline records must be an array")
-    records = set()
-    for record in raw["records"]:
-        normalized = _provenance_record(checker, record)
-        if normalized in records:
-            raise ValueError(f"duplicate graph provenance record: {normalized!r}")
-        records.add(normalized)
-    return records
-
-
-def emit_provenance_baseline(checker, root):
-    policy, provenance = graph_state(checker, root)
-    errors = checker.check_graph(root, policy)
-    if errors:
-        raise ValueError("cannot emit baseline for graph with policy errors: " + "; ".join(errors))
-    return provenance_baseline_json(provenance)
+    return policy
 
 
 def check_tree(checker, root: Path):
     try:
-        policy, provenance = graph_state(checker, root)
-        errors = checker.check_graph(root, policy)
-        protected = load_provenance_baseline(checker)
-        errors.extend(
-            f"graph provenance/activation widened: {record}. "
-            "Propose an operator commit in 274bot-arch, updating policy.toml if needed. "
-            "In that same commit regenerate graph-provenance.json with "
-            "`python3 -B check.py --emit-provenance-baseline /path/to/merged-branch > graph-provenance.json` "
-            "on the branch being merged, after merging current dev. Review removed records"
-            for record in sorted(provenance - protected, key=repr)
-        )
-        return errors
+        policy = graph_state(checker, root)
+        return checker.check_graph(root, policy)
     except (OSError, ValueError, TypeError, KeyError, SystemExit) as exc:
         return [f"invalid graph input: {exc}"]

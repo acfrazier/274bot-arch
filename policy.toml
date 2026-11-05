@@ -21,6 +21,12 @@ members = [
     "scenario",
     # Dev-only executable seat model (contract §27 §8); depends on no workspace crate.
     "seat-model",
+    # Dev-only executable hold model (HOLD-MODEL-AB, operator 2026-11-02); depends on no workspace crate.
+    "hold-model",
+    # Offline quest-campaign seed calculator; consumes product facts and risk rules.
+    "seed-calc",
+    # Repository CI dispatcher; has no workspace crate dependencies.
+    "xtask",
     "script",
     "script-js",
     "tui",
@@ -87,8 +93,9 @@ reason = "host reads vaulted credentials/assignments; vault stays a leaf store."
 [[allow]]
 from = "nav-planner"
 to = "api"
-kinds = ["normal"]
-reason = "nav-planner search, pack and facade code uses host-facing snapshot, work and quest types. It never names api::interact, api::settle, api::prot or a public re-export of them in production scope (planner source test, NAV-CRATE-SPLIT design-r3 2.6)."
+kinds = ["normal", "dev"]
+features = { normal = [], dev = ["embedded-game-data"] }
+reason = "nav-planner search, pack and facade code uses host-facing snapshot, work and quest types. Normal API defaults are off so the bake can use stage-1 files without stage-2 embedding. Dev-only embedded-game-data keeps real-data tests and examples active; no raw packet recorder feature is admitted. Production code never names api::interact, api::settle or api::prot (NAV-CRATE-SPLIT design-r3 2.6; Main 2026-11-05)."
 
 [[allow]]
 from = "nav-planner"
@@ -105,8 +112,9 @@ reason = "BAKED-REACH-1023 BR1: release producers consume runtime schemas, colli
 [[allow]]
 from = "nav-bake"
 to = "api"
-kinds = ["normal"]
-reason = "BAKED-REACH-1023 BR1: content generation consumes selected game facts and shared reach geometry, never script or client execution."
+kinds = ["normal", "dev"]
+features = { normal = [], dev = ["embedded-game-data"] }
+reason = "BAKED-REACH-1023 BR1: content generation consumes selected game facts and shared reach geometry, never script or client execution. Normal API defaults are off for the stage-1 tooling build. Dev-only embedded-game-data keeps existing real-data tests active; no raw packet recorder feature is admitted (Main 2026-11-05)."
 
 [[allow]]
 from = "nav-bake"
@@ -187,6 +195,18 @@ from = "script"
 to = "seat-model"
 kinds = ["dev"]
 reason = "Main 2026-10-12, F0-SCRIPT-SEAM conformance oracle, §27 §2.2 / ADR 0008"
+
+[[allow]]
+from = "host-play"
+to = "hold-model"
+kinds = ["dev"]
+reason = "HOLD-MODEL-AB (operator 2026-11-02): the conformance test drives the real host policy and lease sampling with traces from the checked model of the auto-run hold. dev-only."
+
+[[allow]]
+from = "script-js"
+to = "hold-model"
+kinds = ["dev"]
+reason = "HOLD-MODEL-AB (operator 2026-11-02): the compat-journal conformance test drives the real lease with traces from the checked model of the auto-run hold. dev-only."
 
 [[allow]]
 from = "script"
@@ -398,6 +418,12 @@ reason = "Test-only live-probe feature for panel manual-click LIVE cells."
 
 [[allow]]
 from = "panel"
+to = "host"
+kinds = ["dev"]
+reason = "dev-only: panel --lib tests in window::tests, headed_record::tests, and app::tests::typed_capture_refusals_fail_terminal_pair_and_soak_drains_without_waiting, plus panel --test t44_headed_live (harness = false, required-features = [\"render-test-hooks\"]), use host's render-test-hooks directly. Production panel has no direct host edge; frontend-core retains production operator/host ownership and does not re-export these hooks."
+
+[[allow]]
+from = "panel"
 to = "nav-planner"
 kinds = ["normal"]
 reason = "WalkTo picker and nav paints are panel chrome over host nav."
@@ -431,6 +457,38 @@ from = "tui"
 to = "host"
 kinds = ["dev"]
 reason = "dev-only: tui tests construct host types. Production tui must keep going through host-play."
+
+# --- offline developer tooling (not production slot or UI ownership) ---
+
+[[allow]]
+from = "seed-calc"
+to = "api"
+kinds = ["normal"]
+reason = "BATCH-029: the offline seed calculator reads selected combat facts and WorldTile values from the host-facing API."
+
+[[allow]]
+from = "seed-calc"
+to = "client"
+kinds = ["normal"]
+reason = "BATCH-029: the reviewed tool manifest declares a normal client edge for selected-revision and collision fixtures. The offline calculator does not own a product client or UI loop."
+
+[[allow]]
+from = "seed-calc"
+to = "host-play"
+kinds = ["normal"]
+reason = "BATCH-029: offline crossing calculations reuse the existing admission and risk-policy evaluator. The manifest disables host-play default features; this is not a product frontend ownership edge."
+
+[[allow]]
+from = "seed-calc"
+to = "nav-planner"
+kinds = ["normal"]
+reason = "BATCH-029: the offline calculator reads baked world, route and zone data to assess a declared crossing. No runtime crate depends on this developer tool."
+
+[[allow]]
+from = "seed-calc"
+to = "script"
+kinds = ["normal"]
+reason = "BATCH-029: seed calculations consume the native combat tables, risk results and food policy as product-backed inputs, rather than adding a product runtime."
 
 # --- test orchestration (not production ownership) ---
 
@@ -491,7 +549,7 @@ optional_dependencies = []
 
 [[configuration]]
 id = "workspace-tests"
-packages = ["api", "e2e", "frontend-core", "host", "host-play", "nav-bake", "nav-executor", "nav-planner", "panel", "scenario", "script", "script-js", "seat-model", "tui", "vault"]
+packages = ["api", "e2e", "frontend-core", "hold-model", "host", "host-play", "nav-bake", "nav-executor", "nav-planner", "panel", "scenario", "script", "script-js", "seat-model", "seed-calc", "tui", "vault", "xtask"]
 features = []
 default_features = true
 dev = true

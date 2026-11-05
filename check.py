@@ -5,7 +5,6 @@ Requires Python 3.11+ (stdlib tomllib). Reads Cargo.toml manifests; does not
 compile Rust or parse .rs with regex.
 
     python3 -B check.py --root TREE
-    python3 -B check.py --emit-provenance-baseline TREE
     python3 -B check.py --self-test
 """
 
@@ -14,7 +13,6 @@ from __future__ import annotations
 import argparse
 import sys
 import tempfile
-from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 import importlib.util
@@ -53,6 +51,7 @@ class Edge:
 class Allow:
     kinds: set[str] = field(default_factory=set)
     reasons: list[str] = field(default_factory=list)
+    features: dict[str, set[str]] = field(default_factory=dict)
 
 
 @dataclass
@@ -113,15 +112,22 @@ def load_policy(path: Path) -> Policy:
     known = members | externals | set(path_packages)
     allowed: dict[tuple[str, str], Allow] = {}
     for row in raw.get("allow", []):
-        require_fields(row, {"from", "to", "kinds", "reason"}, "allow")
+        require_fields(row, {"from", "to", "kinds", "reason", "features"}, "allow")
         src, dst = row.get("from"), row.get("to")
         kinds = string_set(row.get("kinds"), "allow.kinds")
         reason = nonblank(row.get("reason"), "allow.reason")
         if src not in members | set(path_packages) or dst not in known or not kinds or not kinds <= KINDS:
             raise ValueError(f"invalid allow endpoints/kinds: {row}")
+        raw_features = row.get("features", {})
+        if not isinstance(raw_features, dict) or not set(raw_features) <= kinds:
+            raise ValueError(f"allow.features must name permitted kinds: {row}")
+        features = {
+            kind: string_set(values, f"allow.features.{kind}")
+            for kind, values in raw_features.items()
+        }
         if (src, dst) in allowed:
             raise ValueError(f"duplicate allow pair: {src} -> {dst}")
-        allowed[src, dst] = Allow(kinds, [reason])
+        allowed[src, dst] = Allow(kinds, [reason], features)
     migrations = {}
     triples = set()
     for row in raw.get("migration", []):
@@ -643,19 +649,11 @@ def trusted_helper(name: str):
 def check_graph_tree(root: Path) -> list[str]:
     return trusted_helper("graph").check_tree(sys.modules[__name__], root)
 
-def emit_provenance_baseline(root: Path) -> str:
-    return trusted_helper("graph").emit_provenance_baseline(sys.modules[__name__], root)
-
-
-
 
 def check_tree(root: Path) -> list[str]:
     errors = check_graph_tree(root)
-    for name in ("ownership", "inventories"):
-        errors.extend(trusted_helper(name).check_tree(root))
+    errors.extend(trusted_helper("inventories").check_tree(root))
     return errors
-
-
 
 
 def write_crate(root: Path, name: str, deps: dict[str, dict] | None = None, **tables: dict) -> None:
@@ -744,6 +742,9 @@ def write_policy(path: Path, members: list[str], allows: list[dict], externals: 
         kinds = ", ".join(repr(k) for k in allow["kinds"])
         lines.append(f"kinds = [{kinds}]")
         lines.append(f'reason = "{allow["reason"]}"')
+        for kind, values in allow.get("features", {}).items():
+            features = ", ".join(repr(value) for value in values)
+            lines.append(f"features.{kind} = [{features}]")
         lines.append("")
     path.write_text("\n".join(lines), encoding="utf-8")
 
@@ -1045,28 +1046,12 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="candidate workspace root (required when checking a tree)",
     )
-    modes = parser.add_mutually_exclusive_group()
-    modes.add_argument(
+    parser.add_argument(
         "--self-test",
         action="store_true",
         help="exercise disposable fixtures; do not read the product workspace",
     )
-    modes.add_argument(
-        "--emit-provenance-baseline",
-        type=Path,
-        metavar="TREE",
-        help="print JSON for the protected exceptional graph provenance baseline",
-    )
     args = parser.parse_args(argv)
-    if args.emit_provenance_baseline is not None:
-        if args.root is not None:
-            parser.error("--root cannot be combined with --emit-provenance-baseline")
-        try:
-            sys.stdout.write(emit_provenance_baseline(args.emit_provenance_baseline.resolve()))
-        except (OSError, ValueError, TypeError, KeyError, SystemExit) as exc:
-            sys.stderr.write(f"cannot emit graph provenance baseline: {exc}\n")
-            return 1
-        return 0
     if args.self_test:
         return run_self_test()
 

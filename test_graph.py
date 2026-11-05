@@ -1,6 +1,5 @@
 """Crate graph rules are loaded from the checker repository."""
 
-import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -37,9 +36,6 @@ class GraphPolicyTests(unittest.TestCase):
         self.root = Path(self.temp.name) / "workspace"
         self.rules = Path(self.temp.name) / "rules"
         self.rules.mkdir()
-        (self.rules / "graph-provenance.json").write_text(
-            '{"schema_version": 1, "records": []}\n', encoding="utf-8"
-        )
         self.previous_rules = checker.RULES_DIR
         checker.RULES_DIR = self.rules
         self.addCleanup(setattr, checker, "RULES_DIR", self.previous_rules)
@@ -56,17 +52,74 @@ class GraphPolicyTests(unittest.TestCase):
         helper = checker.trusted_helper("vendor_manifests")
         (self.rules / helper.PIN).write_text(helper.pin_json(self.root), encoding="utf-8")
 
-    def write_baseline(self, root: Path) -> None:
-        baseline = checker.emit_provenance_baseline(root)
-        (self.rules / "graph-provenance.json").write_text(baseline, encoding="utf-8")
 
     def test_allowed_edge(self) -> None:
         self.write_policy(
             [{"from": "vault", "to": "api", "kinds": ["normal"], "reason": "fixture"}]
         )
         workspace(self.root)
-        self.write_baseline(self.root)
         self.assertEqual(checker.check_graph_tree(self.root), [])
+
+    def test_bake_api_permissions_are_only_embedded_data(self) -> None:
+        protected = checker.load_policy(Path(__file__).with_name("policy.toml"))
+        for source in ("nav-bake", "nav-planner"):
+            with self.subTest(source=source):
+                allowance = protected.allowed[source, "api"]
+                self.assertEqual(allowance.kinds, {"normal", "dev"})
+                self.assertEqual(
+                    allowance.features,
+                    {"normal": set(), "dev": {"embedded-game-data"}},
+                )
+
+    def test_dependency_feature_limits_do_not_admit_raw_recorders(self) -> None:
+        self.write_policy([{
+            "from": "vault",
+            "to": "api",
+            "kinds": ["normal", "dev"],
+            "features": {"normal": [], "dev": ["embedded-game-data"]},
+            "reason": "tooling has no embedding; tests embed data but not raw packet recorders",
+        }])
+        cases = [
+            ("normal", "normal", [], False, None),
+            ("embedded", "dev", ["embedded-game-data"], False, None),
+            ("raw", "dev", ["embedded-game-data", "test-support"], False,
+             "disallowed dependency features"),
+            ("defaults", "dev", ["embedded-game-data"], True,
+             "dependency default features refused"),
+            ("normal-extra", "normal", ["embedded-game-data"], False,
+             "disallowed dependency features"),
+        ]
+        for name, kind, features, defaults, finding in cases:
+            with self.subTest(name=name):
+                root = self.root / name
+                checker.write_workspace(root, ["vault", "api"])
+                table = "dev-dependencies" if kind == "dev" else "dependencies"
+                checker.write_crate(root, "vault", **{table: {"api": {
+                    "path": "../api",
+                    "features": features,
+                    "default-features": defaults,
+                }}})
+                checker.write_crate(root, "api")
+                with (root / "crates/api/Cargo.toml").open("a", encoding="utf-8") as stream:
+                    stream.write(
+                        '\n[features]\nembedded-game-data = []\ntest-support = []\n'
+                    )
+                errors = checker.check_graph_tree(root)
+                if finding is None:
+                    self.assertEqual(errors, [])
+                else:
+                    self.assertTrue(any(finding in error for error in errors), errors)
+
+    def test_feature_limit_kind_requires_an_admitted_edge_kind(self) -> None:
+        self.write_policy([{
+            "from": "vault",
+            "to": "api",
+            "kinds": ["normal"],
+            "features": {"dev": ["embedded-game-data"]},
+            "reason": "invalid fixture",
+        }])
+        with self.assertRaisesRegex(ValueError, "allow.features must name permitted kinds"):
+            checker.load_policy(self.rules / "policy.toml")
 
     def test_baked_reach_producer_edges_have_exact_kinds(self) -> None:
         protected = checker.load_policy(Path(__file__).with_name("policy.toml"))
@@ -76,12 +129,16 @@ class GraphPolicyTests(unittest.TestCase):
             "script-js", "tui",
         ]
         allows = [
-            {"from": src, "to": dst, "kinds": sorted(row.kinds), "reason": "protected policy"}
+            {"from": src, "to": dst, "kinds": sorted(row.kinds),
+             "features": {kind: sorted(values) for kind, values in row.features.items()},
+             "reason": "protected policy"}
             for (src, dst), row in protected.allowed.items()
             if src in members and dst in members
         ]
         admitted = [
             ("nav-bake", "api", "normal"),
+            ("nav-bake", "api", "dev"),
+            ("nav-planner", "api", "dev"),
             ("nav-bake", "client", "normal"),
             ("nav-bake", "nav-planner", "normal"),
             ("host-play", "nav-bake", "build"),
@@ -111,10 +168,27 @@ class GraphPolicyTests(unittest.TestCase):
                     "build": "build_dependencies",
                 }[kind]
                 for member in members:
-                    tables = {table: {target: {"path": f"../{target}"}}} if member == source else {}
+                    tables = {}
+                    if member == source and (source, target, kind) in admitted:
+                        spec = {"path": f"../{target}"}
+                        if target == "api" and source in {"nav-bake", "nav-planner"}:
+                            spec["default-features"] = False
+                            if kind == "dev":
+                                spec["features"] = ["embedded-game-data"]
+                        tables[table] = {target: spec}
                     checker.write_crate(root, member, **tables)
+                    if member == "api":
+                        with (root / "crates/api/Cargo.toml").open("a", encoding="utf-8") as stream:
+                            stream.write('\n[features]\nembedded-game-data = []\n')
                 checker.write_policy(self.rules / "policy.toml", members, allows)
-                self.write_baseline(root)
+                self.assertEqual(checker.check_graph_tree(root), [])
+                if (source, target, kind) in refused:
+                    # Start from a clean fixture before adding the forbidden edge.
+                    manifest = root / "crates" / source / "Cargo.toml"
+                    with manifest.open("a", encoding="utf-8") as stream:
+                        stream.write(
+                            f'\n[{table}]\n{target} = {{ path = "../{target}" }}\n'
+                        )
                 errors = checker.check_graph_tree(root)
                 if (source, target, kind) in admitted:
                     self.assertEqual(errors, [])
@@ -231,7 +305,6 @@ optional_dependencies = ["vault/api"]
 
     def test_dev_row_does_not_defeat_required_optional_dependency_without_dev(self) -> None:
         self.required_optional_fixture(dev=False, optional=True)
-        self.write_baseline(self.root)
         self.assertEqual(checker.check_graph_tree(self.root), [])
 
     def test_dev_row_defeats_required_optional_dependency_with_dev(self) -> None:
@@ -244,51 +317,6 @@ optional_dependencies = ["vault/api"]
         errors = checker.check_graph_tree(self.root)
         self.assertTrue(any("required optional dependency: fixture: vault/api" in error for error in errors), errors)
 
-    def test_exceptional_provenance_widening_is_rejected(self) -> None:
-        self.write_policy(
-            [{"from": "vault", "to": "api", "kinds": ["optional"], "reason": "fixture"}],
-            """
-[[configuration]]
-id = "fixture"
-packages = ["vault"]
-features = []
-default_features = true
-dev = false
-status = "enforced"
-owner = "T1"
-forbidden_features = []
-optional_dependencies = []
-""",
-        )
-        baseline = workspace(self.root / "baseline", kind="optional", feature=True)
-        baseline_manifest = baseline / "crates/vault/Cargo.toml"
-        baseline_manifest.write_text(
-            baseline_manifest.read_text(encoding="utf-8").replace(
-                'default = ["probe"]', "default = []"
-            ),
-            encoding="utf-8",
-        )
-        self.write_baseline(baseline)
-
-        candidate = workspace(self.root / "candidate", kind="optional", feature=True)
-        candidate_manifest = candidate / "crates/vault/Cargo.toml"
-        candidate_manifest.write_text(
-            candidate_manifest.read_text(encoding="utf-8").replace(
-                'default = ["probe"]', "default = []"
-            ),
-            encoding="utf-8",
-        )
-        candidate_manifest.write_text(
-            candidate_manifest.read_text(encoding="utf-8").replace(
-                "default = []", 'default = ["probe"]'
-            ),
-            encoding="utf-8",
-        )
-        errors = checker.check_graph_tree(candidate)
-        self.assertTrue(
-            any("graph provenance/activation widened" in error for error in errors),
-            errors,
-        )
 
     def test_candidate_policy_cannot_activate_optional_dependency(self) -> None:
         optional_allow = [
@@ -315,7 +343,6 @@ optional_dependencies = []
             ),
             encoding="utf-8",
         )
-        self.write_baseline(self.root)
 
         candidate_policy = self.root / "tools/architecture/policy.toml"
         candidate_policy.parent.mkdir(parents=True)
@@ -345,68 +372,6 @@ optional_dependencies = []
             errors,
         )
 
-    def test_emitted_baseline_accepts_feature_activation(self) -> None:
-        self.write_policy(
-            [{"from": "vault", "to": "api", "kinds": ["optional"], "reason": "fixture"}],
-            """
-[[configuration]]
-id = "fixture"
-packages = ["vault"]
-features = []
-default_features = true
-dev = false
-status = "enforced"
-owner = "T1"
-forbidden_features = []
-optional_dependencies = []
-""",
-        )
-        workspace(self.root, kind="optional", feature=True)
-        self.write_baseline(self.root)
-        records = json.loads(
-            (self.rules / "graph-provenance.json").read_text(encoding="utf-8")
-        )["records"]
-        self.assertTrue(any(record[0] == "isolated-activation" and record[3] == "dependency"
-                            for record in records))
-        self.assertEqual(checker.check_graph_tree(self.root), [])
-
-    def test_missing_provenance_baseline_fails_closed(self) -> None:
-        self.write_policy([])
-        workspace(self.root)
-        (self.rules / "graph-provenance.json").unlink()
-        errors = checker.check_graph_tree(self.root)
-        self.assertTrue(
-            any("cannot load protected graph provenance baseline" in error for error in errors),
-            errors,
-        )
-
-    def test_provenance_baseline_schema_is_strict(self) -> None:
-        self.write_policy([])
-        workspace(self.root)
-        baseline = self.rules / "graph-provenance.json"
-        baseline.write_text(
-            json.dumps({"schema_version": 1, "records": [], "extra": True}),
-            encoding="utf-8",
-        )
-        errors = checker.check_graph_tree(self.root)
-        self.assertTrue(any("fields must be exactly" in error for error in errors), errors)
-        baseline.write_text(
-            json.dumps({"schema_version": 1, "records": [["unknown"]]}),
-            encoding="utf-8",
-        )
-        errors = checker.check_graph_tree(self.root)
-        self.assertTrue(any("unknown or malformed record" in error for error in errors), errors)
-
-    def test_duplicate_provenance_records_are_rejected(self) -> None:
-        self.write_policy([])
-        workspace(self.root)
-        record = ["edge", "vault", "api", "optional", "", "dependencies", True, []]
-        (self.rules / "graph-provenance.json").write_text(
-            json.dumps({"schema_version": 1, "records": [record, record]}),
-            encoding="utf-8",
-        )
-        errors = checker.check_graph_tree(self.root)
-        self.assertTrue(any("duplicate graph provenance record" in error for error in errors), errors)
 
     def test_dependency_table_spellings_good_and_bad(self) -> None:
         for table, kind in checker.DEP_TABLES:
@@ -428,7 +393,6 @@ optional_dependencies = []
                     self.write_policy([{
                         "from": "vault", "to": "api", "kinds": [actual_kind], "reason": "fixture"
                     }])
-                    self.write_baseline(root)
                     self.assertEqual(checker.check_graph_tree(root), [])
 
     def vendor_fixture(self, *, allowed: bool, dependency: str = "") -> None:
@@ -467,7 +431,6 @@ optional_dependencies = []
         policy = self.rules / "policy.toml"
         with policy.open("a", encoding="utf-8") as stream:
             stream.write('\n[[allow]]\nfrom = "backend"\nto = "api"\nkinds = ["normal"]\nreason = "fixture"\n')
-        self.write_baseline(self.root)
         self.assertEqual(checker.check_graph_tree(self.root), [])
 
     def test_replace_and_unused_workspace_path_require_listed_identity(self) -> None:
@@ -475,7 +438,6 @@ optional_dependencies = []
         root_manifest = self.root / "Cargo.toml"
         with root_manifest.open("a", encoding="utf-8") as stream:
             stream.write('\n[replace]\n"backend:0.1.0" = { path = "vendor/backend" }\n')
-        self.write_baseline(self.root)
         self.assertEqual(checker.check_graph_tree(self.root), [])
         # A patch or replace entry must also be listed in [root_patches].
         # That refusal fires before the path identity check. A workspace
@@ -561,7 +523,6 @@ optional_dependencies = []
             "root patch list" in error for error in errors
         ), errors)
         self.write_policy(allows, root_patches={"api": "crates/api"})
-        self.write_baseline(self.root)
         self.assertEqual(checker.check_graph_tree(self.root), [])
 
     def test_registry_root_replace_is_refused(self) -> None:
@@ -591,7 +552,6 @@ optional_dependencies = []
         ), encoding="utf-8")
         with policy.open("a", encoding="utf-8") as stream:
             stream.write('\n[[allow]]\nfrom = "backend"\nto = "other"\nkinds = ["normal"]\nreason = "fixture"\n')
-        self.write_baseline(self.root)
         self.assertEqual(checker.check_graph_tree(self.root), [])
 
     def test_member_path_spoofs_good_and_bad(self) -> None:
@@ -629,47 +589,8 @@ optional_dependencies = []
                     vault = root / "crates/vault/Cargo.toml"
                     vault.write_text(vault.read_text(encoding="utf-8").replace("../fake-api", "../api"),
                                      encoding="utf-8")
-                    self.write_baseline(root)
                     self.assertEqual(checker.check_graph_tree(root), [])
 
-    def test_local_feature_needs_no_operator_change(self) -> None:
-        self.write_policy(
-            [{"from": "vault", "to": "api", "kinds": ["normal"], "reason": "fixture"}],
-            """
-[[configuration]]
-id = "fixture"
-packages = ["vault", "api"]
-features = []
-default_features = true
-dev = true
-status = "enforced"
-owner = "T1"
-forbidden_features = []
-optional_dependencies = []
-""",
-        )
-        workspace(self.root)
-        self.write_baseline(self.root)
-        manifest = self.root / "crates/api/Cargo.toml"
-        with manifest.open("a", encoding="utf-8") as stream:
-            stream.write('\n[features]\ndefault = ["probe-noop"]\nprobe-noop = []\n')
-        self.assertEqual(checker.check_graph_tree(self.root), [])
-        # A feature request across the same existing crate edge is protected.
-        vault = self.root / "crates/vault/Cargo.toml"
-        with vault.open("a", encoding="utf-8") as stream:
-            stream.write('\n[features]\ndefault = ["api/probe-noop"]\n')
-        errors = checker.check_graph_tree(self.root)
-        self.assertTrue(any("graph provenance/activation widened" in error for error in errors), errors)
-
-    def test_candidate_baseline_is_refused_even_without_graph_changes(self) -> None:
-        self.write_policy([])
-        workspace(self.root, kind="none")
-        candidate = self.root / "tools/architecture/graph-provenance.json"
-        candidate.parent.mkdir(parents=True)
-        candidate.write_text('{"schema_version": 1, "records": []}', encoding="utf-8")
-        errors = checker.check_graph_tree(self.root)
-        self.assertTrue(any("candidate tools/architecture/graph-provenance.json is forbidden" in error
-                            for error in errors), errors)
 
     def test_candidate_runner_is_not_executed(self) -> None:
         self.write_policy([])
@@ -684,7 +605,6 @@ optional_dependencies = []
         self.write_policy([{
             "from": "vault", "to": "api", "kinds": ["normal"], "reason": "fixture"
         }])
-        self.write_baseline(self.root)
         self.assertEqual(checker.check_graph_tree(self.root), [])
 
     def test_member_rename_cannot_target_listed_nonmember(self) -> None:
@@ -708,7 +628,6 @@ optional_dependencies = []
         policy = self.rules / "policy.toml"
         with policy.open("a", encoding="utf-8") as stream:
             stream.write('\n[[allow]]\nfrom = "backend"\nto = "api"\nkinds = ["normal"]\nreason = "fixture"\n')
-        self.write_baseline(self.root)
         self.assertEqual(checker.check_graph_tree(self.root), [])
 
     def test_cargo_config_patch_pbkdf2_copy_to_api_is_refused(self) -> None:
@@ -724,7 +643,6 @@ optional_dependencies = []
             '[dependencies.api]\npath = "../../../crates/api"\n',
             encoding="utf-8",
         )
-        self.write_baseline(self.root)
         self.assertEqual(checker.check_graph_tree(self.root), [])
         config = self.root / ".cargo/config.toml"
         config.parent.mkdir()
@@ -760,7 +678,6 @@ optional_dependencies = []
                          '"vendor/dear-imgui-wgpu-0.15.1" }\n')
         with (self.root / "crates/vault/Cargo.toml").open("a", encoding="utf-8") as stream:
             stream.write('\n[dependencies]\ndear-imgui-wgpu = "0.15"\n')
-        self.write_baseline(self.root)
         self.assertEqual(checker.check_graph_tree(self.root), [])
         shadow = original / "shadow-imgui"
         shadow.mkdir()
@@ -819,7 +736,6 @@ optional_dependencies = []
     def test_case_variant_cargo_toml_is_refused_in_product_and_vendored_trees(self) -> None:
         self.write_policy([])
         workspace(self.root, kind="none")
-        self.write_baseline(self.root)
         # Exact Cargo.toml names alone pass.
         self.assertEqual(checker.check_graph_tree(self.root), [])
         scenarios = (
@@ -902,7 +818,6 @@ optional_dependencies = []
             encoding="utf-8",
         )
         self.write_pin()
-        self.write_baseline(self.root)
         return play
 
     def assert_pin_refusal(self, filename: str) -> None:
@@ -971,7 +886,7 @@ optional_dependencies = []
         self.client_play_fixture()
         self.assertEqual(checker.check_graph_tree(self.root), [])
 
-    def test_unreached_client_play_default_feature_request_needs_operator_change(self) -> None:
+    def test_unreached_client_play_default_feature_request_needs_pin_update(self) -> None:
         play = self.client_play_fixture()
         play.write_text(play.read_text(encoding="utf-8").replace(
             'default = ["window", "audio"]',
@@ -979,28 +894,15 @@ optional_dependencies = []
             'probe-cross = ["client/headed-fixture"]'
         ), encoding="utf-8")
         self.assert_pin_refusal("crates/client-play/Cargo.toml")
-        self.write_pin()
-        errors = checker.check_graph_tree(self.root)
-        self.assertTrue(any("graph provenance/activation widened" in error
-                            and "client-play" in error and "feature-edge" in error
-                            and "headed-fixture" in error for error in errors), errors)
-        self.write_baseline(self.root)
-        self.assertEqual(checker.check_graph_tree(self.root), [])
 
-    def test_unreached_client_play_optional_dependency_needs_operator_change(self) -> None:
+    def test_unreached_client_play_optional_dependency_needs_pin_update(self) -> None:
         play = self.client_play_fixture()
         play.write_text(play.read_text(encoding="utf-8").replace(
             'default = ["window", "audio"]',
             'default = ["window", "audio", "dep:serde"]'
         ) + '\n[dependencies.serde]\nversion = "=1.0.219"\noptional = true\n', encoding="utf-8")
         self.assert_pin_refusal("crates/client-play/Cargo.toml")
-        self.write_pin()
-        errors = checker.check_graph_tree(self.root)
-        self.assertTrue(any("graph provenance/activation widened" in error
-                            and "client-play" in error and "dependency" in error
-                            and "serde" in error for error in errors), errors)
-        self.write_baseline(self.root)
-        self.assertEqual(checker.check_graph_tree(self.root), [])
+
 
     def test_unchanged_unreached_client_play_is_clean(self) -> None:
         play = self.client_play_fixture()
