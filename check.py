@@ -688,6 +688,9 @@ def _dep_line(name: str, spec: dict) -> str:
     for key, value in spec.items():
         if isinstance(value, bool):
             parts.append(f"{key} = {str(value).lower()}")
+        elif isinstance(value, list):
+            items = ", ".join(repr(item) for item in value)
+            parts.append(f"{key} = [{items}]")
         else:
             parts.append(f'{key} = "{value}"')
     return f"{name} = {{ {', '.join(parts)} }}"

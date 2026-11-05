@@ -164,9 +164,9 @@ def _write_fixture(
         path = root / relative
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("// generated fixture input\n", encoding="utf-8")
+    rule_dir = root / inventories.DATA_DIR_RELATIVE
+    rule_dir.mkdir(parents=True, exist_ok=True)
     if foreign_types is not None:
-        rule_dir = root / inventories.DATA_DIR_RELATIVE
-        rule_dir.mkdir(parents=True, exist_ok=True)
         foreign_path = rule_dir / inventories.FOREIGN_TYPES_RELATIVE
         foreign_path.write_text(foreign_types, encoding="utf-8")
     if workspace_files is not None:
@@ -233,7 +233,7 @@ pub struct FleetView<'a> {
         )
         baseline_errors = inventories.check_tree(root)
         candidate_rules = root / inventories.DATA_DIR_RELATIVE
-        candidate_rules.mkdir()
+        candidate_rules.mkdir(exist_ok=True)
         seam = {
             "id": "owning_public_field|crates/frontend-core/src/views.rs|production|NeverSelfAdmitted::name|public_field_of_owning_view",
             "category": "owning_public_field",
@@ -319,7 +319,7 @@ pub struct FleetView<'a> {
     def test_foreign_type_rules_are_still_loaded_from_the_candidate_tree(self) -> None:
         root = self.fixture(views=self.baseline_views())
         candidate_rules = root / inventories.DATA_DIR_RELATIVE
-        candidate_rules.mkdir()
+        candidate_rules.mkdir(exist_ok=True)
         (candidate_rules / "foreign_types.json").write_text(
             "not checker rules", encoding="utf-8"
         )
@@ -991,9 +991,11 @@ pub struct FleetView<'a> {
         )
 
     def test_workspace_definition_classification_is_checked_from_syntax(self) -> None:
+        # A borrowed anchor makes Clone depend on the payload's ownership,
+        # not the container's deliberate lack of Copy.
         uses = (
             "use api::identity::RequestId;\n"
-            "#[derive(Clone)]\npub struct UsesRequest { value: RequestId }\n"
+            "#[derive(Clone)]\npub struct UsesRequest { value: RequestId, borrowed: &'static str }\n"
         )
         copy_id = "#[derive(Clone, Copy)]\npub struct RequestId(u64);\n"
 
@@ -1056,7 +1058,7 @@ pub struct FleetView<'a> {
             "ViaPhase",
         )
         holders = "".join(
-            f"#[derive(Clone)]\npub struct {symbol}Holder {{ value: {symbol} }}\n"
+            f"#[derive(Clone)]\npub struct {symbol}Holder {{ value: {symbol}, borrowed: &'static str }}\n"
             for symbol in symbols
         )
         views = (
@@ -1659,13 +1661,14 @@ pub struct FleetView<'a> {
             + "pub type SettledBytes = Settlement<Vec<u8>, Token>;\n"
             + "pub type SettledCatalog = Settlement<Token, script_js::CatalogDiff>;\n"
             + "pub type SettledView<'a> = Settlement<&'a str, Token>;\n"
-            + "#[derive(Clone)]\npub struct SettledScalarHolder { settled: SettledScalar }\n"
-            + "#[derive(Clone)]\npub struct SettledBytesHolder { settled: SettledBytes }\n"
-            + "#[derive(Clone)]\npub struct SettledCatalogHolder { settled: SettledCatalog }\n"
-            + "#[derive(Clone)]\npub struct SettledViewHolder<'a> { settled: SettledView<'a> }\n"
+            + "#[derive(Clone)]\npub struct SettledScalarHolder { settled: SettledScalar, borrowed: &'static str }\n"
+            + "#[derive(Clone)]\npub struct SettledBytesHolder { settled: SettledBytes, borrowed: &'static str }\n"
+            + "#[derive(Clone)]\npub struct SettledCatalogHolder { settled: SettledCatalog, borrowed: &'static str }\n"
+            + "#[derive(Clone)]\npub struct SettledViewHolder<'a> { settled: SettledView<'a>, borrowed: &'static str }\n"
             + "#[derive(Clone)]\n"
             + "pub struct SettledHolder {\n"
             + "    settled: Settlement<Token, std::sync::mpsc::Sender<u8>>,\n"
+            + "    borrowed: &'static str,\n"
             + "}\n"
         )
         data = _foreign_data(
