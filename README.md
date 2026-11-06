@@ -63,6 +63,8 @@ Those existing findings are one later cleanup item, not new permission.
 - Foreign navigation/client boundaries, including macro paths and test imports:
   R2, R4, R5 and R6.
 - No whole-crate adapter re-export through `frontend-core`: R3.
+  The manifest identifies a crate root without parsing its body. Type exports
+  still resolve their actual definitions.
 - Owning/borrowed/scalar seam rules, including owning Clone and public fields:
   R6.
 - Operator-only rules and protected-copy CI: R3's attempted checker edit.

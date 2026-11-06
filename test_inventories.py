@@ -2013,6 +2013,29 @@ pub struct FleetView<'a> {
                         errors,
                     )
 
+    def test_whole_crate_export_does_not_need_the_crate_body(self) -> None:
+        workspace = {"crates/host/src/lib.rs": "mod deliberately_unavailable;\n"}
+        for source in (
+            "pub use host as Adapter;\n",
+            "pub use ::host as Adapter;\n",
+            "use host as Private;\npub use Private as Adapter;\n",
+            "mod facade { pub use host as Adapter; }\npub use facade::Adapter;\n",
+        ):
+            with self.subTest(source=source):
+                root = self.clean_fixture(
+                    frontend_lib="pub mod views;\n" + source,
+                    workspace_files=workspace,
+                )
+                errors = inventories.check_tree(root)
+                self.assertTrue(
+                    any("whole-crate re-export of host " in error for error in errors),
+                    errors,
+                )
+                self.assertFalse(
+                    any("deliberately_unavailable" in error for error in errors),
+                    "the manifest already identifies a whole crate export",
+                )
+
     def test_private_crate_alias_and_public_type_reexport_stay_allowed(self) -> None:
         workspace = {
             "crates/host/src/lib.rs": "pub struct Scalar(u64);\n",

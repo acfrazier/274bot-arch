@@ -2223,6 +2223,8 @@ def _seam_records(
             if canonical in TRUSTED_FOREIGN_TYPE_CLASSES:
                 return ("foreign", canonical, None)
             if absolute[0] in workspace_crates:
+                if len(absolute) == 1 and absolute[0] != frontend_crate:
+                    return ("module", (f"::{absolute[0]}",), None)
                 crate_key = (
                     () if absolute[0] == frontend_crate else load_workspace_crate(absolute[0])
                 )
@@ -2381,6 +2383,8 @@ def _seam_records(
         if canonical in TRUSTED_FOREIGN_TYPE_CLASSES:
             return ("foreign", canonical, None)
         if segments[0] in workspace_crates:
+            if len(segments) == 1 and segments[0] != frontend_crate:
+                return ("module", (f"::{segments[0]}",), None)
             crate_key = (
                 () if segments[0] == frontend_crate else load_workspace_crate(segments[0])
             )
