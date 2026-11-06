@@ -2654,6 +2654,15 @@ def _seam_records(
                             )
                             continue
                         resolved = resolve_public_path(module_path, symbol)
+                        if resolved is not None and resolved[0] == "workspace_module":
+                            target_module = resolved[1]
+                            if target_module == crate_root(target_module):
+                                crate_name = target_module[0].removeprefix("::")
+                                unresolved_exports.add(
+                                    f"{file_key}: whole-crate re-export of {crate_name} "
+                                    f"as {local_name} is unsupported"
+                                )
+                                continue
                         if resolved is None or resolved[0] in {"workspace_error", "workspace_module"}:
                             final_name = symbol.rstrip(":").split("::")[-1]
                             if final_name[:1].isupper():

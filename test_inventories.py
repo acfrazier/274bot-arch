@@ -1983,6 +1983,50 @@ pub struct FleetView<'a> {
             errors,
         )
 
+    def test_whole_workspace_crate_reexports_fail_through_aliases(self) -> None:
+        workspace = {
+            f"crates/{crate}/src/lib.rs": "pub struct Scalar(u64);\n"
+            for crate in ("host", "host-play", "scenario", "vault")
+        }
+        for crate in ("host", "host_play", "scenario", "script", "vault"):
+            forms = (
+                f"pub use {crate};\n",
+                f"pub use {crate} as Adapter;\n",
+                f"pub use ::{crate} as Adapter;\n",
+                f"use {crate} as Private;\npub use Private as Adapter;\n",
+                f"mod facade {{ pub use {crate} as Adapter; }}\n"
+                "pub use facade::Adapter;\n",
+            )
+            for source in forms:
+                with self.subTest(crate=crate, source=source):
+                    root = self.clean_fixture(
+                        frontend_lib="pub mod views;\n" + source,
+                        workspace_files=workspace,
+                    )
+                    errors = inventories.check_tree(root)
+                    self.assertTrue(
+                        any(
+                            f"whole-crate re-export of {crate} " in error
+                            for error in errors
+                        ),
+                        errors,
+                    )
+
+    def test_private_crate_alias_and_public_type_reexport_stay_allowed(self) -> None:
+        workspace = {
+            "crates/host/src/lib.rs": "pub struct Scalar(u64);\n",
+        }
+        for source in (
+            "use host as Private;\n",
+            "pub use host::Scalar as PublicScalar;\n",
+        ):
+            with self.subTest(source=source):
+                root = self.clean_fixture(
+                    frontend_lib="pub mod views;\n" + source,
+                    workspace_files=workspace,
+                )
+                self.assertEqual(inventories.check_tree(root), [])
+
     def test_public_glob_reexport_fails_closed(self) -> None:
         base = self.clean_fixture(views=self.baseline_views())
         candidate = self.clean_fixture(
