@@ -1991,6 +1991,7 @@ pub struct FleetView<'a> {
         for crate in ("host", "host_play", "scenario", "script", "vault"):
             forms = (
                 f"pub use {crate};\n",
+                f"pub use ::{crate};\n",
                 f"pub use {crate} as Adapter;\n",
                 f"pub use ::{crate} as Adapter;\n",
                 f"use {crate} as Private;\npub use Private as Adapter;\n",

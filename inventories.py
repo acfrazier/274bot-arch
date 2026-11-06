@@ -2015,6 +2015,11 @@ def _seam_records(
         """Avoid alias cycles for modules already in the current namespace."""
         if not target or local_name != target[-1]:
             return False
+        crate_name = target[1:] if target[0] == "" else target
+        if len(crate_name) == 1 and crate_name[0] in workspace_crates:
+            # The extern prelude already binds this crate under its own name.
+            # Recording that unchanged import as an alias would create a cycle.
+            return True
         root_path = crate_root(module_path)
         if target[0] == "crate":
             candidates = (root_path + target[1:],)
