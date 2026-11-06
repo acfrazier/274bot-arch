@@ -2015,11 +2015,6 @@ def _seam_records(
         """Avoid alias cycles for modules already in the current namespace."""
         if not target or local_name != target[-1]:
             return False
-        crate_name = target[1:] if target[0] == "" else target
-        if len(crate_name) == 1 and crate_name[0] in workspace_crates:
-            # The extern prelude already binds this crate under its own name.
-            # Recording that unchanged import as an alias would create a cycle.
-            return True
         root_path = crate_root(module_path)
         if target[0] == "crate":
             candidates = (root_path + target[1:],)
@@ -2659,15 +2654,24 @@ def _seam_records(
                             )
                             continue
                         resolved = resolve_public_path(module_path, symbol)
+                        crate_name = None
                         if resolved is not None and resolved[0] == "workspace_module":
                             target_module = resolved[1]
                             if target_module == crate_root(target_module):
                                 crate_name = target_module[0].removeprefix("::")
-                                unresolved_exports.add(
-                                    f"{file_key}: whole-crate re-export of {crate_name} "
-                                    f"as {local_name} is unsupported"
-                                )
-                                continue
+                        elif resolved is not None and resolved[0] == "unresolved_import":
+                            # A same-name crate import can resolve to its own
+                            # binding. Reject that public crate-root export
+                            # without changing private/glob shadow resolution.
+                            segments = tuple(part for part in symbol.split("::") if part)
+                            if len(segments) == 1 and segments[0] in workspace_crates:
+                                crate_name = segments[0]
+                        if crate_name is not None:
+                            unresolved_exports.add(
+                                f"{file_key}: whole-crate re-export of {crate_name} "
+                                f"as {local_name} is unsupported"
+                            )
+                            continue
                         if resolved is None or resolved[0] in {"workspace_error", "workspace_module"}:
                             final_name = symbol.rstrip(":").split("::")[-1]
                             if final_name[:1].isupper():
