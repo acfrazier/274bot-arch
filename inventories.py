@@ -1278,11 +1278,23 @@ def _cfg_attr_effect_names(tokens: list[tuple[str, str]], start: int) -> list[st
     return names
 
 
+def _plain_macro_export(attribute: dict[str, Any]) -> bool:
+    return [text for _, text in _attribute_tokens(attribute)] == [
+        "#", "[", "macro_export", "]"
+    ]
+
+
+def _exported_macro_definition(node: dict[str, Any]) -> bool:
+    return node.get("kind") in {"MACRO_RULES", "MACRO_RULES_DEF"} and any(
+        _plain_macro_export(attribute) for attribute in _direct_children(node, "ATTR")
+    )
+
+
 def _binding_attribute_issues(tree: dict[str, Any], path: str) -> list[str]:
     """Report name-changing attributes only when an indexed module is consulted."""
     prelude = {"no_implicit_prelude", "no_std", "no_core", "prelude_import"}
     issues: list[str] = []
-    for node, scope, _, _, _ in _walk_ast(tree, "production", ()):
+    for node, scope, _, parent_kind, _ in _walk_ast(tree, "production", ()):
         if node.get("kind") != "ATTR" or _is_test_scope(scope):
             continue
         tokens = _attribute_tokens(node)
@@ -1292,6 +1304,14 @@ def _binding_attribute_issues(tree: dict[str, Any], path: str) -> list[str]:
         name = tokens[head][1]
         if name in prelude:
             issues.append(f"{path}: unsupported Rust prelude configuration")
+        elif (
+            name == "macro_export"
+            and parent_kind in {"MACRO_RULES", "MACRO_RULES_DEF"}
+            and _plain_macro_export(node)
+        ):
+            # A definition adds only a macro-namespace binding. Invocations
+            # remain unsupported because they may generate type bindings.
+            continue
         elif name in {"macro_use", "macro_export"}:
             issues.append(f"{path}: unsupported macro binding attribute")
         elif name == "cfg_attr":
@@ -1785,7 +1805,12 @@ def _type_definitions(
         kind = item.get("kind")
         if strict and kind in {"UNION", "TYPE_ALIAS", "TRAIT"} and _is_public(item):
             raise _InventoryError(f"{path}: unsupported public seam type syntax ({kind})")
-        if strict and kind in {"MACRO_RULES", "MACRO_RULES_DEF"} and parent_kind in {"SOURCE_FILE", "ITEM_LIST"}:
+        if (
+            strict
+            and kind in {"MACRO_RULES", "MACRO_RULES_DEF"}
+            and parent_kind in {"SOURCE_FILE", "ITEM_LIST"}
+            and not _exported_macro_definition(item)
+        ):
             raise _InventoryError(f"{path}: item-generating macro syntax is unsupported")
         if strict and kind == "MACRO_CALL" and parent_kind in {"SOURCE_FILE", "ITEM_LIST"}:
             raise _InventoryError(f"{path}: item macro invocation is unsupported")
@@ -2072,10 +2097,11 @@ def _seam_records(
                 elif kind in {"CONST", "STATIC", "FN"} and _is_public(item):
                     if name is not None:
                         non_type_items.add((module_path, name))
-                elif kind in {"MACRO_RULES", "MACRO_RULES_DEF"} and parent_kind in {
-                    "SOURCE_FILE",
-                    "ITEM_LIST",
-                }:
+                elif (
+                    kind in {"MACRO_RULES", "MACRO_RULES_DEF"}
+                    and parent_kind in {"SOURCE_FILE", "ITEM_LIST"}
+                    and not _exported_macro_definition(item)
+                ):
                     issue = f"{file_key}: item-generating macro syntax is unsupported"
                     module_issues[module_path].append(issue)
                 elif kind == "MACRO_CALL" and parent_kind in {"SOURCE_FILE", "ITEM_LIST"}:

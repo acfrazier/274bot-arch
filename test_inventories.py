@@ -1653,6 +1653,41 @@ pub struct FleetView<'a> {
                     errors,
                 )
 
+    def test_standard_io_error_is_an_exact_owning_foreign_type(self) -> None:
+        data = _foreign_data(_foreign("std::io::Error", "owning"))
+        for spelling, prefix in (
+            ("std::io::Error", ""),
+            ("io::Error", "use std::io;\n"),
+        ):
+            with self.subTest(spelling=spelling):
+                declaration = (
+                    prefix + "pub struct StandardErrorView<'a> {\n"
+                    f"    source: {spelling},\n"
+                    "    borrowed: &'a str,\n}\n"
+                )
+                self.assertEqual(inventories.check_tree(self.fixture(
+                    views=self.baseline_views() + declaration,
+                    foreign_types=data,
+                )), [])
+                errors = inventories.check_tree(self.fixture(
+                    views=self.baseline_views()
+                    + declaration.replace("    source:", "    pub source:"),
+                    foreign_types=data,
+                ))
+                self.assertTrue(
+                    any("owning seam exposes a public field" in error for error in errors),
+                    errors,
+                )
+        errors = inventories.check_tree(self.fixture(
+            views=self.baseline_views()
+            + "pub struct DifferentError { source: other::io::Error }\n",
+            foreign_types=data,
+        ))
+        self.assertTrue(
+            any("other::io::Error" in error and "unresolved" in error for error in errors),
+            errors,
+        )
+
     def test_foreign_data_row_keeps_generic_argument_ownership(self) -> None:
         views = (
             self.baseline_views()
@@ -2628,12 +2663,89 @@ pub struct FleetView<'a> {
                 )
 
 
+    def _workspace_item_macro_fixture(self, source: str) -> Path:
+        return self.fixture(
+            views=self.baseline_views()
+            + "#[derive(Clone)]\npub struct AttackView {\n"
+            "    pub label: &'static str,\n    pub payload: api::State,\n}\n",
+            workspace_files={
+                "crates/api/src/lib.rs": source
+                + "#[derive(Clone, Copy)]\npub struct State { value: u64 }\n"
+            },
+        )
+
+    def test_test_only_workspace_item_macro_does_not_block_seam_lookup(self) -> None:
+        root = self._workspace_item_macro_fixture(
+            "#[cfg(test)]\nthread_local! {\n"
+            "    static TEST_EVENTS: std::cell::RefCell<Vec<u64>> =\n"
+            "        const { std::cell::RefCell::new(Vec::new()) };\n"
+            "}\n"
+        )
+        self.assertEqual(inventories.check_tree(root), [])
+
+    def test_non_test_workspace_item_macro_still_blocks_seam_lookup(self) -> None:
+        root = self._workspace_item_macro_fixture(
+            "thread_local! {\n"
+            "    static LIVE_EVENTS: std::cell::RefCell<Vec<u64>> =\n"
+            "        const { std::cell::RefCell::new(Vec::new()) };\n"
+            "}\n"
+        )
+        errors = inventories.check_tree(root)
+        self.assertTrue(any(
+            "item macro invocation is unsupported" in error
+            and "consulted for a seam field type" in error
+            for error in errors
+        ), errors)
+
+    def test_test_only_macro_does_not_hide_non_test_workspace_item(self) -> None:
+        test_item = (
+            "#[cfg(test)]\nthread_local! {\n"
+            "    static TEST_EVENTS: std::cell::RefCell<Vec<u64>> =\n"
+            "        const { std::cell::RefCell::new(Vec::new()) };\n"
+            "}\n"
+        )
+        live_item = (
+            "thread_local! {\n"
+            "    static LIVE_EVENTS: std::cell::RefCell<Vec<u64>> =\n"
+            "        const { std::cell::RefCell::new(Vec::new()) };\n"
+            "}\n"
+        )
+        for source in (test_item + live_item, live_item + test_item):
+            with self.subTest(source=source):
+                errors = inventories.check_tree(self._workspace_item_macro_fixture(source))
+                self.assertTrue(any(
+                    "item macro invocation is unsupported" in error
+                    and "consulted for a seam field type" in error
+                    for error in errors
+                ), errors)
+
+    def test_exported_macro_definition_only_adds_a_macro_binding(self) -> None:
+        for name, cfg in (
+            ("guard", ""),
+            ("guard", '#[cfg(any(test, feature = "test-hooks"))]\n'),
+            ("State", ""),
+        ):
+            with self.subTest(name=name, cfg=cfg):
+                source = cfg + f"#[macro_export]\nmacro_rules! {name} {{ () => {{}}; }}\n"
+                self.assertEqual(
+                    inventories.check_tree(self._workspace_item_macro_fixture(source)), []
+                )
+        errors = inventories.check_tree(self._workspace_item_macro_fixture(
+            "#[macro_export]\nmacro_rules! guard { () => {}; }\nguard!();\n"
+        ))
+        self.assertTrue(any(
+            "item macro invocation is unsupported" in error
+            and "consulted for a seam field type" in error
+            for error in errors
+        ), errors)
+
     def test_direct_macro_binding_attributes_refuse(self) -> None:
         base = self.clean_fixture(views=self.baseline_views())
         self.assertEqual(inventories.check_tree(base), [])
         cases = {
             "macro_use module": "#[macro_use]\nmod hidden {}\n",
-            "macro_export definition": "#[macro_export]\nmacro_rules! generated { () => {}; }\n",
+            "macro_export non-definition": "#[macro_export]\npub fn generated() {}\n",
+            "macro_export arguments": "#[macro_export(local_inner_macros)]\nmacro_rules! generated { () => {}; }\n",
         }
         for row, source in cases.items():
             with self.subTest(row=row):
