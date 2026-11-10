@@ -17,6 +17,8 @@ members = [
     "nav-planner",
     "nav-executor",
     "nav-bake",
+    # Offline RuneScript machine. Its profile module owns engine selection.
+    "rs2vm",
     "panel",
     "scenario",
     # Dev-only executable seat model (contract §27 §8); depends on no workspace crate.
@@ -121,6 +123,12 @@ from = "nav-bake"
 to = "client"
 kinds = ["normal"]
 reason = "BAKED-REACH-1023 BR1: generation decodes the selected cache. The shared navigation action deny list forbids client execution APIs."
+
+[[allow]]
+from = "nav-bake"
+to = "rs2vm"
+kinds = ["normal"]
+reason = "Operator-approved bytecode slice 1a: release-only shadow execution reads the leaf RuneScript machine. No runtime crate depends on rs2vm. Engine selection is confined to crates/rs2vm/src/profile.rs."
 
 [[allow]]
 from = "host-play"
@@ -549,7 +557,7 @@ optional_dependencies = []
 
 [[configuration]]
 id = "workspace-tests"
-packages = ["api", "e2e", "frontend-core", "hold-model", "host", "host-play", "nav-bake", "nav-executor", "nav-planner", "panel", "scenario", "script", "script-js", "seat-model", "seed-calc", "tui", "vault", "xtask"]
+packages = ["api", "e2e", "frontend-core", "hold-model", "host", "host-play", "nav-bake", "nav-executor", "nav-planner", "panel", "rs2vm", "scenario", "script", "script-js", "seat-model", "seed-calc", "tui", "vault", "xtask"]
 features = []
 default_features = true
 dev = true
