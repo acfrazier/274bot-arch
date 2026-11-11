@@ -115,8 +115,8 @@ reason = "BAKED-REACH-1023 BR1: release producers consume runtime schemas, colli
 from = "nav-bake"
 to = "api"
 kinds = ["normal", "dev"]
-features = { normal = [], dev = ["embedded-game-data"] }
-reason = "BAKED-REACH-1023 BR1: content generation consumes selected game facts and shared reach geometry, never script or client execution. Normal API defaults are off for the stage-1 tooling build. Dev-only embedded-game-data keeps existing real-data tests active; no raw packet recorder feature is admitted (Main 2026-11-05)."
+features = { normal = [], dev = ["embedded-game-data", "test-support"] }
+reason = "BAKED-REACH-1023 BR1: content generation consumes selected game facts and shared reach geometry, never script or client execution. Normal API defaults are off for the stage-1 tooling build. Dev-only embedded-game-data keeps real-data tests active. Operator-approved bytecode slice 1a uses the existing test-support local-asset resolver in tests; no packet recorder API is used, and test-support stays out of the normal graph."
 
 [[allow]]
 from = "nav-bake"
@@ -128,7 +128,7 @@ reason = "BAKED-REACH-1023 BR1: generation decodes the selected cache. The share
 from = "nav-bake"
 to = "rs2vm"
 kinds = ["normal"]
-reason = "Operator-approved bytecode slice 1a: release-only shadow execution reads the leaf RuneScript machine. No runtime crate depends on rs2vm. Engine selection is confined to crates/rs2vm/src/profile.rs."
+reason = "Operator-approved bytecode slice 1a: opt-in --nav-shadow execution reads the leaf RuneScript machine. No runtime crate depends on rs2vm. Engine profile definitions live in crates/rs2vm/src/profile.rs. Revision selection lives in crates/nav-bake/src/transport.rs."
 
 [[allow]]
 from = "host-play"
