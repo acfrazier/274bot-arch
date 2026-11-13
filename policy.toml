@@ -14,6 +14,8 @@ members = [
     "frontend-core",
     "host",
     "host-play",
+    # Compile-time host/client source identity. No workspace dependencies.
+    "build-stamp",
     "nav-planner",
     "nav-executor",
     "nav-bake",
@@ -262,6 +264,12 @@ reason = "shared Play session exposes host-facing snapshot/interact types to ope
 
 [[allow]]
 from = "host-play"
+to = "build-stamp"
+kinds = ["normal"]
+reason = "The live harness records baked host and client source identities in run receipts. build-stamp has no workspace dependencies."
+
+[[allow]]
+from = "host-play"
 to = "client"
 kinds = ["normal"]
 reason = "Play constructs and pumps Client slots; it does not own GPU/UI."
@@ -411,6 +419,12 @@ from = "panel"
 to = "api"
 kinds = ["normal"]
 reason = "panel UI binds host-facing types; it does not reimplement the client applet UI."
+
+[[allow]]
+from = "panel"
+to = "build-stamp"
+kinds = ["normal"]
+reason = "The panel displays the same baked host source identity and build time as the live harness. build-stamp has no workspace dependencies."
 
 [[allow]]
 from = "panel"
