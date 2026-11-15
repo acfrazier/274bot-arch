@@ -27,6 +27,8 @@ members = [
     "seat-model",
     # Dev-only executable hold model (HOLD-MODEL-AB, operator 2026-11-02); depends on no workspace crate.
     "hold-model",
+    # Dev-only executable model of the JS isolate teardown (LP1, ADR 0017); depends on no workspace crate.
+    "js-teardown-model",
     # Offline quest-campaign seed calculator; consumes product facts and risk rules.
     "seed-calc",
     # Repository CI dispatcher; has no workspace crate dependencies.
@@ -229,6 +231,12 @@ from = "script-js"
 to = "hold-model"
 kinds = ["dev"]
 reason = "HOLD-MODEL-AB (operator 2026-11-02): the compat-journal conformance test drives the real lease with traces from the checked model of the auto-run hold. dev-only."
+
+[[allow]]
+from = "script-js"
+to = "js-teardown-model"
+kinds = ["dev"]
+reason = "LP1-JS-TEARDOWN (Main 2026-11-15, ADR 0017): the conformance tests drive the real isolate teardown functions and the retirement registry through traces of the checked model. dev-only."
 
 [[allow]]
 from = "script"
@@ -583,7 +591,7 @@ optional_dependencies = []
 
 [[configuration]]
 id = "workspace-tests"
-packages = ["api", "e2e", "frontend-core", "hold-model", "host", "host-play", "nav-bake", "nav-executor", "nav-planner", "panel", "rs2vm", "scenario", "script", "script-js", "seat-model", "seed-calc", "tui", "vault", "xtask"]
+packages = ["api", "e2e", "frontend-core", "hold-model", "host", "host-play", "js-teardown-model", "nav-bake", "nav-executor", "nav-planner", "panel", "rs2vm", "scenario", "script", "script-js", "seat-model", "seed-calc", "tui", "vault", "xtask"]
 features = []
 default_features = true
 dev = true
