@@ -207,6 +207,12 @@ kinds = ["dev"]
 reason = "Main 2026-10-12, F0-SCRIPT-SEAM conformance oracle, §27 §2.2 / ADR 0008"
 
 [[allow]]
+from = "host"
+to = "seat-model"
+kinds = ["dev"]
+reason = "V11A-GUARDIAN-OWNER (Main 2026-11-15, design V11D section 3.4 / ADR 0008, ADR 0017): host conformance tests replay the checked C6 Guardian ownership model's traces against the real Guardian. dev-only."
+
+[[allow]]
 from = "host-play"
 to = "hold-model"
 kinds = ["dev"]
