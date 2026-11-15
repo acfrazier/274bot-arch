@@ -214,6 +214,12 @@ reason = "V11A-GUARDIAN-OWNER (Main 2026-11-15, design V11D section 3.4 / ADR 00
 
 [[allow]]
 from = "host-play"
+to = "seat-model"
+kinds = ["dev"]
+reason = "V11A-GUARDIAN-OWNER round 3 (Main 2026-11-15, ADR 0008, ADR 0017): the seat conformance test drives the real Guardian, claim adapter, slot and seat with traces from the checked C6 model. dev-only."
+
+[[allow]]
+from = "host-play"
 to = "hold-model"
 kinds = ["dev"]
 reason = "HOLD-MODEL-AB (operator 2026-11-02): the conformance test drives the real host policy and lease sampling with traces from the checked model of the auto-run hold. dev-only."
