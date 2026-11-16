@@ -34,10 +34,18 @@ FOREIGN_PATH_RESERVED_ROOTS = frozenset({"crate", "self", "super", "Self"})
 SEAM_EXCEPTIONS_PATH = Path(__file__).with_name("seam-exceptions.json")
 VIEWS_RELATIVE = Path("crates/frontend-core/src/views.rs")
 FRONTEND_SRC_RELATIVE = Path("crates/frontend-core/src")
-# Each tuple covers the native core and the JS surface. A missing root is
-# optional, but at least one root in each tuple must exist.
-SCRIPT_SRC_RELATIVE = (Path("crates/script/src"), Path("crates/script-js/src"))
-SCRIPT_TESTS_RELATIVE = (Path("crates/script/tests"), Path("crates/script-js/tests"))
+# Each tuple covers the native core, the JS surface and the Luau surface. A
+# missing root is optional, but at least one root in each tuple must exist.
+SCRIPT_SRC_RELATIVE = (
+    Path("crates/script/src"),
+    Path("crates/script-js/src"),
+    Path("crates/script-luau/src"),
+)
+SCRIPT_TESTS_RELATIVE = (
+    Path("crates/script/tests"),
+    Path("crates/script-js/tests"),
+    Path("crates/script-luau/tests"),
+)
 SCRIPT_AUX_RELATIVE = (
     Path("crates/script/schema/generated/isolate_generated.rs"),
     Path("crates/script-js/schema/generated/isolate_generated.rs"),
@@ -250,6 +258,7 @@ FRONTEND_CRATE_NAMES = frozenset(
         "nav_executor",
         "script",
         "script_js",
+        "script_luau",
         "vault",
     }
 )
@@ -661,9 +670,13 @@ def _check_rust_editions(root: Path) -> list[str]:
     for relative in (
         Path("crates/script/Cargo.toml"),
         Path("crates/script-js/Cargo.toml"),
+        Path("crates/script-luau/Cargo.toml"),
         Path("crates/frontend-core/Cargo.toml"),
     ):
-        if relative == Path("crates/script-js/Cargo.toml") and not (
+        if relative in (
+            Path("crates/script-js/Cargo.toml"),
+            Path("crates/script-luau/Cargo.toml"),
+        ) and not (
             (root / relative).exists() or (root / relative).is_symlink()
         ):
             continue
@@ -978,7 +991,11 @@ def _root_test_scopes(
     """Resolve external module and include provenance for the syntax scan."""
     contexts: dict[str, set[str]] = {}
     errors: list[str] = []
-    root_files = ("crates/script/src/lib.rs", "crates/script-js/src/lib.rs")
+    root_files = (
+        "crates/script/src/lib.rs",
+        "crates/script-js/src/lib.rs",
+        "crates/script-luau/src/lib.rs",
+    )
     if not any(root_file in parsed for root_file in root_files):
         return {}, [f"missing Rust crate root: {root_files[0]}"]
 

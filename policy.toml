@@ -37,6 +37,7 @@ members = [
     "xtask",
     "script",
     "script-js",
+    "script-luau",
     "tui",
     "vault",
 ]
@@ -276,6 +277,30 @@ to = "nav-planner"
 kinds = ["dev"]
 reason = "The two named bank-location tests use the planner as an exact fixture oracle. Production uses the Core facade."
 
+[[allow]]
+from = "script-luau"
+to = "script"
+kinds = ["normal", "dev"]
+reason = "The Luau surface binds the native core. Tests use the core test hooks."
+
+[[allow]]
+from = "script-luau"
+to = "api"
+kinds = ["normal", "dev"]
+reason = "The surface uses snapshot, identity, settings and paint vocabulary. Dev: API test support."
+
+[[allow]]
+from = "script-luau"
+to = "vault"
+kinds = ["normal"]
+reason = "The library reads script files with the bounded file read."
+
+[[allow]]
+from = "script-luau"
+to = "luau-model"
+kinds = ["dev"]
+reason = "The conformance tests drive the real run with traces of the checked model."
+
 # --- orchestration and composition ---
 
 [[allow]]
@@ -325,6 +350,12 @@ from = "host-play"
 to = "script-js"
 kinds = ["optional", "dev"]
 reason = "Optional: Play binds the JS surface factory and catalog only with js. Dev: tests use the JS test hooks."
+
+[[allow]]
+from = "host-play"
+to = "script-luau"
+kinds = ["optional", "dev"]
+reason = "Optional: Play binds the Luau surface factory only with `luau`. Dev: tests use the Luau test hooks."
 
 [[allow]]
 from = "host-play"
@@ -399,6 +430,12 @@ from = "frontend-core"
 to = "script-js"
 kinds = ["optional", "dev"]
 reason = "Optional: operator script coordination consumes the JS catalog and library only with js. Dev: JS-backed fixtures remain available to tests."
+
+[[allow]]
+from = "frontend-core"
+to = "script-luau"
+kinds = ["optional", "dev"]
+reason = "Optional: the script model uses the Luau library only with `luau`. Dev: fixtures."
 
 [[allow]]
 from = "frontend-core"
@@ -593,7 +630,7 @@ optional_dependencies = []
 
 [[configuration]]
 id = "workspace-tests"
-packages = ["api", "e2e", "frontend-core", "hold-model", "host", "host-play", "js-teardown-model", "luau-model", "nav-bake", "nav-executor", "nav-planner", "panel", "rs2vm", "scenario", "script", "script-js", "seat-model", "seed-calc", "tui", "vault", "xtask"]
+packages = ["api", "e2e", "frontend-core", "hold-model", "host", "host-play", "js-teardown-model", "luau-model", "nav-bake", "nav-executor", "nav-planner", "panel", "rs2vm", "scenario", "script", "script-js", "script-luau", "seat-model", "seed-calc", "tui", "vault", "xtask"]
 features = []
 default_features = true
 dev = true
@@ -616,6 +653,17 @@ optional_dependencies = []
 [[configuration]]
 id = "script-js-tests"
 packages = ["script-js"]
+features = []
+default_features = true
+dev = true
+status = "enforced"
+owner = "T2"
+forbidden_features = []
+optional_dependencies = []
+
+[[configuration]]
+id = "script-luau-tests"
+packages = ["script-luau"]
 features = []
 default_features = true
 dev = true
@@ -673,6 +721,30 @@ optional_dependencies = []
 id = "native-only"
 packages = ["panel", "tui", "host-play"]
 features = []
+default_features = false
+dev = false
+status = "enforced"
+owner = "T2"
+forbidden_features = ["host-play/js", "frontend-core/js", "panel/js", "tui/js", "host-play/luau", "frontend-core/luau", "panel/luau", "tui/luau"]
+optional_dependencies = ["host-play/script-js", "frontend-core/script-js", "host-play/script-luau", "frontend-core/script-luau"]
+
+# JS-only product graphs exclude the Luau surfaces; the Luau graph mirrors it.
+[[configuration]]
+id = "js-only"
+packages = ["panel", "tui", "host-play"]
+features = ["panel/js", "tui/js", "host-play/js"]
+default_features = false
+dev = false
+status = "enforced"
+owner = "T2"
+forbidden_features = ["host-play/luau", "frontend-core/luau", "panel/luau", "tui/luau"]
+optional_dependencies = ["host-play/script-luau", "frontend-core/script-luau"]
+
+# Luau-only product graphs exclude the JS surfaces; the JS graph mirrors it.
+[[configuration]]
+id = "luau-only"
+packages = ["panel", "tui", "host-play"]
+features = ["panel/luau", "tui/luau", "host-play/luau"]
 default_features = false
 dev = false
 status = "enforced"
