@@ -21,10 +21,16 @@ RUST_EDITION = "2021"
 
 
 
-# The checker code (not inventories.json) pins the parser.  This is the exact
-# Linux x86-64 rust-analyzer binary provisioned for the architecture gate.
-PARSER_VERSION = "rust-analyzer 0.3.3081-standalone"
-PARSER_SHA256 = "fd89304c85f6c1996b036ea8f2c9ad9d3e25a197dbd713661c7fe51ec9dc8e49"
+# Pin exact executable bytes and version output, not candidate-supplied metadata.
+# Release assets and hash reproduction commands are in README.md.
+PARSER_PINS = {
+    # Linux x86-64.
+    "fd89304c85f6c1996b036ea8f2c9ad9d3e25a197dbd713661c7fe51ec9dc8e49":
+        "rust-analyzer 0.3.3081-standalone",
+    # macOS ARM64.
+    "c863e967a7244fa3687d7bd6235ac7abae5a7ce44bcbf8307eb1dc80aa85f397":
+        "rust-analyzer 0.3.3081-standalone (2ad81e72b7 2026-10-11)",
+}
 DATA_DIR_RELATIVE = Path("tools/architecture")
 FOREIGN_TYPES_RELATIVE = Path("foreign_types.json")
 FOREIGN_TOP_FIELDS = frozenset({"schema_version", "foreign_types"})
@@ -544,7 +550,8 @@ def _parser_executable() -> str:
                 digest.update(block)
     except OSError as error:
         raise _InventoryError(f"cannot read pinned rust-analyzer: {error}") from error
-    if digest.hexdigest() != PARSER_SHA256:
+    expected_version = PARSER_PINS.get(digest.hexdigest())
+    if expected_version is None:
         raise _InventoryError("rust-analyzer binary hash does not match the trusted pin")
     try:
         version = subprocess.run(
@@ -557,7 +564,7 @@ def _parser_executable() -> str:
         )
     except (OSError, subprocess.SubprocessError) as error:
         raise _InventoryError(f"cannot identify pinned rust-analyzer: {error}") from error
-    if version.returncode != 0 or version.stdout.strip() != PARSER_VERSION:
+    if version.returncode != 0 or version.stdout.strip() != expected_version:
         raise _InventoryError("rust-analyzer version does not match the trusted pin")
     return str(resolved)
 

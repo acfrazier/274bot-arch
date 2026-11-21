@@ -9,6 +9,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from typing import Any
+from unittest import mock
 
 HERE = Path(__file__).resolve().parent
 INVENTORIES_PATH = HERE / "inventories.py"
@@ -193,6 +194,52 @@ def _write_fixture(
     return root
 
 
+class ParserPinTests(unittest.TestCase):
+    LINUX_SHA256 = "fd89304c85f6c1996b036ea8f2c9ad9d3e25a197dbd713661c7fe51ec9dc8e49"
+    MACOS_SHA256 = "c863e967a7244fa3687d7bd6235ac7abae5a7ce44bcbf8307eb1dc80aa85f397"
+    LINUX_VERSION = "rust-analyzer 0.3.3081-standalone"
+    MACOS_VERSION = "rust-analyzer 0.3.3081-standalone (2ad81e72b7 2026-10-11)"
+
+    def parser(self, digest: str, version: str, returncode: int = 0) -> str:
+        executable = str(Path(__file__).resolve())
+        with (
+            mock.patch.object(inventories.shutil, "which", return_value=executable),
+            mock.patch.object(inventories.hashlib, "sha256") as sha256,
+            mock.patch.object(inventories.subprocess, "run") as run,
+        ):
+            sha256.return_value.hexdigest.return_value = digest
+            run.return_value = inventories.subprocess.CompletedProcess(
+                [executable, "--version"], returncode, stdout=version + "\n", stderr=""
+            )
+            return inventories._parser_executable()
+
+    def test_exact_linux_and_macos_pins_are_accepted(self) -> None:
+        for digest, version in (
+            (self.LINUX_SHA256, self.LINUX_VERSION),
+            (self.MACOS_SHA256, self.MACOS_VERSION),
+        ):
+            with self.subTest(digest=digest):
+                self.assertEqual(self.parser(digest, version), str(Path(__file__).resolve()))
+
+    def test_unknown_hash_is_rejected_even_with_a_trusted_version(self) -> None:
+        with self.assertRaisesRegex(inventories._InventoryError, "binary hash"):
+            self.parser("0" * 64, self.LINUX_VERSION)
+
+    def test_each_hash_requires_its_exact_version(self) -> None:
+        for digest, version in (
+            (self.LINUX_SHA256, self.MACOS_VERSION),
+            (self.MACOS_SHA256, self.LINUX_VERSION),
+            (self.MACOS_SHA256, self.MACOS_VERSION + " changed"),
+        ):
+            with self.subTest(digest=digest, version=version):
+                with self.assertRaisesRegex(inventories._InventoryError, "version"):
+                    self.parser(digest, version)
+
+    def test_failed_version_command_is_rejected(self) -> None:
+        with self.assertRaisesRegex(inventories._InventoryError, "version"):
+            self.parser(self.MACOS_SHA256, self.MACOS_VERSION, returncode=1)
+
+
 class InventoryBehaviorTests(unittest.TestCase):
     def fixture(self, **kwargs: Any) -> Path:
         temporary = tempfile.TemporaryDirectory(prefix="f0-inventory-")
@@ -219,6 +266,26 @@ pub struct FleetView<'a> {
     def test_clean_scalar_and_borrowed_seams_are_accepted(self) -> None:
         root = self.fixture(views=self.baseline_views(), )
         self.assertEqual(inventories.check_tree(root), [])
+
+    def test_error_and_nonzero_foreign_classes_are_consulted(self) -> None:
+        rows = (
+            _foreign("serde_json::Error", "owning"),
+            _foreign("std::io::Error", "owning"),
+            _foreign("std::num::NonZeroU64", "scalar"),
+        )
+        root = self.fixture(
+            views=self.baseline_views() + (
+                "pub struct Failure {\n"
+                "    json: serde_json::Error,\n"
+                "    io: std::io::Error,\n"
+                "}\n"
+                "#[derive(Clone, Copy)]\n"
+                "pub struct Sequence { pub value: std::num::NonZeroU64 }\n"
+            ),
+            foreign_types=_foreign_data(*rows),
+        )
+        self.assertEqual(inventories.check_tree(root), [])
+
 
     def test_candidate_inventory_cannot_self_admit_a_seam_or_import(self) -> None:
         views = self.baseline_views() + (

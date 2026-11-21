@@ -4,15 +4,36 @@ Operator-owned architecture checker and protected rules for 274bot.
 
 ## Running
 
-The checker requires Python 3.11 or newer. Product CI pins Python 3.14.8. The
-syntax-aware source checks require `rust-analyzer 0.3.3081-standalone` on
-`PATH`, with SHA-256
-`fd89304c85f6c1996b036ea8f2c9ad9d3e25a197dbd713661c7fe51ec9dc8e49`.
+The checker requires Python 3.11 or newer. Product CI pins Python 3.14.8.
+Python does not supply the Rust parser and has no executable hash pin here.
+The syntax-aware source checks require one of these exact `rust-analyzer`
+executables on `PATH`. Both come from the
+[2026-10-12 release](https://github.com/rust-lang/rust-analyzer/releases/tag/2026-10-12).
+
+| Release asset | Executable SHA-256 | Exact `--version` output |
+|---|---|---|
+| `rust-analyzer-x86_64-unknown-linux-gnu.gz` | `fd89304c85f6c1996b036ea8f2c9ad9d3e25a197dbd713661c7fe51ec9dc8e49` | `rust-analyzer 0.3.3081-standalone` |
+| `rust-analyzer-aarch64-apple-darwin.gz` | `c863e967a7244fa3687d7bd6235ac7abae5a7ce44bcbf8307eb1dc80aa85f397` | `rust-analyzer 0.3.3081-standalone (2ad81e72b7 2026-10-11)` |
+
+`inventories.py` pins each executable hash and its exact version output.
+An unlisted hash or a different version output fails the check.
+To reproduce a pin, download the corresponding release asset. Then hash the
+decompressed executable bytes, not the compressed archive:
+
+```bash
+asset=rust-analyzer-aarch64-apple-darwin.gz
+curl --fail --location --output "$asset" \
+  "https://github.com/rust-lang/rust-analyzer/releases/download/2026-10-12/$asset"
+gzip -dc "$asset" | shasum -a 256
+```
+
+Use `asset=rust-analyzer-x86_64-unknown-linux-gnu.gz` for the Linux pin.
 
 From this repository:
 
 ```bash
 python3 -B check.py --self-test
+python3 -B -m unittest discover
 python3 -B check.py --root /path/to/274bot
 ```
 
@@ -56,6 +77,10 @@ Ownership classes are inferred from source, not an exhaustive type registry.
 with reasons: 15 owning findings and 12 test-nav imports. The narrow built-in
 test whitelist is unchanged. Candidate inventory rows cannot admit a violation.
 Those existing findings are one later cleanup item, not new permission.
+
+`serde_json::Error` and `std::io::Error` own their diagnostic payloads.
+`std::num::NonZeroU64` is scalar. These candidate-supplied classifications
+remain subject to the source traversal and stale-row check.
 
 ## What remains
 
