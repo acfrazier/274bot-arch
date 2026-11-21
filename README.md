@@ -57,9 +57,9 @@ identities fail closed.
 
 An `allow.features` table can restrict explicit dependency features by edge
 kind. Such an edge must set `default-features = false`. The bake and planner
-normal API edges allow no feature request; their dev edges allow only
-`embedded-game-data`, not API raw packet recorders. Inherited workspace feature
-requests are checked too.
+normal API edges allow no feature request. Their dev edges allow
+`embedded-game-data`. The bake dev edge also allows `test-support` for the
+local-asset resolver. Inherited workspace feature requests are checked too.
 
 Graph source hygiene rejects candidate copies of protected `policy.toml` and
 `vendor-manifests.json`, Cargo configuration files that could override the

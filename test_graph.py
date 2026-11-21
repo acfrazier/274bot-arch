@@ -60,15 +60,18 @@ class GraphPolicyTests(unittest.TestCase):
         workspace(self.root)
         self.assertEqual(checker.check_graph_tree(self.root), [])
 
-    def test_bake_api_permissions_are_only_embedded_data(self) -> None:
+    def test_bake_and_planner_api_permissions_match_approved_features(self) -> None:
         protected = checker.load_policy(Path(__file__).with_name("policy.toml"))
-        for source in ("nav-bake", "nav-planner"):
+        for source, dev_features in (
+            ("nav-bake", {"embedded-game-data", "test-support"}),
+            ("nav-planner", {"embedded-game-data"}),
+        ):
             with self.subTest(source=source):
                 allowance = protected.allowed[source, "api"]
                 self.assertEqual(allowance.kinds, {"normal", "dev"})
                 self.assertEqual(
                     allowance.features,
-                    {"normal": set(), "dev": {"embedded-game-data"}},
+                    {"normal": set(), "dev": dev_features},
                 )
 
     def test_dependency_feature_limits_do_not_admit_raw_recorders(self) -> None:
@@ -699,7 +702,6 @@ optional_dependencies = []
 
     def test_cargo_configs_are_refused_in_nested_and_symlink_locations(self) -> None:
         self.write_policy([])
-        workspace(self.root, kind="none")
         for directory in ("", "vendor/fr-client-rust", "vendor/fr-client-rust/crates/client-play"):
             for cargo, filename in (
                 (".cargo", "config"), (".cargo", "config.toml"),
@@ -708,19 +710,22 @@ optional_dependencies = []
                 (".Cargo/nested", "CONFIG.TOML"),
             ):
                 for symlink in (False, True):
-                    with self.subTest(directory=directory, cargo=cargo, filename=filename, symlink=symlink):
-                        config = self.root / directory / cargo / filename
+                    with (
+                        self.subTest(directory=directory, cargo=cargo, filename=filename, symlink=symlink),
+                        tempfile.TemporaryDirectory(prefix="architecture-config-") as temporary,
+                    ):
+                        root = workspace(Path(temporary) / "workspace", kind="none")
+                        config = root / directory / cargo / filename
                         config.parent.mkdir(parents=True, exist_ok=True)
                         if symlink:
-                            config.symlink_to(self.root / "missing-config")
+                            config.symlink_to(root / "missing-config")
                         else:
                             config.write_text("[paths]\n", encoding="utf-8")
-                        errors = checker.check_graph_tree(self.root)
+                        errors = checker.check_graph_tree(root)
                         self.assertTrue(any(
-                            f"candidate {config.relative_to(self.root)} is forbidden" in error
+                            f"candidate {config.relative_to(root)} is forbidden" in error
                             for error in errors
                         ), errors)
-                        config.unlink()
 
     def test_case_variant_cargo_directory_symlink_is_refused(self) -> None:
         self.write_policy([])
@@ -735,9 +740,6 @@ optional_dependencies = []
 
     def test_case_variant_cargo_toml_is_refused_in_product_and_vendored_trees(self) -> None:
         self.write_policy([])
-        workspace(self.root, kind="none")
-        # Exact Cargo.toml names alone pass.
-        self.assertEqual(checker.check_graph_tree(self.root), [])
         scenarios = (
             # o22 analog: a product manifest variant with a hidden edge
             # and a git source.
@@ -768,22 +770,33 @@ optional_dependencies = []
         )
         for relative, content in scenarios:
             for symlink in (False, True):
-                with self.subTest(relative=relative, symlink=symlink):
-                    candidate = self.root / relative
+                with (
+                    self.subTest(relative=relative, symlink=symlink),
+                    tempfile.TemporaryDirectory(prefix="architecture-manifest-") as temporary,
+                ):
+                    root = workspace(Path(temporary) / "workspace", kind="none")
+                    self.assertEqual(checker.check_graph_tree(root), [])
+                    candidate = root / relative
                     candidate.parent.mkdir(parents=True, exist_ok=True)
+                    canonical = candidate.with_name("Cargo.toml")
+                    saved_manifest = Path(temporary) / "saved-manifest"
+                    # A case-insensitive filesystem cannot hold both spellings.
+                    if candidate.exists() and candidate.samefile(canonical):
+                        canonical.rename(saved_manifest)
                     if symlink:
-                        candidate.symlink_to(self.root / "missing-manifest")
+                        candidate.symlink_to(root / "missing-manifest")
                     else:
                         candidate.write_text(content, encoding="utf-8")
-                    errors = checker.check_graph_tree(self.root)
+                    errors = checker.check_graph_tree(root)
                     self.assertTrue(any(
-                        f"candidate {candidate.relative_to(self.root)} is forbidden" in error
+                        f"candidate {candidate.relative_to(root)} is forbidden" in error
                         and "exact spelling Cargo.toml" in error
                         for error in errors
                     ), errors)
                     candidate.unlink()
-        # Removal returns the tree to exact Cargo.toml names alone.
-        self.assertEqual(checker.check_graph_tree(self.root), [])
+                    if saved_manifest.exists():
+                        saved_manifest.rename(canonical)
+                    self.assertEqual(checker.check_graph_tree(root), [])
 
     def client_play_fixture(self) -> Path:
         workspace(self.root, kind="none")
