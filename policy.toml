@@ -27,6 +27,8 @@ members = [
     "seat-model",
     # Dev-only executable hold model (HOLD-MODEL-AB, operator 2026-11-02); depends on no workspace crate.
     "hold-model",
+    # Dev-only executable model of the host stderr queue (R3, ADR 0017); depends on no workspace crate.
+    "hostlog-model",
     # Dev-only executable model of the JS isolate teardown (LP1, ADR 0017); depends on no workspace crate.
     "js-teardown-model",
     # Dev-only executable Luau run model; depends on no workspace crate.
@@ -240,6 +242,12 @@ from = "script-js"
 to = "js-teardown-model"
 kinds = ["dev"]
 reason = "LP1-JS-TEARDOWN (Main 2026-11-15, ADR 0017): the conformance tests drive the real isolate teardown functions and the retirement registry through traces of the checked model. dev-only."
+
+[[allow]]
+from = "api"
+to = "hostlog-model"
+kinds = ["dev"]
+reason = "R3 (ADR 0017): the conformance tests replay every state and edge of the checked stderr-queue model on the real queue (Enqueue, Counters, Reservation, the channel). dev-only."
 
 [[allow]]
 from = "script"
@@ -630,7 +638,7 @@ optional_dependencies = []
 
 [[configuration]]
 id = "workspace-tests"
-packages = ["api", "e2e", "frontend-core", "hold-model", "host", "host-play", "js-teardown-model", "luau-model", "nav-bake", "nav-executor", "nav-planner", "panel", "rs2vm", "scenario", "script", "script-js", "script-luau", "seat-model", "seed-calc", "tui", "vault", "xtask"]
+packages = ["api", "e2e", "frontend-core", "hold-model", "host", "host-play", "hostlog-model", "js-teardown-model", "luau-model", "nav-bake", "nav-executor", "nav-planner", "panel", "rs2vm", "scenario", "script", "script-js", "script-luau", "seat-model", "seed-calc", "tui", "vault", "xtask"]
 features = []
 default_features = true
 dev = true
