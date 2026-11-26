@@ -363,7 +363,7 @@ reason = "Optional: Play binds the JS surface factory and catalog only with js. 
 from = "host-play"
 to = "script-luau"
 kinds = ["optional", "dev"]
-reason = "Optional: Play binds the Luau surface factory only with `luau`. Dev: tests use the Luau test hooks."
+reason = "Optional: Play binds the Luau surface factory only with `luau`. With `scenario-luau`, the live harness gives one Luau Start a scenario extension and reads the header of a scenario file. Dev: tests use the Luau test hooks."
 
 [[allow]]
 from = "host-play"
@@ -759,3 +759,14 @@ status = "enforced"
 owner = "T2"
 forbidden_features = ["host-play/js", "frontend-core/js", "panel/js", "tui/js", "client/scenario-observe", "api/scenario-observe", "script-luau/scenario-luau", "host-play/scenario-luau", "frontend-core/scenario-luau", "panel/scenario-luau", "tui/scenario-luau", "script-luau/test-hooks", "host-play/test-support"]
 optional_dependencies = ["host-play/script-js", "frontend-core/script-js"]
+
+[[configuration]]
+id = "luau-scenarios"
+packages = ["panel", "tui", "host-play"]
+features = ["panel/scenario-luau", "tui/scenario-luau", "host-play/scenario-luau"]
+default_features = true
+dev = false
+status = "enforced"
+owner = "T2"
+forbidden_features = ["host-play/test-support", "script-luau/test-hooks"]
+optional_dependencies = ["host-play/script-luau", "frontend-core/script-luau"]
