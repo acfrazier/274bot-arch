@@ -161,11 +161,13 @@ def load_policy(path: Path) -> Policy:
             raise ValueError(f"unknown configuration packages: {identity}")
         for key in ("features", "forbidden_features", "optional_dependencies"):
             string_set(row[key], f"configuration.{key}")
-            if key != "features" and any(
-                len(item.split("/")) != 2 or item.split("/")[0] not in members
-                or not item.split("/")[1] for item in row[key]
-            ):
-                raise ValueError(f"configuration {key} must name known package/item: {identity}")
+            if key in {"forbidden_features", "optional_dependencies"}:
+                owners = members | set(path_packages) if key == "forbidden_features" else members
+                if any(
+                    len(item.split("/")) != 2 or item.split("/")[0] not in owners
+                    or not item.split("/")[1] for item in row[key]
+                ):
+                    raise ValueError(f"configuration {key} must name known package/item: {identity}")
         if type(row["default_features"]) is not bool or type(row["dev"]) is not bool:
             raise ValueError(f"configuration flags must be boolean: {identity}")
         if row["status"] not in {"enforced", "pending"} or row["owner"] not in OWNERS:

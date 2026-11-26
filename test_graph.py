@@ -418,6 +418,47 @@ optional_dependencies = []
             "[workspace]", '[workspace]\npath_packages = { backend = "vendor/backend/Cargo.toml" }'
         ), encoding="utf-8")
 
+    def test_forbidden_feature_on_registered_path_package(self) -> None:
+        self.vendor_fixture(allowed=False, dependency="\n[features]\nscenario-observe = []\n")
+        with (self.root / "Cargo.toml").open("a", encoding="utf-8") as stream:
+            stream.write('\n[patch.crates-io]\nbackend = { path = "vendor/backend" }\n')
+        vault = self.root / "crates/vault/Cargo.toml"
+        with vault.open("a", encoding="utf-8") as stream:
+            stream.write(
+                '\n[dependencies]\nbackend = "0.1"\n'
+                '\n[features]\nprobe = ["backend/scenario-observe"]\n'
+            )
+        policy = self.rules / "policy.toml"
+        with policy.open("a", encoding="utf-8") as stream:
+            stream.write("""
+[[configuration]]
+id = "fixture"
+packages = ["vault"]
+features = []
+default_features = true
+dev = false
+status = "enforced"
+owner = "T1"
+forbidden_features = ["backend/scenario-observe"]
+optional_dependencies = []
+""")
+        self.assertEqual(checker.check_graph_tree(self.root), [])
+        text = policy.read_text(encoding="utf-8")
+        policy.write_text(text.replace("features = []", 'features = ["vault/probe"]', 1),
+                          encoding="utf-8")
+        self.assertEqual(checker.check_graph_tree(self.root), [
+            "invalid graph input: forbidden supported feature: fixture: backend/scenario-observe"
+        ])
+        policy.write_text(text.replace("backend/scenario-observe", "unregistered/probe"),
+                          encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "forbidden_features must name known package/item"):
+            checker.load_policy(policy)
+        policy.write_text(text.replace("optional_dependencies = []",
+                                       'optional_dependencies = ["backend/api"]'),
+                          encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "optional_dependencies must name known package/item"):
+            checker.load_policy(policy)
+
     def test_vendor_patch_manifest_good_and_bad(self) -> None:
         self.vendor_fixture(
             allowed=False, dependency='\n[dependencies.api]\npath = "../../crates/api"\n'
