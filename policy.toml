@@ -368,8 +368,8 @@ reason = "Optional: Play binds the Luau surface factory only with `luau`. With `
 [[allow]]
 from = "host-play"
 to = "vault"
-kinds = ["normal"]
-reason = "Play unlocks the vault and assigns profiles to slots."
+kinds = ["normal", "dev"]
+reason = "Play unlocks the vault and assigns profiles to slots. dev-only: vault test-support (legacy 0.2.9 fixture writers and directory-sync failure hook for S8 two-store recovery tests); vault test-support is never enabled in the normal graph."
 
 [[allow]]
 from = "host-play"
@@ -633,7 +633,7 @@ default_features = true
 dev = false
 status = "enforced"
 owner = "T1"
-forbidden_features = ["client/scenario-observe", "api/scenario-observe", "script-luau/scenario-luau", "host-play/scenario-luau", "frontend-core/scenario-luau", "panel/scenario-luau", "tui/scenario-luau", "script-luau/test-hooks", "host-play/test-support"]
+forbidden_features = ["client/scenario-observe", "api/scenario-observe", "script-luau/scenario-luau", "host-play/scenario-luau", "frontend-core/scenario-luau", "panel/scenario-luau", "tui/scenario-luau", "script-luau/test-hooks", "host-play/test-support", "vault/test-support"]
 optional_dependencies = []
 
 [[configuration]]
@@ -733,7 +733,7 @@ default_features = false
 dev = false
 status = "enforced"
 owner = "T2"
-forbidden_features = ["host-play/js", "frontend-core/js", "panel/js", "tui/js", "host-play/luau", "frontend-core/luau", "panel/luau", "tui/luau", "client/scenario-observe", "api/scenario-observe", "script-luau/scenario-luau", "host-play/scenario-luau", "frontend-core/scenario-luau", "panel/scenario-luau", "tui/scenario-luau", "script-luau/test-hooks", "host-play/test-support"]
+forbidden_features = ["host-play/js", "frontend-core/js", "panel/js", "tui/js", "host-play/luau", "frontend-core/luau", "panel/luau", "tui/luau", "client/scenario-observe", "api/scenario-observe", "script-luau/scenario-luau", "host-play/scenario-luau", "frontend-core/scenario-luau", "panel/scenario-luau", "tui/scenario-luau", "script-luau/test-hooks", "host-play/test-support", "vault/test-support"]
 optional_dependencies = ["host-play/script-js", "frontend-core/script-js", "host-play/script-luau", "frontend-core/script-luau"]
 
 # JS-only product graphs exclude the Luau surfaces; the Luau graph mirrors it.
@@ -745,7 +745,7 @@ default_features = false
 dev = false
 status = "enforced"
 owner = "T2"
-forbidden_features = ["host-play/luau", "frontend-core/luau", "panel/luau", "tui/luau", "client/scenario-observe", "api/scenario-observe", "script-luau/scenario-luau", "host-play/scenario-luau", "frontend-core/scenario-luau", "panel/scenario-luau", "tui/scenario-luau", "script-luau/test-hooks", "host-play/test-support"]
+forbidden_features = ["host-play/luau", "frontend-core/luau", "panel/luau", "tui/luau", "client/scenario-observe", "api/scenario-observe", "script-luau/scenario-luau", "host-play/scenario-luau", "frontend-core/scenario-luau", "panel/scenario-luau", "tui/scenario-luau", "script-luau/test-hooks", "host-play/test-support", "vault/test-support"]
 optional_dependencies = ["host-play/script-luau", "frontend-core/script-luau"]
 
 # Luau-only product graphs exclude the JS surfaces; the JS graph mirrors it.
@@ -757,7 +757,7 @@ default_features = false
 dev = false
 status = "enforced"
 owner = "T2"
-forbidden_features = ["host-play/js", "frontend-core/js", "panel/js", "tui/js", "client/scenario-observe", "api/scenario-observe", "script-luau/scenario-luau", "host-play/scenario-luau", "frontend-core/scenario-luau", "panel/scenario-luau", "tui/scenario-luau", "script-luau/test-hooks", "host-play/test-support"]
+forbidden_features = ["host-play/js", "frontend-core/js", "panel/js", "tui/js", "client/scenario-observe", "api/scenario-observe", "script-luau/scenario-luau", "host-play/scenario-luau", "frontend-core/scenario-luau", "panel/scenario-luau", "tui/scenario-luau", "script-luau/test-hooks", "host-play/test-support", "vault/test-support"]
 optional_dependencies = ["host-play/script-js", "frontend-core/script-js"]
 
 [[configuration]]
@@ -768,5 +768,5 @@ default_features = true
 dev = false
 status = "enforced"
 owner = "T2"
-forbidden_features = ["host-play/test-support", "script-luau/test-hooks"]
+forbidden_features = ["host-play/test-support", "script-luau/test-hooks", "vault/test-support"]
 optional_dependencies = ["host-play/script-luau", "frontend-core/script-luau"]
